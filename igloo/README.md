@@ -1,46 +1,54 @@
 # Ireland 2036: Igloo showcase
 
-A three-minute real-time immersive piece for an Igloo room with four walls and a floor. It is a single HTML page (`index.html`) that maps stock footage of Ireland onto the physical room in real time. It plays as one continuous flow, with no slides and no cuts.
+A three-minute immersive show for an Igloo room with four walls and a floor. There is no 3D rendering. Real footage of Ireland wraps all four walls as one seamless mirrored panorama that drifts around the room. The same footage pools across the floor as a rippling, slowly swirling reflection. Scenes change with a liquid-light dissolve. At 1:16 a wave of light crosses the floor and climbs the walls, the floor year counter runs 2026 → 2036, and the footage takes on the 2036 grade. The finale draws the island map across the floor.
 
-## How it works
+`index.html` is the whole show: one WebGL2 shader, no libraries.
 
-The show is ten 18-second scenes, each built around one stock clip. Each clip wraps all four walls as one seamless mirrored panorama that drifts slowly around the room. On the floor it becomes a rippling reflection that swirls toward the centre. Scenes change with a liquid-light dissolve. At 1:16 a wave of light sweeps across the floor and climbs the walls. The floor year counter runs 2026 → 2036, and the footage takes on the 2036 colour grade, a holographic grid and rising light. The finale draws the island map across the floor.
+## Package for the Igloo PC
 
-A scene with no clip falls back to the live 3D world, so the show always runs end to end.
+`python3 tools/build-package.py` builds `dist/Ireland2036/` and `dist/Ireland2036-Igloo.zip`. The package contains:
+- the show, with bundled fonts, so it runs offline
+- `Start Ireland 2036.bat` and `serve.ps1`: a local server at `http://localhost:8036/` with byte-range support, which video seeking needs
+- `tools/prepare-clips.bat`: converts source clips to 4K H.264 MP4 plus VP9 WebM
+- `README.txt`: Igloo Core Engine setup and the shot list
 
-| Time | Scene | Clip to use |
-|------|-------|-------------|
-| 0:00 | Atlantic dawn | Cliffs of Moher or Wild Atlantic Way, aerial at sunrise |
-| 0:18 | The land | Green fields and stone walls, aerial |
-| 0:36 | The capital | Dublin streets and people |
-| 0:54 | Open economy | Docklands and the Liffey at dusk |
-| 1:12 | The turn (2036 sweep at 1:16) | Night time-lapse of Dublin |
-| 1:30 | Energy | Offshore wind farm, aerial |
-| 1:48 | Transport | Train, tram or metro in motion |
-| 2:06 | Housing | New homes and construction, aerial |
-| 2:24 | One nation (map on floor) | Ireland at night, stars or aurora |
-| 2:42 | Together | Sunrise over the sea |
+Pass `--videos DIR` to copy `s01`–`s10` `.mp4`/`.webm` (and `music.mp3`) into the package.
 
-Add clips in **Footage library**: MP4 (H.264) or WebM, about 1920 px wide, 20 MB maximum each.
+## Footage (ten clips, about 18 s each)
 
-## Output formats (press `V`)
+| Scene | Time | Shot |
+|---|---|---|
+| s01 | 0:00 | Cliffs of Moher / Wild Atlantic Way, aerial at sunrise |
+| s02 | 0:18 | Green fields and stone walls, aerial |
+| s03 | 0:36 | Dublin streets and people |
+| s04 | 0:54 | Docklands and the Liffey at dusk |
+| s05 | 1:12 | Night time-lapse of Dublin (2036 sweep at 1:16) |
+| s06 | 1:30 | Offshore wind farm, aerial |
+| s07 | 1:48 | Train, tram or metro in motion |
+| s08 | 2:06 | New homes and construction, aerial |
+| s09 | 2:24 | Ireland at night / stars / aurora (map on floor) |
+| s10 | 2:42 | Sunrise over the sea |
 
-- **360° Igloo** (default): a 2:1 equirectangular frame for the Igloo 360 layer.
-- **Walls + floor**: a direct canvas with Front | Right | Back | Left walls across the top and the **floor panel on the right**. `O` rotates the floor panel in 90° steps to match the room.
+Clips come from `assets/manifest.json` in the package, or from the **Footage library** on the published page (MP4/WebM, 20 MB each).
+
+## Output formats (`V`)
+
+- **360° Igloo**: 2:1 equirectangular for the Igloo 360 web layer.
+- **Walls + floor**: Front | Right | Back | Left across the top, with the floor panel on the right. `O` rotates the floor panel.
 - **Desk preview**: a perspective view for rehearsing. Drag to look around.
 
-Set the room size and eye height on the start screen, so wall and floor footage line up with the physical room.
+Room size and eye height are set on the start screen.
 
-## Operator keys
+## Sound
 
-`Space` pause/play · `→`/`PageDown` next act · `←`/`PageUp` previous act · `1`–`4` jump to act · `R` restart · `B` or `.` blackout · `A` sound · `F` full screen · `H` hide controls · `O` rotate floor panel · `Q` 3D detail (512–1536 px per cube face)
+A soft ambient score: slow sine and triangle voicings held for a whole act, with a long reverb and no percussive events. Put a licensed `assets/audio/music.mp3` in the package to replace it.
 
-Presentation clickers send `PageDown`/`PageUp`/`.` and work out of the box. The controls hide themselves after about 3 seconds without mouse movement.
+## Keys
 
-## Facts on screen (check before the visit)
+`Space` pause · `→`/`PageDown` next act · `←`/`PageUp` previous · `1`–`4` jump · `R` restart · `B`/`.` blackout · `A` sound · `F` full screen · `H` hide controls · `V` output · `O` rotate floor
+
+## Facts on screen (confirm before the visit)
 
 - 5.4 million people; one of the youngest populations in Europe
-- National offshore wind targets: 5 GW by 2030, 20 GW by 2040
+- Offshore wind targets: 5 GW by 2030, 20 GW by 2040
 - MetroLink: airport to city centre by metro
-
-Edit the `CAPTIONS` array in `index.html` to change any wording or timing.
