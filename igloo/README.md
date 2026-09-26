@@ -1,35 +1,40 @@
 # Ireland 2036: Igloo showcase
 
-A three-minute immersive show for an Igloo room with four walls and a floor. There is no 3D rendering. Real footage of Ireland wraps all four walls as one seamless mirrored panorama that drifts around the room. The same footage pools across the floor as a rippling, slowly swirling reflection. Scenes change with a liquid-light dissolve. At 1:16 a wave of light crosses the floor and climbs the walls, the floor year counter runs 2026 → 2036, and the footage takes on the 2036 grade. The finale draws the island map across the floor.
+A three-minute immersive show for an Igloo room with four walls and a floor. There is no 3D rendering. Real footage of Ireland wraps all four walls as a panorama that turns slowly around the room, and the floor becomes a dark, softly rippling water reflection of it. Scenes change with a liquid-light dissolve. At 1:16 a wave of light crosses the floor and climbs the walls, the floor year counter runs 2026 → 2036, and the footage takes on the 2036 grade. The finale draws the island map across the floor.
 
 `index.html` is the whole show: one WebGL2 shader, no libraries.
 
-## Package for the Igloo PC
+## The Igloo package: `igloo/Ireland2036/`
 
-`python3 tools/build-package.py` builds `dist/Ireland2036/` and `dist/Ireland2036-Igloo.zip`. The package contains:
-- the show, with bundled fonts, so it runs offline
+This folder is the complete show, ready to copy to the Igloo PC:
+- the show (`index.html`), with bundled fonts, so it runs offline
+- the real footage in `assets/video`, as H.264 MP4 plus VP9 WebM (see `CREDITS.txt`)
 - `Start Ireland 2036.bat` and `serve.ps1`: a local server at `http://localhost:8036/` with byte-range support, which video seeking needs
-- `tools/prepare-clips.bat`: converts source clips to 4K H.264 MP4 plus VP9 WebM
-- `README.txt`: Igloo Core Engine setup and the shot list
+- `tools/prepare-clips.bat`: converts replacement footage into both formats
+- `README.txt`: Igloo Core Engine setup, running order and operator keys
 
-Pass `--videos DIR` to copy `s01`–`s10` `.mp4`/`.webm` (and `music.mp3`) into the package.
+To download it, use **Code → Download ZIP** on this branch on GitHub, or clone the repo. Then copy `igloo/Ireland2036` to the Igloo PC.
 
-## Footage (ten clips, about 18 s each)
+After editing `index.html`, run `python3 tools/build-package.py` to refresh the package (add `--zip` for a zip in `dist/`).
 
-| Scene | Time | Shot |
+## Footage
+
+Six credited clips are cast into ten 18-second scenes. Each scene's front half plays one segment; the back half plays another moment from the same kind of shot, joined by feathered seams. The floor is a dark water reflection.
+
+| Time | Scene | Footage |
 |---|---|---|
-| s01 | 0:00 | Cliffs of Moher / Wild Atlantic Way, aerial at sunrise |
-| s02 | 0:18 | Green fields and stone walls, aerial |
-| s03 | 0:36 | Dublin streets and people |
-| s04 | 0:54 | Docklands and the Liffey at dusk |
-| s05 | 1:12 | Night time-lapse of Dublin (2036 sweep at 1:16) |
-| s06 | 1:30 | Offshore wind farm, aerial |
-| s07 | 1:48 | Train, tram or metro in motion |
-| s08 | 2:06 | New homes and construction, aerial |
-| s09 | 2:24 | Ireland at night / stars / aurora (map on floor) |
-| s10 | 2:42 | Sunrise over the sea |
+| 0:00 | Atlantic edge | Cliffs of Moher, aerial |
+| 0:18 | The land | Conor Pass, Dingle, aerial |
+| 0:36 | The capital | Dublin quays: Dublin Bus, Convention Centre, Samuel Beckett Bridge |
+| 0:54 | Open economy | Docklands, aerial |
+| 1:12 | The turn (2036 sweep at 1:16) | The Liffey from above |
+| 1:30 | Energy | Atlantic cliffs and sea |
+| 1:48 | Transport | City streets from above |
+| 2:06 | Housing | Construction and new homes, Grand Canal Dock |
+| 2:24 | One nation (map on floor) | Conor Pass valley |
+| 2:42 | Together | Cliffs of Moher and O'Brien's Tower |
 
-Clips come from `assets/manifest.json` in the package, or from the **Footage library** on the published page (MP4/WebM, 20 MB each).
+Credits: Dublin © European Union 2026, European Parliament (CC BY 4.0). Cliffs of Moher, Wiebe de Jager (CC BY-SA 4.0). Conor Pass, Superbass (CC BY-SA 4.0). The adapted clips from the CC BY-SA sources stay under CC BY-SA 4.0.
 
 ## Output formats (`V`)
 
