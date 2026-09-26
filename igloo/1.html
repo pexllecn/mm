@@ -1,0 +1,2090 @@
+<title>Ireland 2036</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  /* Single-look design: this page drives a projection room, so it stays dark in every theme. */
+  :root {
+    color-scheme: dark;
+    --void: #030609;
+    --panel: rgba(6, 14, 19, 0.82);
+    --panel-solid: #08131a;
+    --line: rgba(217, 212, 199, 0.16);
+    --stone: #d9d4c7;
+    --mute: #8a9ea1;
+    --gold: #f2c14e;
+    --sea: #7fd1c7;
+    --alert: #ef8a6b;
+    --sans: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --serif: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  }
+  html, body { height: 100%; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--void); color: var(--stone); font-family: var(--sans); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #000; }
+  body.show-hidden, body.show-hidden * { cursor: none !important; }
+
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold); }
+  button, select { font: inherit; color: inherit; }
+  button:focus-visible, select:focus-visible, label:focus-within { outline: 2px solid var(--sea); outline-offset: 2px; }
+
+  /* Start gate */
+  #gate {
+    position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: flex-start;
+    padding-inline: clamp(16px, 5vw, 72px); padding-block: clamp(24px, 6vh, 72px);
+    background: linear-gradient(90deg, rgba(3,6,9,.92) 0%, rgba(3,6,9,.72) 38%, rgba(3,6,9,.1) 75%);
+    overflow-y: auto;
+  }
+  .gate-card { max-width: 560px; display: grid; gap: 22px; }
+  .gate-card h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(56px, 9vw, 120px); line-height: .9; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+  .gate-card h1 em { color: var(--gold); font-style: italic; }
+  .gate-card p { margin: 0; font-size: 17px; line-height: 1.5; color: var(--stone); max-width: 52ch; }
+  .spec { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--mute); font-variant-numeric: tabular-nums; }
+  .spec b { color: var(--stone); font-weight: 500; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: rgba(8,19,26,.6); flex-wrap: wrap; }
+  .seg button { border: 0; background: transparent; padding: 8px 14px; border-radius: 999px; font-size: 14px; cursor: pointer; color: var(--mute); }
+  .seg button[aria-pressed="true"] { background: var(--stone); color: var(--void); }
+  .go {
+    border: 0; border-radius: 999px; padding: 16px 30px; font-size: 17px; font-weight: 600; letter-spacing: .04em;
+    background: var(--gold); color: #1a1405; cursor: pointer; display: inline-flex; gap: 12px; align-items: center;
+  }
+  .go:hover { filter: brightness(1.08); }
+  .go[disabled] { opacity: .45; cursor: progress; filter: none; }
+  .credit { margin: 0; font-size: 12px; line-height: 1.45; color: var(--mute); max-width: 56ch; }
+  .ghost { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 14px 20px; font-size: 15px; cursor: pointer; }
+  .ghost:hover { border-color: var(--stone); }
+  .room { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--mute); }
+  .room input { width: 4.2em; background: rgba(8,19,26,.7); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--stone); font: inherit; font-variant-numeric: tabular-nums; }
+  .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 16px; font-size: 13px; color: var(--mute); }
+  kbd { font-family: var(--sans); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; color: var(--stone); margin-right: 6px; }
+
+  /* Operator bar */
+  #hud {
+    position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    width: min(980px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    backdrop-filter: blur(10px); padding: 12px 14px; display: grid; gap: 10px; transition: opacity .5s, transform .5s;
+  }
+  body.show-hidden #hud { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
+  .acts { display: grid; grid-template-columns: 36fr 36fr 72fr 36fr; gap: 4px; }
+  .act { border: 0; background: transparent; text-align: left; padding: 0; cursor: pointer; display: grid; gap: 6px; }
+  .act .bar { height: 4px; border-radius: 2px; background: rgba(217,212,199,.14); overflow: hidden; }
+  .act .bar i { display: block; height: 100%; width: 0; background: var(--stone); }
+  .act.on .bar i { background: var(--gold); }
+  .act span { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+  .act.on span { color: var(--stone); }
+  .ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ctl button { border: 1px solid var(--line); background: rgba(217,212,199,.04); border-radius: 8px; padding: 7px 12px; font-size: 14px; cursor: pointer; }
+  .ctl button:hover { border-color: var(--stone); }
+  .ctl button.primary { background: var(--stone); color: var(--void); border-color: var(--stone); min-width: 84px; }
+  .clock { font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 500; letter-spacing: .02em; margin-right: 6px; }
+  .clock small { font-size: 14px; color: var(--mute); }
+  .spacer { flex: 1; }
+  .stat { font-size: 12px; color: var(--mute); font-variant-numeric: tabular-nums; }
+
+  /* Media panel */
+  #media {
+    position: fixed; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); width: min(420px, calc(100% - 32px));
+    max-height: calc(100% - 140px); overflow-y: auto; background: var(--panel-solid); border: 1px solid var(--line);
+    border-radius: 14px; padding: 18px; display: grid; gap: 14px;
+  }
+  #media h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0; }
+  #media p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--mute); }
+  .slot { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; }
+  .thumb { width: 96px; aspect-ratio: 16/9; border-radius: 6px; background: #0e1c24 center/cover no-repeat; display: grid; place-items: center; font-size: 11px; color: var(--mute); overflow: hidden; }
+  .thumb video { width: 100%; height: 100%; object-fit: cover; }
+  .slot b { font-weight: 500; display: block; }
+  .slot small { color: var(--mute); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .slot .acts-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .slot label, .slot button { font-size: 13px; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; background: transparent; }
+  .slot input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .note { font-size: 13px; color: var(--sea); min-height: 1em; }
+  .note.err { color: var(--alert); }
+
+  #toast { position: fixed; top: calc(18px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); background: var(--panel-solid); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; font-size: 14px; transition: opacity .4s; pointer-events: none; }
+  #toast.off { opacity: 0; }
+
+  @media (max-width: 640px) {
+    #gate { align-items: flex-start; background: rgba(3,6,9,.86); }
+    .acts span { font-size: 10px; letter-spacing: .06em; }
+    .clock { font-size: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) { #hud, #toast { transition: none; } }
+</style>
+
+<canvas id="stage" aria-label="Ireland 2036 immersive scene"></canvas>
+
+<section id="gate" aria-labelledby="gate-title">
+  <div class="gate-card">
+    <div class="eyebrow">Igloo immersive · four walls + floor</div>
+    <h1 id="gate-title">Ireland <em>2036</em></h1>
+    <p>The real island, at real scale. Terrain from satellite elevation data, imagery draped over it, and every place — the Cliffs of Moher, the Liffey, Arklow Bank — at its true longitude and latitude. The flight wraps all four walls and pools across the floor. Then a wave of light sweeps out from Dublin, and Ireland 2036 takes shape around you.</p>
+    <div class="spec"><span><b>3:00</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> live render</span><span id="gpu-note">Checking graphics…</span></div>
+    <div class="note" id="load-note" role="status">Starting up…</div>
+    <div class="row" role="group" aria-label="Output format">
+      <div class="seg" id="mode-seg">
+        <button type="button" data-mode="0" aria-pressed="true">360° Igloo</button>
+        <button type="button" data-mode="1" aria-pressed="false">Walls + floor</button>
+        <button type="button" data-mode="2" aria-pressed="false">Desk preview</button>
+      </div>
+    </div>
+    <div class="room" role="group" aria-label="Room size in metres">
+      <label for="r-w">Front wall <input id="r-w" type="number" min="2" max="30" step="0.1" value="6"> m</label>
+      <label for="r-d">Side wall <input id="r-d" type="number" min="2" max="30" step="0.1" value="6"> m</label>
+      <label for="r-h">Height <input id="r-h" type="number" min="1.5" max="10" step="0.1" value="3"> m</label>
+      <label for="r-e">Eye <input id="r-e" type="number" min="1" max="2.2" step="0.05" value="1.6"> m</label>
+    </div>
+    <div class="row">
+      <button type="button" class="go" id="start" disabled>▶ Start the show</button>
+      <button type="button" class="ghost" id="open-media">Footage library</button>
+    </div>
+    <div class="keys" aria-label="Operator keys">
+      <span><kbd>Space</kbd>Pause / play</span>
+      <span><kbd>→</kbd><kbd>←</kbd>Next / previous act</span>
+      <span><kbd>R</kbd>Restart</span>
+      <span><kbd>V</kbd>Output format</span>
+      <span><kbd>F</kbd>Full screen</span>
+      <span><kbd>A</kbd>Sound on / off</span>
+      <span><kbd>H</kbd>Hide controls</span>
+      <span><kbd>B</kbd>Blackout</span>
+      <span><kbd>O</kbd>Rotate floor panel</span>
+    </div>
+    <p class="credit">Elevation: Terrain Tiles on AWS (SRTM, NED, GEBCO). Imagery: Esri World Imagery. Coastline and place coordinates: public geographic data. Swap either service at the top of the script if the venue has a licensed source.</p>
+  </div>
+</section>
+
+<div id="hud" hidden>
+  <div class="acts" id="acts"></div>
+  <div class="ctl">
+    <span class="clock" id="clock">0:00 <small>/ 3:00</small></span>
+    <button type="button" class="primary" id="b-play">Pause</button>
+    <button type="button" id="b-restart">Restart</button>
+    <button type="button" id="b-mode">360° Igloo</button>
+    <button type="button" id="b-audio">Sound on</button>
+    <button type="button" id="b-media">Footage</button>
+    <button type="button" id="b-full">Full screen</button>
+    <span class="spacer"></span>
+    <span class="stat" id="stat"></span>
+  </div>
+</div>
+
+<aside id="media" hidden aria-labelledby="media-title">
+  <div class="row" style="justify-content:space-between">
+    <h2 id="media-title">Footage library</h2>
+    <button type="button" class="ghost" id="close-media" style="padding:8px 14px">Close</button>
+  </div>
+  <p>One clip per scene. Each clip wraps around all four walls as a seamless panorama and pools across the floor as a moving reflection. Clips save with the show, so the Igloo PC picks them up live. Scenes without a clip show the live 3D world.</p>
+  <div id="slots"></div>
+  <div class="note" id="media-note" role="status"></div>
+</aside>
+
+<div id="toast" class="off" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script>
+if (!window.THREE) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+</script>
+<script>
+(() => {
+'use strict';
+const T = window.THREE;
+const $ = (id) => document.getElementById(id);
+if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the network and reload.'; return; }
+
+
+// ---------------------------------------------------------------- show data
+const DURATION = 180;
+// Each scene is a stock clip wrapped around the room. `want` is what the clip should show.
+const SCENES = [
+  { id: 's01', t0: 0,   name: 'Atlantic dawn',     want: 'Cliffs of Moher or Wild Atlantic Way, aerial at sunrise' },
+  { id: 's02', t0: 18,  name: 'The land',          want: 'Green fields and stone walls, aerial (Connemara, Kerry, Wicklow)' },
+  { id: 's03', t0: 36,  name: 'The capital',       want: 'Dublin streets and people: Grafton Street, Temple Bar, Ha’penny Bridge' },
+  { id: 's04', t0: 54,  name: 'Open economy',      want: 'Dublin Docklands and the Liffey at dusk, Samuel Beckett Bridge' },
+  { id: 's05', t0: 72,  name: 'The turn',          want: 'Night time-lapse of Dublin, or light trails over the city' },
+  { id: 's06', t0: 90,  name: 'Energy',            want: 'Offshore wind farm, aerial, ideally at sunset' },
+  { id: 's07', t0: 108, name: 'Transport',         want: 'Modern train, tram or metro in motion (Luas, DART, rail)' },
+  { id: 's08', t0: 126, name: 'Housing',           want: 'New homes and construction, aerial; modern sustainable architecture' },
+  { id: 's09', t0: 144, name: 'One nation',        want: 'Ireland at night from above, or starry sky / aurora over the coast' },
+  { id: 's10', t0: 162, name: 'Together',          want: 'Sunrise over the sea or a hilltop, people looking out' },
+];
+SCENES.forEach((s, i) => { s.t1 = i < SCENES.length - 1 ? SCENES[i + 1].t0 : DURATION; });
+const XFADE = 3.2; // seconds of liquid dissolve into each scene
+
+const ACTS = [
+  { name: 'Today', t: 0 },
+  { name: 'Momentum', t: 36 },
+  { name: 'Ireland 2036', t: 72 },
+  { name: 'Together', t: 144 },
+];
+
+const CAPTIONS = [
+  { t0: 3,   t1: 15,  eb: 'Ireland · 2026',       ti: 'Where we stand today',          sub: 'The Wild Atlantic Way at first light' },
+  { t0: 21,  t1: 33,  eb: 'Our people',           ti: '5.4 million people',            sub: 'One of the youngest populations in Europe' },
+  { t0: 39,  t1: 51,  eb: 'Dublin · the capital', ti: 'A capital on the move',         sub: 'Talent, technology and trade along the Liffey' },
+  { t0: 57,  t1: 69,  eb: 'Open economy',         ti: 'Connected to the world',        sub: 'European home to many of the world’s leading companies' },
+  { t0: 80,  t1: 88,  eb: '2026 → 2036',          ti: 'The next ten years start now',  sub: '' },
+  { t0: 93,  t1: 105, eb: 'Energy',               ti: 'Powered by the Atlantic',       sub: 'National offshore wind targets: 5 GW by 2030, 20 GW by 2040' },
+  { t0: 111, t1: 123, eb: 'Transport',            ti: 'Connected by MetroLink',        sub: 'Airport to city centre by metro, regions linked by rail' },
+  { t0: 129, t1: 141, eb: 'Housing',              ti: 'Homes for a growing nation',    sub: 'New communities, built at pace and powered cleanly' },
+  { t0: 147, t1: 159, eb: 'One nation',           ti: 'Every region, connected',       sub: 'Dublin · Cork · Galway · Limerick · Waterford' },
+  { t0: 164, t1: 177.5, eb: 'Ireland 2036',       ti: 'Ambition, delivered together',  sub: '' },
+];
+
+// ---------------------------------------------------------------- real-world geography
+// The whole scene is built in real metres on a local tangent plane centred on Ireland.
+// +x is east, -z is north, y is metres above sea level. Nothing here is invented geometry:
+// every place below sits at its true longitude and latitude.
+const LON0 = -8.0, LAT0 = 53.4;
+const M_LON = 111320 * Math.cos(LAT0 * Math.PI / 180); // metres per degree of longitude
+const M_LAT = 110574;                                   // metres per degree of latitude
+const gx = (lon) => (lon - LON0) * M_LON;
+const gz = (lat) => -(lat - LAT0) * M_LAT;
+const lonAt = (x) => LON0 + x / M_LON;
+const latAt = (z) => LAT0 - z / M_LAT;
+
+// Data window: the whole island with a margin of open sea on every side.
+const LON_W = -11.10, LON_E = -4.90, LAT_N = 55.70, LAT_S = 51.10;
+const FX0 = gx(LON_W), FX1 = gx(LON_E), FZ0 = gz(LAT_N), FZ1 = gz(LAT_S);
+const FW = 1536, FH = 1880; // elevation field resolution, about 270 m per sample
+
+// Real places. Longitude, latitude, then whatever that place needs.
+const PLACES = {
+  dublin:    [-6.2603, 53.3498], docklands: [-6.2350, 53.3470], spire: [-6.2603, 53.3498],
+  poolbeg:   [-6.1859, 53.3356], beckett:   [-6.2410, 53.3479], airport: [-6.2499, 53.4264],
+  swords:    [-6.2180, 53.4597], cliffs:    [-9.4269, 52.9737], obrien:  [-9.4290, 52.9746],
+  cork:      [-8.4706, 51.8985], galway:    [-9.0568, 53.2707], limerick: [-8.6238, 52.6638],
+  waterford: [-7.1101, 52.2593], belfast:   [-5.9301, 54.5973], derry:    [-7.3086, 54.9966],
+  sligo:     [-8.4761, 54.2697], athlone:   [-7.9407, 53.4239], drogheda: [-6.3478, 53.7189],
+  dundalk:   [-6.4058, 54.0019], kilkenny:  [-7.2528, 52.6541], tralee:   [-9.7026, 52.2713],
+  ennis:     [-8.9811, 52.8436], portlaoise:[-7.2999, 53.0344], mullingar:[-7.3400, 53.5236],
+  navan:     [-6.6817, 53.6528], carlow:    [-6.9261, 52.8365], wexford:  [-6.4633, 52.3369],
+};
+
+const CITIES = [
+  ['Dublin',    -6.2603, 53.3498, 9200, 1.00],
+  ['Belfast',   -5.9301, 54.5973, 5200, 0.72],
+  ['Cork',      -8.4706, 51.8985, 4200, 0.66],
+  ['Galway',    -9.0568, 53.2707, 3000, 0.52],
+  ['Limerick',  -8.6238, 52.6638, 3000, 0.52],
+  ['Waterford', -7.1101, 52.2593, 2100, 0.44],
+  ['Derry',     -7.3086, 54.9966, 2400, 0.44],
+  ['Drogheda',  -6.3478, 53.7189, 1900, 0.40],
+  ['Dundalk',   -6.4058, 54.0019, 1700, 0.38],
+  ['Sligo',     -8.4761, 54.2697, 1500, 0.35],
+  ['Athlone',   -7.9407, 53.4239, 1400, 0.33],
+  ['Kilkenny',  -7.2528, 52.6541, 1300, 0.33],
+  ['Tralee',    -9.7026, 52.2713, 1300, 0.32],
+  ['Ennis',     -8.9811, 52.8436, 1200, 0.30],
+  ['Portlaoise',-7.2999, 53.0344, 1100, 0.30],
+  ['Mullingar', -7.3400, 53.5236, 1100, 0.30],
+  ['Navan',     -6.6817, 53.6528, 1200, 0.31],
+  ['Carlow',    -6.9261, 52.8365, 1100, 0.29],
+  ['Wexford',   -6.4633, 52.3369, 1200, 0.30],
+];
+// The five the floor map and the closing caption name.
+const MAP_CITIES = [['Dublin', -6.26, 53.35], ['Cork', -8.47, 51.90], ['Galway', -9.05, 53.27], ['Limerick', -8.63, 52.66], ['Waterford', -7.11, 52.26]];
+
+// Consented and planned Irish offshore wind sites.
+const WIND_SITES = [
+  ['Dublin Array',    -6.030, 53.255, 6, 5, 3200],
+  ['Codling Wind Park', -5.990, 53.060, 7, 6, 3600],
+  ['Arklow Bank',     -5.960, 52.800, 5, 8, 3400],
+  ['Oriel',           -6.190, 53.960, 4, 5, 2800],
+  ['Sceirde Rocks',   -9.960, 53.300, 4, 4, 2600],
+  ['Tonn Nua',        -7.300, 51.900, 5, 5, 3000],
+];
+
+// Real route geometry, simplified to their true corridors.
+const ROUTES = {
+  metro:   [[-6.2180, 53.4597], [-6.2499, 53.4264], [-6.2620, 53.3930], [-6.2740, 53.3700], [-6.2603, 53.3498], [-6.2590, 53.3380], [-6.2600, 53.3290]],
+  cork:    [[-6.2920, 53.3465], [-6.5400, 53.2600], [-7.0100, 53.1100], [-7.2999, 53.0344], [-7.8100, 52.6800], [-8.2100, 52.5000], [-8.6500, 52.1300], [-8.4706, 51.8985]],
+  belfast: [[-6.2490, 53.3530], [-6.3478, 53.7189], [-6.4058, 54.0019], [-6.3360, 54.1770], [-6.0300, 54.4200], [-5.9301, 54.5973]],
+  galway:  [[-6.2490, 53.3530], [-6.6817, 53.6528], [-7.3400, 53.5236], [-7.9407, 53.4239], [-8.5900, 53.3200], [-9.0568, 53.2707]],
+  ewic:    [[-6.0900, 53.5200], [-5.6000, 53.5000], [-5.0500, 53.4200]],
+  celtic:  [[-7.8500, 51.9500], [-7.2000, 51.6000], [-6.6000, 51.3000]],
+  greenlink:[[-6.9500, 52.2200], [-6.3000, 52.0500], [-5.7000, 51.9000]],
+};
+
+// Named upland areas, used only when the online elevation service cannot be reached.
+// Longitude, latitude, radius in kilometres, summit height in metres, roughness.
+const RANGES = [
+  [-9.750, 51.990, 19, 1038, 1.00], [-9.980, 51.870, 16,  690, 0.90], [-9.300, 51.950, 17,  750, 0.85],
+  [-8.170, 52.360, 13,  919, 0.80], [-7.950, 52.230, 12,  794, 0.75], [-7.550, 52.230, 11,  792, 0.75],
+  [-6.420, 53.000, 24,  925, 0.90], [-6.830, 52.550, 10,  796, 0.70], [-7.600, 53.050, 15,  527, 0.55],
+  [-9.830, 53.500, 16,  729, 0.90], [-9.830, 53.630, 12,  814, 0.90], [-9.600, 54.050, 20,  806, 0.85],
+  [-8.900, 54.100, 17,  544, 0.65], [-8.420, 54.370, 12,  647, 0.80], [-8.100, 54.720, 16,  674, 0.75],
+  [-8.120, 55.030, 15,  751, 0.85], [-7.100, 54.780, 24,  678, 0.70], [-6.000, 54.180, 13,  850, 0.90],
+  [-6.150, 54.950, 22,  554, 0.60], [-6.200, 54.050, 10,  589, 0.75], [-8.500, 53.050, 16,  400, 0.50],
+  [-8.300, 52.750, 12,  420, 0.50], [-9.150, 53.050, 14,  320, 0.60], [-9.430, 52.970,  6,  214, 0.45],
+  [-10.150, 51.750, 9,  600, 0.85], [-7.000, 52.050, 10,  420, 0.55], [-9.400, 54.250, 12,  500, 0.70],
+];
+// Large lakes, flattened to their real surface levels.
+const LAKES = [
+  [-6.450, 54.600, 21,  12], [-9.250, 53.450, 14,   6], [-8.300, 52.900, 16,  33],
+  [-8.000, 53.560, 12,  37], [-7.700, 54.220, 15,  46], [-9.520, 52.010,  5,  22],
+];
+
+// Coastline of the island, used for the floor map and for the offline land mask.
+const IRL = [[-7.37,55.38],[-6.95,55.2],[-6.5,55.25],[-6.12,55.22],[-5.97,55.05],[-5.8,54.85],[-5.7,54.67],[-5.55,54.65],[-5.45,54.45],[-5.55,54.3],[-5.85,54.22],[-6.05,54.02],[-6.2,53.99],[-6.35,53.85],[-6.25,53.7],[-6.2,53.55],[-6.1,53.45],[-6.05,53.38],[-6.2,53.34],[-6.1,53.25],[-6.02,53.1],[-6.0,52.95],[-6.15,52.75],[-6.25,52.55],[-6.33,52.3],[-6.36,52.17],[-6.6,52.18],[-6.95,52.2],[-7.1,52.15],[-7.55,52.03],[-7.85,51.95],[-8.2,51.82],[-8.3,51.8],[-8.55,51.65],[-8.95,51.57],[-9.35,51.48],[-9.82,51.45],[-9.55,51.62],[-10.05,51.6],[-10.25,51.78],[-9.9,51.9],[-10.35,52.0],[-10.45,52.12],[-10.0,52.15],[-9.85,52.3],[-9.6,52.55],[-9.45,52.6],[-9.85,52.62],[-9.55,52.9],[-9.43,52.97],[-9.3,53.12],[-9.05,53.15],[-9.1,53.25],[-9.6,53.25],[-10.0,53.4],[-10.2,53.55],[-9.9,53.75],[-9.95,53.9],[-10.2,54.0],[-10.0,54.25],[-9.3,54.3],[-8.6,54.25],[-8.55,54.45],[-8.3,54.5],[-8.6,54.62],[-8.8,54.7],[-8.45,54.85],[-8.5,55.0],[-8.3,55.15],[-7.9,55.25],[-7.65,55.25],[-7.55,55.1],[-7.37,55.38]];
+
+// ---------------------------------------------------------------- real-world data services
+// Elevation: Terrain Tiles on AWS (SRTM, NED and GEBCO bathymetry, terrarium encoding).
+// Imagery:   Esri World Imagery. Both are swappable if the venue has a licensed source.
+const ELEV_URL = (z, x, y) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`;
+const IMAGE_URL = (z, x, y) => `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
+const ELEV_Z = 9;    // about 180 m per pixel across the island
+const IMAGE_Z = 9;   // base imagery for the whole island
+const DETAIL_Z = 13; // a sharp inset over Dublin, where the show spends most of its time
+const DETAIL = { lon0: -6.45, lon1: -6.05, lat0: 53.45, lat1: 53.25 };
+
+const tileX = (lon, z) => (lon + 180) / 360 * Math.pow(2, z);
+const tileY = (lat, z) => { const s = Math.sin(lat * Math.PI / 180); return (.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * Math.pow(2, z); };
+const lonOfX = (x, z) => x / Math.pow(2, z) * 360 - 180;
+const latOfY = (y, z) => { const n = Math.PI - 2 * Math.PI * y / Math.pow(2, z); return 180 / Math.PI * Math.atan(.5 * (Math.exp(n) - Math.exp(-n))); };
+
+// ---------------------------------------------------------------- math
+const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function hash(i, j) {
+  let n = (Math.imul(i, 374761393) + Math.imul(j, 668265263)) | 0;
+  n = Math.imul(n ^ (n >>> 13), 1274126177); n ^= n >>> 16;
+  return (n >>> 0) / 4294967296;
+}
+function noise(x, y) {
+  const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j;
+  const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+  const a = hash(i, j), b = hash(i + 1, j), c = hash(i, j + 1), d = hash(i + 1, j + 1);
+  return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+}
+function fbm(x, y, o = 5) { let s = 0, a = .5; for (let k = 0; k < o; k++) { s += a * noise(x, y); x = x * 2.03 + 17.1; y = y * 2.03 + 9.2; a *= .5; } return s; }
+let seedN = 1; const rnd = () => { seedN = (Math.imul(seedN, 1664525) + 1013904223) | 0; return (seedN >>> 0) / 4294967296; };
+
+// ---------------------------------------------------------------- elevation field
+// One regular grid of real heights in metres. Everything in the show reads from it:
+// the terrain mesh, the sea depth, where buildings stand and how low the camera may fly.
+let FIELD = null;               // Float32Array, row 0 is the north edge
+let FIELD_SOURCE = 'pending';
+const elevTex = new T.DataTexture(new Float32Array(FW * FH), FW, FH, T.RedFormat, T.FloatType);
+elevTex.magFilter = elevTex.minFilter = T.NearestFilter;
+elevTex.wrapS = elevTex.wrapT = T.ClampToEdgeWrapping;
+elevTex.needsUpdate = true;
+
+function heightAt(x, z) {
+  if (!FIELD) return 0;
+  const u = (x - FX0) / (FX1 - FX0) * (FW - 1), v = (z - FZ0) / (FZ1 - FZ0) * (FH - 1);
+  if (u < 0 || v < 0 || u > FW - 1 || v > FH - 1) return -80;
+  const i = Math.floor(u), j = Math.floor(v), fx = u - i, fy = v - j;
+  const i1 = Math.min(FW - 1, i + 1), j1 = Math.min(FH - 1, j + 1);
+  const a = FIELD[j * FW + i], b = FIELD[j * FW + i1], c = FIELD[j1 * FW + i], d = FIELD[j1 * FW + i1];
+  return lerp(lerp(a, b, fx), lerp(c, d, fx), fy);
+}
+
+// ---------------------------------------------------------------- offline island model
+// Used when the elevation service is unreachable. The coastline, the named uplands and
+// the lakes are all at their real positions; only the detail between them is synthesised.
+// The coast is rasterised once and turned into a distance field, so the whole island
+// resolves in one pass instead of testing every cell against every coastline segment.
+const CELL_KM = (FX1 - FX0) / FW / 1000;
+let COAST = null;
+function coastMask() {
+  if (COAST) return COAST;
+  const inside = new Uint8Array(FW * FH);
+  for (let j = 0; j < FH; j++) {
+    const lat = lerp(LAT_N, LAT_S, j / (FH - 1)), xs = [];
+    for (let a = 0, b = IRL.length - 1; a < IRL.length; b = a++) {
+      const [x1, y1] = IRL[a], [x2, y2] = IRL[b];
+      if ((y1 > lat) !== (y2 > lat)) xs.push(x1 + (lat - y1) / (y2 - y1) * (x2 - x1));
+    }
+    xs.sort((m, n) => m - n);
+    for (let k = 0; k + 1 < xs.length; k += 2) {
+      const i0 = Math.max(0, Math.ceil((xs[k] - LON_W) / (LON_E - LON_W) * (FW - 1)));
+      const i1 = Math.min(FW - 1, Math.floor((xs[k + 1] - LON_W) / (LON_E - LON_W) * (FW - 1)));
+      for (let i = i0; i <= i1; i++) inside[j * FW + i] = 1;
+    }
+  }
+  // two-pass chamfer: distance in cells from every cell to the shoreline
+  const BIG = 1e9, d = new Float32Array(FW * FH);
+  for (let j = 0; j < FH; j++) for (let i = 0; i < FW; i++) {
+    const k = j * FW + i, v = inside[k];
+    const edge = (i > 0 && inside[k - 1] !== v) || (i < FW - 1 && inside[k + 1] !== v)
+      || (j > 0 && inside[k - FW] !== v) || (j < FH - 1 && inside[k + FW] !== v);
+    d[k] = edge ? 0 : BIG;
+  }
+  const A = 1, B = Math.SQRT2;
+  for (let j = 0; j < FH; j++) for (let i = 0; i < FW; i++) {
+    const k = j * FW + i; let m = d[k];
+    if (j > 0) { m = Math.min(m, d[k - FW] + A); if (i > 0) m = Math.min(m, d[k - FW - 1] + B); if (i < FW - 1) m = Math.min(m, d[k - FW + 1] + B); }
+    if (i > 0) m = Math.min(m, d[k - 1] + A);
+    d[k] = m;
+  }
+  for (let j = FH - 1; j >= 0; j--) for (let i = FW - 1; i >= 0; i--) {
+    const k = j * FW + i; let m = d[k];
+    if (j < FH - 1) { m = Math.min(m, d[k + FW] + A); if (i < FW - 1) m = Math.min(m, d[k + FW + 1] + B); if (i > 0) m = Math.min(m, d[k + FW - 1] + B); }
+    if (i < FW - 1) m = Math.min(m, d[k + 1] + A);
+    d[k] = m;
+  }
+  COAST = { inside, d };
+  return COAST;
+}
+
+function syntheticField() {
+  const { inside, d } = coastMask();
+  const out = new Float32Array(FW * FH);
+  const kmPerLon = Math.cos(LAT0 * Math.PI / 180) * 111.32;
+  // 1. lowland, falling towards the coast
+  for (let j = 0; j < FH; j++) {
+    const lat = lerp(LAT_N, LAT_S, j / (FH - 1));
+    for (let i = 0; i < FW; i++) {
+      const k = j * FW + i, dk = d[k] * CELL_KM;
+      if (!inside[k]) { out[k] = -Math.min(200, 2 + dk * 5.5); continue; }
+      const lon = lerp(LON_W, LON_E, i / (FW - 1));
+      const base = 25 + 55 * fbm(lon * 26 + 11, lat * 26 + 7, 3) + 20 * fbm(lon * 95, lat * 95, 2);
+      out[k] = base * smooth(0, 14, dk);
+    }
+  }
+  // 2. the named uplands, each added only over its own footprint
+  for (const [rl, rt, rk, peak, rough] of RANGES) {
+    const spanLat = rk * 2.6 / 111.32, spanLon = rk * 2.6 / kmPerLon;
+    const j0 = Math.max(0, Math.floor((rt + spanLat - LAT_N) / (LAT_S - LAT_N) * (FH - 1)));
+    const j1 = Math.min(FH - 1, Math.ceil((rt - spanLat - LAT_N) / (LAT_S - LAT_N) * (FH - 1)));
+    const i0 = Math.max(0, Math.floor((rl - spanLon - LON_W) / (LON_E - LON_W) * (FW - 1)));
+    const i1 = Math.min(FW - 1, Math.ceil((rl + spanLon - LON_W) / (LON_E - LON_W) * (FW - 1)));
+    for (let j = j0; j <= j1; j++) {
+      const lat = lerp(LAT_N, LAT_S, j / (FH - 1));
+      for (let i = i0; i <= i1; i++) {
+        const k = j * FW + i; if (!inside[k]) continue;
+        const lon = lerp(LON_W, LON_E, i / (FW - 1));
+        const dd = Math.hypot((lon - rl) * kmPerLon, (lat - rt) * 111.32) / rk;
+        if (dd > 2.6) continue;
+        const shape = Math.exp(-dd * dd * 3.0);
+        const texture = .70 + .30 * fbm(lon * 150, lat * 150, 3) * 2 * rough;
+        out[k] += peak * shape * Math.min(texture, 1.15);
+      }
+    }
+  }
+  // 3. lakes sit flat at their real surface level
+  for (const [ll, lt, lk, lvl] of LAKES) {
+    const spanLat = lk / 111.32, spanLon = lk / kmPerLon;
+    for (let j = Math.max(0, Math.floor((lt + spanLat - LAT_N) / (LAT_S - LAT_N) * (FH - 1)));
+         j <= Math.min(FH - 1, Math.ceil((lt - spanLat - LAT_N) / (LAT_S - LAT_N) * (FH - 1))); j++) {
+      const lat = lerp(LAT_N, LAT_S, j / (FH - 1));
+      for (let i = Math.max(0, Math.floor((ll - spanLon - LON_W) / (LON_E - LON_W) * (FW - 1)));
+           i <= Math.min(FW - 1, Math.ceil((ll + spanLon - LON_W) / (LON_E - LON_W) * (FW - 1))); i++) {
+        const k = j * FW + i; if (!inside[k]) continue;
+        const lon = lerp(LON_W, LON_E, i / (FW - 1));
+        const dd = Math.hypot((lon - ll) * kmPerLon, (lat - lt) * 111.32) / lk;
+        if (dd < 1) out[k] = lerp(lvl, out[k], smooth(.55, 1, dd));
+      }
+    }
+  }
+  // 4. the Atlantic cliff wall, and a clean edge everywhere else
+  for (let j = 0; j < FH; j++) {
+    const lat = lerp(LAT_N, LAT_S, j / (FH - 1));
+    for (let i = 0; i < FW; i++) {
+      const k = j * FW + i; if (!inside[k]) continue;
+      const lon = lerp(LON_W, LON_E, i / (FW - 1)), dk = d[k] * CELL_KM;
+      out[k] = Math.max(1.5, Math.min(1040, out[k] * smooth(0, 1.0, dk)));
+      // The Atlantic coast does not taper to the sea, it stops dead. Apply the cliff
+      // after the shoreline taper so the drop survives.
+      if (lon < -9.0 && dk < 1.5) {
+        let cliff = 50 + 130 * fbm(lat * 170, 3.3, 3);
+        if (lat > 52.90 && lat < 53.06) cliff = Math.max(cliff, 200); // Cliffs of Moher
+        out[k] = Math.max(out[k], cliff);
+      }
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- tile loading
+function loadImage(url) {
+  return new Promise((res, rej) => {
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    im.onload = () => res(im); im.onerror = () => rej(new Error(url));
+    im.src = url;
+  });
+}
+async function pool(items, width, fn) {
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(width, items.length) }, async () => {
+    while (next < items.length) { const k = next++; await fn(items[k]); }
+  }));
+}
+async function stitch(z, urlFn, onProgress) {
+  const x0 = Math.floor(tileX(LON_W, z)), x1 = Math.floor(tileX(LON_E, z));
+  const y0 = Math.floor(tileY(LAT_N, z)), y1 = Math.floor(tileY(LAT_S, z));
+  const nx = x1 - x0 + 1, ny = y1 - y0 + 1;
+  const cv = document.createElement('canvas'); cv.width = nx * 256; cv.height = ny * 256;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  const jobs = []; for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) jobs.push([i, j]);
+  let done = 0, failed = 0;
+  await pool(jobs, 8, async ([i, j]) => {
+    try { ctx.drawImage(await loadImage(urlFn(z, i, j)), (i - x0) * 256, (j - y0) * 256); }
+    catch (e) { failed++; }
+    if (onProgress) onProgress(++done / jobs.length);
+  });
+  if (failed > jobs.length * .2) throw new Error(`tile service unreachable (${failed}/${jobs.length} failed)`);
+  return { cv, ctx, z, x0, y0, w: cv.width, h: cv.height };
+}
+// Longitude and latitude to a pixel in a stitched sheet.
+const sheetPx = (s, lon, lat) => [(tileX(lon, s.z) - s.x0) * 256, (tileY(lat, s.z) - s.y0) * 256];
+
+async function realField(onProgress) {
+  const sheet = await stitch(ELEV_Z, ELEV_URL, (p) => onProgress(p * .55));
+  const src = sheet.ctx.getImageData(0, 0, sheet.w, sheet.h).data;
+  const out = new Float32Array(FW * FH);
+  for (let j = 0; j < FH; j++) {
+    const lat = lerp(LAT_N, LAT_S, j / (FH - 1));
+    const py = clamp(Math.round((tileY(lat, ELEV_Z) - sheet.y0) * 256), 0, sheet.h - 1);
+    for (let i = 0; i < FW; i++) {
+      const lon = lerp(LON_W, LON_E, i / (FW - 1));
+      const px = clamp(Math.round((tileX(lon, ELEV_Z) - sheet.x0) * 256), 0, sheet.w - 1);
+      const k = (py * sheet.w + px) * 4;
+      // terrarium: height = (R * 256 + G + B / 256) - 32768
+      out[j * FW + i] = (src[k] * 256 + src[k + 1] + src[k + 2] / 256) - 32768;
+    }
+    if (j % 200 === 0) onProgress(.55 + .08 * (j / FH));
+  }
+  // Flat cells near sea level are ambiguous in the source data. Resolve them against
+  // the real coastline so water is water and the shore sits where it actually sits.
+  const { inside } = coastMask();
+  for (let k = 0; k < out.length; k++) {
+    const h = out[k];
+    if (h > 2 || h < -1) continue;
+    if (!inside[k]) out[k] = -4;
+  }
+  return out;
+}
+
+// A daylight satellite layer. Tiles are drawn straight into the final grid, one band
+// at a time, so no oversized intermediate canvas is ever allocated.
+async function imageryLayer(z, box, IW, IH, onProgress) {
+  const x0 = Math.floor(tileX(box.lon0, z)), x1 = Math.floor(tileX(box.lon1, z));
+  const y0 = Math.floor(tileY(box.lat0, z)), y1 = Math.floor(tileY(box.lat1, z));
+  const cv = document.createElement('canvas'); cv.width = IW; cv.height = IH;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#0a1420'; ctx.fillRect(0, 0, IW, IH);
+  const dx = (lon) => (lon - box.lon0) / (box.lon1 - box.lon0) * IW;
+  const dy = (lat) => (lat - box.lat0) / (box.lat1 - box.lat0) * IH;
+  const jobs = []; for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) jobs.push([i, j]);
+  let done = 0, failed = 0;
+  const BANDS = 8;
+  await pool(jobs, 8, async ([i, j]) => {
+    try {
+      const im = await loadImage(IMAGE_URL(z, i, j));
+      const lx0 = dx(lonOfX(i, z)), lx1 = dx(lonOfX(i + 1, z));
+      for (let b = 0; b < BANDS; b++) {
+        const ty0 = dy(latOfY(j + b / BANDS, z)), ty1 = dy(latOfY(j + (b + 1) / BANDS, z));
+        ctx.drawImage(im, 0, b * 256 / BANDS, 256, 256 / BANDS,
+          lx0, ty0, (lx1 - lx0) + 1, (ty1 - ty0) + 1);
+      }
+    } catch (e) { failed++; }
+    if (onProgress) onProgress(++done / jobs.length);
+  });
+  if (failed > jobs.length * .2) throw new Error(`imagery service unreachable (${failed}/${jobs.length} failed)`);
+  const tex = new T.CanvasTexture(cv);
+  if ('SRGBColorSpace' in T) tex.colorSpace = T.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping;
+  tex.anisotropy = 8; tex.minFilter = T.LinearMipmapLinearFilter; tex.generateMipmaps = true;
+  return tex;
+}
+const baseBox = { lon0: LON_W, lon1: LON_E, lat0: LAT_N, lat1: LAT_S };
+const realImagery = (onProgress) => imageryLayer(IMAGE_Z, baseBox, 2560, 3163, onProgress);
+const detailImagery = (onProgress) => imageryLayer(DETAIL_Z, DETAIL, 2560, 2125, onProgress);
+
+// ---------------------------------------------------------------- night lights sheet
+// Warm light where people actually live, drawn once from the real city list and the
+// real route corridors. It carries the night half of the show on both data paths.
+const lightsTex = (() => {
+  const LW = 1024, LH = Math.round(LW * (FZ1 - FZ0) / (FX1 - FX0));
+  const cv = document.createElement('canvas'); cv.width = LW; cv.height = LH;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#000'; c.fillRect(0, 0, LW, LH);
+  const toPx = (lon, lat) => [(gx(lon) - FX0) / (FX1 - FX0) * LW, (gz(lat) - FZ0) / (FZ1 - FZ0) * LH];
+  const mPx = LW / (FX1 - FX0);
+  c.globalCompositeOperation = 'lighter';
+  for (const [, lon, lat, r, w] of CITIES) {
+    const [x, y] = toPx(lon, lat), rp = Math.max(3, r * mPx * 2.2);
+    const g = c.createRadialGradient(x, y, 0, x, y, rp);
+    g.addColorStop(0, `rgba(255,220,170,${(.85 * w).toFixed(3)})`);
+    g.addColorStop(.35, `rgba(255,190,120,${(.35 * w).toFixed(3)})`);
+    g.addColorStop(1, 'rgba(255,170,90,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, rp, 0, 6.2832); c.fill();
+  }
+  c.strokeStyle = 'rgba(255,185,110,.30)'; c.lineWidth = Math.max(1, 1.4 * mPx * 1000);
+  for (const key of ['cork', 'belfast', 'galway']) {
+    c.beginPath(); ROUTES[key].forEach((p, i) => { const q = toPx(p[0], p[1]); i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); }); c.stroke();
+  }
+  const tex = new T.CanvasTexture(cv);
+  tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping; tex.anisotropy = 4;
+  return tex;
+})();
+
+// ---------------------------------------------------------------- renderer
+const canvas = $('stage');
+let renderer;
+try {
+  renderer = new T.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: false });
+} catch (e) { $('gpu-note').textContent = 'WebGL is not available on this machine.'; return; }
+renderer.setPixelRatio(1);
+renderer.autoClear = true;
+if ('outputColorSpace' in renderer) renderer.outputColorSpace = T.LinearSRGBColorSpace || 'srgb-linear';
+const gl = renderer.getContext();
+const isGL2 = renderer.capabilities.isWebGL2;
+const halfOK = isGL2 && (gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'));
+if (!isGL2) { $('gpu-note').textContent = 'This build needs WebGL 2. Update the graphics driver or browser.'; return; }
+$('gpu-note').textContent = halfOK ? 'HDR render ready' : 'Standard render';
+
+const QUALITY = [512, 768, 1024, 1536];
+let qIndex = 2;
+let cubeRT, cubeCam;
+function makeCube() {
+  if (cubeRT) cubeRT.dispose();
+  const size = QUALITY[qIndex];
+  cubeRT = new T.WebGLCubeRenderTarget(size, {
+    type: halfOK ? T.HalfFloatType : T.UnsignedByteType,
+    generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter,
+  });
+  if (cubeCam) { cubeCam.renderTarget = cubeRT; } else { cubeCam = new T.CubeCamera(20, 1400000, cubeRT); }
+  U.uPx.value = size / 2;
+  if (post) post.material.uniforms.uCube.value = cubeRT.texture;
+}
+
+const scene = new T.Scene();
+const U = {
+  uTime: { value: 0 }, uShow: { value: 0 }, uCam: { value: new T.Vector3() },
+  uSunDir: { value: new T.Vector3(0, .1, 1) }, uLightDir: { value: new T.Vector3(0, 1, 0) }, uLightCol: { value: new T.Vector3(1, 1, 1) },
+  uAmb: { value: new T.Vector3(.3, .3, .3) }, uZenith: { value: new T.Vector3() }, uHorizon: { value: new T.Vector3() }, uSunCol: { value: new T.Vector3() },
+  uNight: { value: 0 }, uCloud: { value: .5 }, uAurora: { value: 0 }, uFogD: { value: .000006 },
+  uScanR: { value: 0 }, uScanC: { value: new T.Vector2(gx(PLACES.dublin[0]), gz(PLACES.dublin[1])) }, uPx: { value: 512 },
+  uElev: { value: elevTex }, uLights: { value: lightsTex },
+  uFB: { value: new T.Vector4(FX0, FZ0, 1 / (FX1 - FX0), 1 / (FZ1 - FZ0)) },
+  uFRes: { value: new T.Vector2(FW, FH) },
+};
+
+const COMMON = /* glsl */`
+uniform float uTime; uniform float uShow; uniform vec3 uCam; uniform vec3 uSunDir; uniform vec3 uLightDir; uniform vec3 uLightCol; uniform vec3 uAmb;
+uniform vec3 uZenith; uniform vec3 uHorizon; uniform vec3 uSunCol; uniform float uNight; uniform float uCloud; uniform float uAurora; uniform float uFogD;
+uniform float uScanR; uniform vec2 uScanC; uniform float uPx;
+uniform sampler2D uElev; uniform sampler2D uLights; uniform vec4 uFB; uniform vec2 uFRes;
+float hash12(vec2 p){ vec3 p3=fract(vec3(p.xyx)*.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
+float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
+  return mix(mix(hash12(i),hash12(i+vec2(1,0)),u.x), mix(hash12(i+vec2(0,1)),hash12(i+vec2(1,1)),u.x), u.y); }
+float fbm(vec2 p){ float a=.5,s=0.; for(int i=0;i<5;i++){ s+=a*vnoise(p); p=p*2.03+vec2(17.1,9.2); a*=.5; } return s; }
+float fbm3(vec2 p){ float a=.5,s=0.; for(int i=0;i<3;i++){ s+=a*vnoise(p); p=p*2.03+vec2(17.1,9.2); a*=.5; } return s; }
+// world position to a coordinate in the elevation field
+vec2 fieldUV(vec2 xz){ return (xz-uFB.xy)*uFB.zw; }
+// The field is stored unfiltered so the height is exact; interpolate it by hand.
+float terrainAt(vec2 xz){
+  vec2 uv=fieldUV(xz);
+  if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.) return -80.;
+  vec2 t=uv*uFRes-.5; vec2 i=floor(t), f=fract(t);
+  vec2 px=1./uFRes;
+  float a=texture2D(uElev,(i+vec2(.5,.5))*px).r;
+  float b=texture2D(uElev,(i+vec2(1.5,.5))*px).r;
+  float c=texture2D(uElev,(i+vec2(.5,1.5))*px).r;
+  float d=texture2D(uElev,(i+vec2(1.5,1.5))*px).r;
+  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
+}
+vec3 terrainNormal(vec2 xz, float step){
+  float l=terrainAt(xz-vec2(step,0.)), r=terrainAt(xz+vec2(step,0.));
+  float d=terrainAt(xz-vec2(0.,step)), u=terrainAt(xz+vec2(0.,step));
+  return normalize(vec3(l-r, 2.*step, d-u));
+}
+vec3 skyCol(vec3 d){
+  float h=max(d.y,0.);
+  vec3 c=mix(uHorizon,uZenith,pow(h,.5));
+  c=mix(c,uHorizon*.45,smoothstep(0.,-.3,d.y));
+  float sd=max(dot(d,uSunDir),0.);
+  c+=uSunCol*(pow(sd,5.)*.22+pow(sd,40.)*.45)*smoothstep(-.35,.05,uSunDir.y);
+  return c;
+}
+vec3 fogColor(vec3 d){ return skyCol(normalize(vec3(d.x,max(d.y,0.)*.25+.015,d.z))); }
+vec3 applyFog(vec3 col, vec3 wp){ vec3 v=wp-uCam; float dist=length(v); float f=1.-exp(-dist*uFogD); return mix(col,fogColor(v/dist),f); }
+// The 2036 sweep, now measured across real kilometres of ground.
+float scanInside(vec2 p){ return smoothstep(0.,4000.,uScanR-length(p-uScanC)); }
+float scanRing(vec2 p){ float d=length(p-uScanC); float w=900.+uScanR*.004; return exp(-abs(d-uScanR)/w)*step(1.,uScanR)*smoothstep(520000.,400000.,uScanR); }
+const vec3 GOLD=vec3(1.,.72,.32); const vec3 TEAL=vec3(.35,1.,.86);
+`;
+
+function mat(vs, fs, extra = {}, opts = {}) {
+  return new T.ShaderMaterial(Object.assign({ uniforms: Object.assign({}, U, extra), vertexShader: COMMON + vs, fragmentShader: COMMON + fs }, opts));
+}
+
+// ---------------------------------------------------------------- sky
+{
+  const m = mat(`varying vec3 vW; void main(){ vec4 w=modelMatrix*vec4(position,1.); vW=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`, `
+  varying vec3 vW;
+  void main(){
+    vec3 d=normalize(vW-uCam);
+    vec3 c=skyCol(d);
+    float sd=dot(d,uSunDir);
+    c+=uSunCol*smoothstep(.99955,.9998,sd)*18.;
+    if(d.y>0.){
+      vec2 cp=d.xz/(d.y+.09)*1.3+uTime*vec2(.006,.002);
+      float n=fbm(cp*1.4);
+      float cov=smoothstep(1.-uCloud,1.25-uCloud,n)*smoothstep(0.,.14,d.y);
+      vec3 lit=mix(uHorizon*.85+uAmb*.3, uSunCol*.75+uHorizon*.4, pow(max(sd,0.),3.)*.7+.25*smoothstep(-.1,.3,uSunDir.y));
+      lit=mix(lit, vec3(.012,.018,.03), uNight*.85);
+      float edge=smoothstep(.3,.0,abs(n-(1.1-uCloud)))*pow(max(sd,0.),6.);
+      c=mix(c,lit,cov*.92)+uSunCol*edge*.6*cov;
+    }
+    if(uNight>0.01){
+      vec3 sp=d*240.; vec3 id=floor(sp); vec3 f=fract(sp)-.5;
+      float h=hash12(id.xy+id.z*7.13);
+      float st=step(.9975,h)*smoothstep(.45,.0,length(f))*smoothstep(-.02,.25,d.y);
+      c+=vec3(.9,.95,1.)*st*(.55+.45*sin(uTime*2.3+h*90.))*uNight*3.;
+      float mw=exp(-pow(dot(d,normalize(vec3(.6,.3,-.75))),2.)*14.);
+      c+=vec3(.25,.3,.45)*mw*fbm(d.xz*6.+d.y*3.)*uNight*.12*smoothstep(0.,.2,d.y);
+    }
+    if(uAurora>0.01){
+      float az=atan(d.x,-d.z); float el=d.y;
+      float w=sin(az*2.+uTime*.12+sin(az*5.-uTime*.18)*.8)*.07+sin(az*9.+uTime*.3)*.015;
+      float band=exp(-pow((el-.28-w)/.10,2.));
+      float band2=exp(-pow((el-.46-w*1.4)/.16,2.))*.5;
+      float rays=.35+.65*pow(vnoise(vec2(az*38.,uTime*.35)),1.6);
+      float north=.35+.65*smoothstep(.4,-.9,d.z);
+      vec3 ac=mix(vec3(.08,1.,.45),vec3(.55,.25,1.),smoothstep(.25,.55,el-w));
+      c+=ac*(band+band2)*rays*uAurora*north*1.6*smoothstep(0.,.1,el);
+    }
+    gl_FragColor=vec4(c,1.);
+  }`, {}, { side: T.BackSide, depthWrite: false });
+  const sky = new T.Mesh(new T.SphereGeometry(900000, 48, 24), m);
+  sky.frustumCulled = false; sky.renderOrder = -10;
+  scene.add(sky);
+  scene.userData.sky = sky;
+}
+
+// ---------------------------------------------------------------- cloud deck the finale rises through
+const cloudDeck = (() => {
+  const m = mat(`varying vec3 vW; void main(){ vec3 p=position; p.xz+=uCam.xz; vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
+  uniform float uOp; varying vec3 vW;
+  void main(){ vec2 p=vW.xz*.000022+uTime*vec2(.004,.0015);
+    float n=fbm(p)*.7+fbm(p*3.1+4.)*.3;
+    float a=smoothstep(.42,.72,n)*uOp;
+    float d=length(vW-uCam); a*=smoothstep(900.,26000.,d)*(1.-smoothstep(300000.,520000.,d));
+    vec3 top=mix(uAmb*1.6,uLightCol*.8+uAmb,.4)+vec3(.05,.07,.12)*uNight;
+    top+=vec3(.08,.5,.3)*uAurora*.18*n;
+    gl_FragColor=vec4(top*(.55+.45*n),a); }`,
+  { uOp: { value: 0 } }, { transparent: true, depthWrite: false, side: T.DoubleSide });
+  const g = new T.PlaneGeometry(1200000, 1200000, 1, 1); g.rotateX(-Math.PI / 2); g.translate(0, 11000, 0);
+  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 6; scene.add(mesh);
+  return m;
+})();
+
+// ---------------------------------------------------------------- the island map (finale floor)
+const mapGroup = new T.Group();
+const mapMat = (() => {
+  const S = 2048, cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const c = cv.getContext('2d');
+  const K = S * .8 / 4.9;
+  const proj = ([lon, lat]) => [S / 2 + (lon + 8.05) * Math.cos(53.4 * Math.PI / 180) * K * 1.62, S / 2 - (lat - 53.4) * K];
+  c.fillStyle = '#000'; c.fillRect(0, 0, S, S);
+  // R: land & coast glow
+  c.save(); c.beginPath(); IRL.forEach((p, i) => { const q = proj(p); i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); }); c.closePath();
+  c.fillStyle = 'rgb(70,0,0)'; c.fill();
+  c.globalCompositeOperation = 'lighter';
+  c.shadowColor = 'rgb(255,0,0)'; c.shadowBlur = 40; c.lineJoin = 'round'; c.strokeStyle = 'rgb(255,0,0)'; c.lineWidth = 6; c.stroke();
+  c.shadowBlur = 0; c.lineWidth = 3; c.stroke(); c.restore();
+  // G: network arcs
+  c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgb(0,200,0)'; c.lineWidth = 5; c.shadowColor = 'rgb(0,255,0)'; c.shadowBlur = 18;
+  const cp = MAP_CITIES.map((x) => proj([x[1], x[2]]));
+  for (let i = 0; i < cp.length; i++) for (let j = i + 1; j < cp.length; j++) {
+    const a = cp[i], b = cp[j], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, dx = b[0] - a[0], dy = b[1] - a[1];
+    c.beginPath(); c.moveTo(a[0], a[1]); c.quadraticCurveTo(mx - dy * .18, my + dx * .18, b[0], b[1]); c.stroke();
+  }
+  c.restore();
+  // B: dot grid inside the island
+  c.save(); c.beginPath(); IRL.forEach((p, i) => { const q = proj(p); i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); }); c.closePath(); c.clip();
+  c.globalCompositeOperation = 'lighter'; c.fillStyle = 'rgb(0,0,255)';
+  for (let y = 0; y < S; y += 18) for (let x = 0; x < S; x += 18) { c.beginPath(); c.arc(x, y, 2.6, 0, 6.283); c.fill(); }
+  c.restore();
+  const tex = new T.CanvasTexture(cv); tex.anisotropy = 8;
+  const cu = cp.map((p) => new T.Vector2(p[0] / S, 1 - p[1] / S));
+  mapGroup.visible = false;
+  scene.add(mapGroup);
+  return { tex, cu };
+})();
+
+// ---------------------------------------------------------------- shared lit material
+function litMat(color, opts = {}) {
+  return mat(`varying vec3 vW; varying vec3 vN; varying vec3 vL;
+  void main(){ vec4 w=modelMatrix*vec4(position,1.); vW=w.xyz; vL=position; vN=normalize(mat3(modelMatrix)*normal); gl_Position=projectionMatrix*viewMatrix*w; }`, `
+  uniform vec3 uColor; uniform float uBands; uniform float uMetal; uniform vec3 uGlow;
+  varying vec3 vW; varying vec3 vN; varying vec3 vL;
+  void main(){ vec3 N=normalize(vN); vec3 c=uColor;
+    if(uBands>0.){ float b=step(.5,fract(vL.y/uBands)); c=mix(vec3(.62,.08,.06),vec3(.82,.8,.76),b); }
+    vec3 V=normalize(vW-uCam);
+    vec3 lit=c*(uLightCol*max(dot(N,uLightDir),0.)+uAmb*(.6+.4*N.y));
+    lit=mix(lit,skyCol(reflect(V,N))*c*1.3,uMetal);
+    lit+=uGlow*uNight;
+    gl_FragColor=vec4(applyFog(lit,vW),1.); }`,
+  { uColor: { value: new T.Color(color) }, uBands: { value: opts.bands || 0 }, uMetal: { value: opts.metal || 0 }, uGlow: { value: new T.Color(opts.glow || 0x000000) } });
+}
+
+// ---------------------------------------------------------------- world construction
+// Everything below stands on the real elevation field, so it can only be built once
+// that field has been resolved. buildWorld runs exactly once.
+let imageryTex = null, detailTex = null;
+const BEACONS = [];
+
+function buildWorld() {
+
+  // ------------------------------------------------ terrain
+  // A camera-centred radial grid: dense underfoot, coarse at the horizon. Vertices are
+  // displaced by the real elevation field, so this is the actual shape of Ireland.
+  {
+    const A = 288, R = 240, pos = [], idx = [];
+    for (let r = 0; r <= R; r++) {
+      const rad = 60 * (Math.pow(1.044, r) - 1);
+      for (let a = 0; a < A; a++) { const th = a / A * Math.PI * 2; pos.push(Math.cos(th) * rad, 0, Math.sin(th) * rad); }
+    }
+    for (let r = 0; r < R; r++) for (let a = 0; a < A; a++) {
+      const i0 = r * A + a, i1 = r * A + (a + 1) % A, i2 = (r + 1) * A + a, i3 = (r + 1) * A + (a + 1) % A;
+      idx.push(i0, i1, i2, i1, i3, i2);
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    const m = mat(`varying vec3 vW; varying float vR;
+    void main(){ vec3 p=position+vec3(uCam.x,0.,uCam.z); vR=length(position.xz);
+      p.y=terrainAt(p.xz); vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
+    uniform sampler2D uImage; uniform float uHasImage;
+    uniform sampler2D uDetail; uniform float uHasDetail; uniform vec4 uDetailBox;
+    varying vec3 vW; varying float vR;
+    void main(){
+      vec3 P=vW;
+      // Normal detail follows the camera: fine close up, smoothed far away.
+      float st=clamp(vR*.035+60.,60.,3000.);
+      vec3 N=terrainNormal(P.xz,st);
+      float slope=1.-N.y;
+      vec2 uv=fieldUV(P.xz);
+      vec3 col;
+      if(uHasImage>.5){
+        col=texture2D(uImage,uv).rgb;
+        if(uHasDetail>.5){
+          vec2 du=(P.xz-uDetailBox.xy)*uDetailBox.zw;
+          if(du.x>0.&&du.x<1.&&du.y>0.&&du.y<1.){
+            float w=smoothstep(0.,.05,du.x)*smoothstep(1.,.95,du.x)*smoothstep(0.,.05,du.y)*smoothstep(1.,.95,du.y);
+            col=mix(col,texture2D(uDetail,du).rgb,w);
+          }
+        }
+        col=pow(col,vec3(1.35))*1.55;                       // lift the flat satellite response
+        col*=.92+.16*fbm3(P.xz*.0009);                      // break up tile seams
+        col=mix(col,col*vec3(.86,.95,.82),smoothstep(.05,.35,slope)*.5);
+      } else {
+        // No imagery service: shade the real elevation as Irish land cover.
+        vec2 q=P.xz/vec2(4200.,3100.); q+=(vnoise(P.xz*.00009)-.5)*1.3;
+        float r=hash12(floor(q));
+        vec3 g1=vec3(.10,.24,.06), g2=vec3(.22,.36,.09), g3=vec3(.34,.37,.16);
+        vec3 grass=r<.5?mix(g1,g2,r*2.):mix(g2,g3,(r-.5)*2.);
+        grass*=.72+.45*fbm3(P.xz*.0006+r*7.);
+        float bog=smoothstep(90.,220.,P.y)*(1.-smoothstep(.22,.42,slope));
+        grass=mix(grass,vec3(.26,.21,.12),bog*.65);
+        float heath=smoothstep(200.,430.,P.y);
+        grass=mix(grass,vec3(.22,.18,.11),heath*.7);
+        vec3 rock=mix(vec3(.13,.125,.12),vec3(.31,.29,.26),.5+.5*sin(P.y*.05+vnoise(P.xz*.001)*4.));
+        col=mix(grass,rock,smoothstep(.30,.55,slope));
+        col=mix(col,vec3(.55,.52,.46),smoothstep(620.,900.,P.y)*.5); // bare summits
+        col=mix(col,vec3(.018,.048,.085),smoothstep(0.,-30.,P.y));     // open sea beyond the wave mesh
+      }
+      // shoreline sand and wet rock
+      col=mix(col,vec3(.42,.40,.35),smoothstep(6.,0.,P.y)*.5);
+      float inside=scanInside(P.xz);
+      float dif=max(dot(N,uLightDir),0.);
+      vec3 lit=col*(uLightCol*dif+uAmb*(.55+.45*N.y));
+      // where people live
+      float lights=texture2D(uLights,uv).r;
+      lit+=vec3(1.,.66,.32)*lights*uNight*1.5;
+      lit+=vec3(1.,.66,.32)*pow(lights,3.)*uNight*1.2;
+      // 2036: clean-energy roofs and a teal field grid inside the sweep
+      lit+=inside*TEAL*.05*uNight*(1.-smoothstep(.3,.5,slope));
+      lit+=inside*lights*TEAL*.9*uNight;
+      lit+=scanRing(P.xz)*GOLD*4.;
+      gl_FragColor=vec4(applyFog(lit,P),1.);
+    }`, {
+      uImage: { value: imageryTex || lightsTex }, uHasImage: { value: imageryTex ? 1 : 0 },
+      uDetail: { value: detailTex || lightsTex }, uHasDetail: { value: detailTex ? 1 : 0 },
+      uDetailBox: { value: new T.Vector4(gx(DETAIL.lon0), gz(DETAIL.lat0),
+        1 / (gx(DETAIL.lon1) - gx(DETAIL.lon0)), 1 / (gz(DETAIL.lat1) - gz(DETAIL.lat0))) },
+    });
+    const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; scene.add(mesh);
+  }
+
+  // ------------------------------------------------ ocean
+  {
+    const A = 200, R = 170, pos = [], idx = [];
+    for (let r = 0; r <= R; r++) {
+      const rad = r === 0 ? 0 : 40 * (Math.pow(1.062, r) - 1);
+      for (let a = 0; a < A; a++) { const th = a / A * Math.PI * 2; pos.push(Math.cos(th) * rad, 0, Math.sin(th) * rad); }
+    }
+    for (let r = 0; r < R; r++) for (let a = 0; a < A; a++) {
+      const i0 = r * A + a, i1 = r * A + (a + 1) % A, i2 = (r + 1) * A + a, i3 = (r + 1) * A + (a + 1) % A;
+      idx.push(i0, i1, i2, i1, i3, i2);
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    const WAVES = `
+    const int NW=5;
+    vec4 W[NW];
+    void initW(){ W[0]=vec4(normalize(vec2(1.,.3)),72.,.85); W[1]=vec4(normalize(vec2(.8,-.6)),38.,.45); W[2]=vec4(normalize(vec2(.2,1.)),21.,.26); W[3]=vec4(normalize(vec2(-.6,.8)),11.,.12); W[4]=vec4(normalize(vec2(.95,-.1)),6.,.06); }
+    float amp(float depth, float dist){ return smoothstep(0.,7.,depth)*(1.-smoothstep(1500.,5000.,dist)); }
+    vec3 waveH(vec2 p, float a){ float h=0.,dx=0.,dz=0.;
+      for(int i=0;i<NW;i++){ float k=6.2831/W[i].z; float w=sqrt(9.8*k); float ph=dot(W[i].xy,p)*k-w*uTime; float A=W[i].w*a;
+        h+=A*sin(ph); float c=A*k*cos(ph); dx+=c*W[i].x; dz+=c*W[i].y; }
+      return vec3(h,dx,dz); }`;
+    const m = mat(WAVES + `
+    varying vec3 vW; varying float vDepth; varying float vA;
+    void main(){ initW(); vec3 p=position+vec3(uCam.x,0.,uCam.z);
+      float depth=-terrainAt(p.xz); float a=amp(depth,length(p.xz-uCam.xz)); vA=a; vDepth=depth;
+      p.y=waveH(p.xz,a).x; vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`,
+    WAVES + `
+    varying vec3 vW; varying float vDepth; varying float vA;
+    void main(){ initW();
+      if(vDepth<.6) discard;                                  // real coastline: no water over land
+      vec3 P=vW; vec3 V=normalize(P-uCam); float dist=length(P-uCam);
+      vec3 wh=waveH(P.xz,vA);
+      float df=1.-smoothstep(200.,2500.,dist);
+      vec2 np=P.xz*.22+uTime*vec2(.35,.12);
+      float n1=vnoise(np), n2=vnoise(np*2.3-uTime*.2);
+      vec3 N=normalize(vec3(-wh.y+(n1-.5)*.35*df+(n2-.5)*.18*df,1.,-wh.z+(vnoise(np+9.)-.5)*.35*df));
+      float fres=.02+.98*pow(1.-max(dot(-V,N),0.),5.);
+      vec3 R=reflect(V,N); R.y=abs(R.y)+.01;
+      vec3 refl=skyCol(normalize(R));
+      refl+=uSunCol*pow(max(dot(R,uSunDir),0.),650.)*70.*smoothstep(-.05,.05,uSunDir.y);
+      vec3 moon=normalize(vec3(.5,.35,-.8));
+      refl+=vec3(.6,.7,.9)*pow(max(dot(normalize(R),moon),0.),260.)*6.*uNight;
+      float depth=vDepth;
+      vec3 water=mix(vec3(.02,.17,.16),vec3(.004,.028,.045),smoothstep(0.,30.,depth));
+      water*=uAmb*1.3+uLightCol*.22;
+      float sss=pow(max(wh.x,0.)/1.2,2.)*max(dot(V,uSunDir),0.);
+      water+=vec3(.05,.3,.25)*sss*uLightCol*.6;
+      vec3 col=mix(water,refl,fres);
+      float shore=smoothstep(3.2,.2,depth);
+      float foamN=vnoise(P.xz*.12+uTime*.25)*.6+vnoise(P.xz*.5-uTime*.1)*.4;
+      float foam=shore*smoothstep(.35,.75,foamN+.35*sin(depth*5.-uTime*1.6));
+      foam+=smoothstep(1.,1.5,wh.x)*smoothstep(.5,.85,foamN)*.5;
+      col=mix(col,vec3(.85,.9,.9)*(uAmb*1.4+uLightCol*.6),clamp(foam,0.,1.));
+      // harbour and estuary light spilling onto the water
+      float lights=texture2D(uLights,fieldUV(P.xz)).r;
+      col+=vec3(1.,.62,.3)*lights*uNight*1.1*(.4+.6*pow(vnoise(P.xz*.02+uTime*.3),4.));
+      col+=scanRing(P.xz)*GOLD*5.;
+      gl_FragColor=vec4(applyFog(col,P),1.);
+    }`);
+    const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = -5; scene.add(mesh);
+  }
+
+  // ------------------------------------------------ towns and cities
+  // Built where the real settlements are, sitting on real ground, sized by real scale.
+  {
+    seedN = 7;
+    const inst = []; // x, z, w, d, h, type, future
+    const dockCentre = [gx(PLACES.docklands[0]), gz(PLACES.docklands[1])];
+    for (const [name, lon, lat, radius, weight] of CITIES) {
+      const cx = gx(lon), cz = gz(lat);
+      const step = radius > 4000 ? 90 : 110;
+      const isDublin = name === 'Dublin';
+      for (let bx = -radius; bx < radius; bx += step) for (let bz = -radius; bz < radius; bz += step) {
+        const rr = Math.hypot(bx, bz) / radius;
+        if (rr > 1) continue;
+        if (rnd() > (1 - rr * .75) * (.55 + weight * .45)) continue;
+        const x = cx + bx + rnd() * step * .5, z = cz + bz + rnd() * step * .5;
+        const ground = heightAt(x, z);
+        if (ground < 2.5) continue;                       // never build on water
+        const core = 1 - smooth(0, radius * .45, Math.hypot(bx, bz));
+        const w = 14 + rnd() * 22, d = 14 + rnd() * 22;
+        let h = 10 + rnd() * 10 + core * (6 + rnd() * 14 * weight);
+        let type = rnd() < .6 ? 0 : 1;
+        if (isDublin) {
+          const dock = 1 - smooth(1200, 4200, Math.hypot(x - dockCentre[0], z - dockCentre[1]));
+          if (dock > .4 && rnd() < .7) { type = 2; h = 26 + rnd() * 44 * dock; }
+        }
+        inst.push([x, z, w, d, h, type, 0]);
+      }
+    }
+    // 2036 towers, in the Docklands where Dublin actually builds tall
+    for (let i = 0; i < 90; i++) {
+      const a = rnd() * 6.2832, r = 400 + rnd() * 2600;
+      const x = dockCentre[0] + Math.cos(a) * r, z = dockCentre[1] + Math.sin(a) * r * .55;
+      if (heightAt(x, z) < 2.5) continue;
+      const w = 20 + rnd() * 16;
+      inst.push([x, z, w, w * (.7 + rnd() * .5), 55 + rnd() * 95, 2, 1]);
+    }
+    // new neighbourhoods on the western edge of the city
+    for (let c = 0; c < 5; c++) {
+      const a = 2.4 + c * .42, r = 11000 + rnd() * 5000;
+      const nx = gx(PLACES.dublin[0]) + Math.cos(a) * r, nz = gz(PLACES.dublin[1]) + Math.sin(a) * r;
+      for (let row = 0; row < 8; row++) for (let k = 0; k < 7; k++) {
+        const x = nx + k * 32 + (row % 2) * 10, z = nz + row * 26;
+        if (heightAt(x, z) < 3) continue;
+        inst.push([x, z, 22, 12, 9 + rnd() * 7, 3, 1]);
+      }
+    }
+
+    const geo = new T.BoxGeometry(1, 1, 1); geo.translate(0, .5, 0);
+    const seeds = new Float32Array(inst.length * 4);
+    const m = mat(`attribute vec4 aSeed; varying vec3 vW; varying vec3 vN; varying vec4 vS; varying float vBase; varying float vTop; varying float vRise;
+    void main(){
+      vec4 o=modelMatrix*instanceMatrix*vec4(0.,0.,0.,1.);
+      float rise=1.;
+      if(aSeed.w>.5){ float d=length(o.xz-uScanC); rise=smoothstep(0.,1.,clamp((uScanR-d-1200.)/9000.,0.,1.)); }
+      vec3 p=position; p.y*=max(rise,.0001);
+      vec4 w=modelMatrix*instanceMatrix*vec4(p,1.);
+      vW=w.xyz; vN=normalize(mat3(modelMatrix*instanceMatrix)*normal); vS=aSeed; vBase=o.y;
+      vTop=(modelMatrix*instanceMatrix*vec4(0.,1.,0.,1.)).y; vRise=rise;
+      gl_Position=projectionMatrix*viewMatrix*w; }`, `
+    varying vec3 vW; varying vec3 vN; varying vec4 vS; varying float vBase; varying float vTop; varying float vRise;
+    void main(){
+      if(vRise<.002) discard;
+      vec3 N=normalize(vN); vec3 P=vW; vec3 V=normalize(P-uCam);
+      float type=vS.y; bool fut=vS.w>.5;
+      vec3 fac = type<.5? vec3(.42,.22,.15) : (type<1.5? vec3(.62,.6,.55) : (type<2.5? vec3(.16,.22,.26) : vec3(.7,.68,.63)));
+      fac*=.85+.3*vS.x;
+      bool roof=N.y>.5;
+      float along=abs(N.x)>.5?P.z:P.x;
+      vec2 wc=vec2(along/(type>1.5&&type<2.5?2.4:3.2),(P.y-vBase)/3.3);
+      vec2 wf=fract(wc); vec2 wid=floor(wc);
+      float win=roof?0.:step(.16,wf.x)*step(wf.x,.84)*step(.22,wf.y)*step(wf.y,.82)*step(1.,wid.y);
+      vec3 col=fac;
+      if(type>1.5&&type<2.5){ col=mix(fac,skyCol(reflect(V,N))*.7,.55*(1.-float(roof))); win=roof?0.:step(.08,wf.x)*step(.3,wf.y); }
+      col=mix(col,vec3(.05,.06,.07),win*.7);
+      float inside=scanInside(P.xz);
+      if(roof){ col=vec3(.1,.1,.11); if(inside>.5){ col=vS.z<.5?vec3(.16,.34,.13):vec3(.04,.06,.13); } }
+      vec3 lit=col*(uLightCol*max(dot(N,uLightDir),0.)+uAmb*(.55+.45*N.y));
+      float lh=hash12(wid+vS.x*91.+N.xz*13.);
+      float litFrac=mix(.04,fut?.75:.55,uNight);
+      vec3 wcol=fut?vec3(.75,.9,1.):mix(vec3(1.,.72,.4),vec3(1.,.85,.6),lh);
+      lit+=win*step(lh,litFrac)*wcol*(1.2+uNight*1.6)*(.4+.6*uNight);
+      if(fut){ lit+=GOLD*smoothstep(vTop-2.5,vTop-.3,P.y)*(1.-float(roof))*2.5*uNight; }
+      if(roof&&inside>.5&&vS.z>=.5){ lit+=uLightCol*pow(max(dot(reflect(V,N),uLightDir),0.),30.)*.8+vec3(.15,.3,.7)*.12*uNight; }
+      lit+=scanRing(P.xz)*GOLD*2.;
+      gl_FragColor=vec4(applyFog(lit,P),1.);
+    }`);
+    const im = new T.InstancedMesh(geo, m, inst.length);
+    const M = new T.Matrix4();
+    inst.forEach((b, i) => {
+      const y = heightAt(b[0], b[1]) - 1.5;
+      M.makeScale(b[2], b[4] + 1.5, b[3]); M.setPosition(b[0], y, b[1]);
+      im.setMatrixAt(i, M);
+      seeds.set([rnd(), b[5], rnd(), b[6]], i * 4);
+      if (b[6] && b[5] === 2 && b[4] > 90) BEACONS.push([b[0], y + b[4] + 3, b[1], 0, 1]);
+    });
+    geo.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
+    im.frustumCulled = false; scene.add(im);
+  }
+
+  // ------------------------------------------------ landmarks, at their true coordinates
+  {
+    const put = (lonlat) => [gx(lonlat[0]), gz(lonlat[1])];
+    // The Spire of Dublin, O'Connell Street, 120 m
+    {
+      const [sx, sz] = put(PLACES.spire), sy = heightAt(sx, sz);
+      const spire = new T.Mesh(new T.ConeGeometry(1.6, 120, 16), litMat(0xc9ced2, { metal: .75 }));
+      spire.position.set(sx, sy + 60, sz); scene.add(spire);
+      BEACONS.push([sx, sy + 120, sz, 1, 0]);
+    }
+    // Poolbeg chimneys, Ringsend, 207 m
+    {
+      const [px, pz] = put(PLACES.poolbeg);
+      for (let k = 0; k < 2; k++) {
+        const x = px - k * 34, z = pz + k * 10, y = heightAt(x, z);
+        const c = new T.Mesh(new T.CylinderGeometry(3.4, 4.8, 207, 20, 1, false), litMat(0xffffff, { bands: 207 / 7.5 }));
+        c.geometry.translate(0, 103.5, 0); c.position.set(x, y, z); scene.add(c);
+        BEACONS.push([x, y + 208, z, 0, 0], [x, y + 140, z, 0, 0]);
+      }
+    }
+    // Samuel Beckett Bridge, over the Liffey
+    {
+      const [bx, bz] = put(PLACES.beckett), by = Math.max(heightAt(bx, bz), 2);
+      const white = litMat(0xe9ecef, { glow: 0x5f6f7a });
+      const deck = new T.Mesh(new T.BoxGeometry(124, 1.6, 12), white); deck.position.set(bx, by + 6.5, bz); scene.add(deck);
+      const curve = new T.CatmullRomCurve3([
+        new T.Vector3(bx - 26, by + 6, bz - 3), new T.Vector3(bx - 20, by + 26, bz - 7),
+        new T.Vector3(bx - 6, by + 42, bz - 8), new T.Vector3(bx + 8, by + 48, bz - 5)]);
+      scene.add(new T.Mesh(new T.TubeGeometry(curve, 40, 1.3, 10, false), white));
+      const cab = [];
+      for (let i = 0; i <= 24; i++) {
+        const p = curve.getPoint(.25 + .75 * i / 24);
+        cab.push(p.x, p.y, p.z, bx + 62 - 58 * (i / 24) - (i % 2) * 2, by + 7.2, bz + (i % 2 ? 4 : -4));
+      }
+      const cg = new T.BufferGeometry(); cg.setAttribute('position', new T.Float32BufferAttribute(cab, 3));
+      const cm = mat(`varying vec3 vW; void main(){ vW=position; gl_Position=projectionMatrix*viewMatrix*vec4(position,1.); }`,
+        `varying vec3 vW; void main(){ vec3 c=vec3(.85)*(uAmb*1.5+uLightCol*.5)+vec3(.7,.85,1.)*uNight*1.4; gl_FragColor=vec4(applyFog(c,vW),1.); }`);
+      scene.add(new T.LineSegments(cg, cm));
+    }
+    // O'Brien's Tower, Cliffs of Moher
+    {
+      const [tx, tz] = put(PLACES.obrien), ty = heightAt(tx, tz);
+      const tower = new T.Mesh(new T.CylinderGeometry(4, 4.3, 13, 16), litMat(0x8b8577));
+      tower.position.set(tx, ty + 6, tz); scene.add(tower);
+      const crown = new T.Mesh(new T.CylinderGeometry(4.6, 4.6, 1.6, 16), litMat(0x77716a));
+      crown.position.set(tx, ty + 13, tz); scene.add(crown);
+    }
+  }
+
+  // ------------------------------------------------ offshore wind, on the real consented sites
+  {
+    seedN = 99;
+    const spots = [];
+    for (const [, lon, lat, cols, rows, spacing] of WIND_SITES) {
+      const cx = gx(lon), cz = gz(lat);
+      for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+        const x = cx + (i - (cols - 1) / 2) * spacing + (j % 2) * spacing * .4;
+        const z = cz + (j - (rows - 1) / 2) * spacing;
+        if (heightAt(x, z) > -3) continue;                // turbines only go in the water
+        spots.push([x, z]);
+      }
+    }
+    const HUB = 150, ROT = 115;                            // 15 MW class, as planned for Irish waters
+    const tower = new T.CylinderGeometry(3.2, 5.4, HUB, 12); tower.translate(0, HUB / 2, 0);
+    const nac = new T.BoxGeometry(16, 6, 6); nac.translate(1.5, HUB + 1, 0);
+    const blade = new T.BoxGeometry(.8, ROT, 4); blade.translate(0, ROT / 2, 0);
+    const bp = blade.attributes.position; for (let i = 0; i < bp.count; i++) { const y = bp.getY(i) / ROT; bp.setZ(i, bp.getZ(i) * (1 - y * .8)); }
+    function merge(list) {
+      const P = [], N = [];
+      list.forEach((gg) => { const ng = gg.index ? gg.toNonIndexed() : gg; P.push(...ng.attributes.position.array); N.push(...ng.attributes.normal.array); });
+      const out = new T.BufferGeometry(); out.setAttribute('position', new T.Float32BufferAttribute(P, 3)); out.setAttribute('normal', new T.Float32BufferAttribute(N, 3)); return out;
+    }
+    const blades = [];
+    for (let k = 0; k < 3; k++) { const b = blade.clone(); b.rotateX(k * Math.PI * 2 / 3); blades.push(b); }
+    const bodyG = merge([tower, nac]), bladeG = merge(blades);
+    const vs = (isBlade) => `attribute vec4 aSeed; varying vec3 vW; varying vec3 vN; varying float vRise;
+    void main(){
+      vec4 o=modelMatrix*instanceMatrix*vec4(0.,0.,0.,1.);
+      float d=length(o.xz-uScanC); float rise=clamp((uScanR-d-1800.)/14000.,0.,1.); rise=rise*rise*(3.-2.*rise); vRise=rise;
+      vec3 p=position; vec3 n=normal;
+      ${isBlade ? `float a=uTime*(.55+aSeed.x*.15)+aSeed.y*6.2831; float c=cos(a),s=sin(a);
+        p=vec3(p.x,p.y*c-p.z*s,p.y*s+p.z*c); n=vec3(n.x,n.y*c-n.z*s,n.y*s+n.z*c); p+=vec3(-8.,${HUB + 1}.,0.);` : ''}
+      p.y-=(1.-rise)*${HUB + ROT + 40}.;
+      vec4 w=modelMatrix*instanceMatrix*vec4(p,1.); vW=w.xyz; vN=normalize(mat3(modelMatrix*instanceMatrix)*n);
+      gl_Position=projectionMatrix*viewMatrix*vec4(w.xyz,1.); }`;
+    const fs = `varying vec3 vW; varying vec3 vN; varying float vRise;
+    void main(){ if(vRise<.001||vW.y<-.5) discard; vec3 N=normalize(vN);
+      vec3 c=vec3(.86,.88,.9)*(uLightCol*max(dot(N,uLightDir),0.)+uAmb*(.7+.3*N.y));
+      c+=vec3(.5,.6,.7)*.05*uNight;
+      c+=GOLD*smoothstep(1.,6.,vW.y)*smoothstep(16.,6.,vW.y)*(1.-vRise)*3.;
+      gl_FragColor=vec4(applyFog(c,vW),1.); }`;
+    const M = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler();
+    const seeds = new Float32Array(Math.max(1, spots.length) * 4);
+    const body = new T.InstancedMesh(bodyG, mat(vs(false), fs), Math.max(1, spots.length));
+    const rot = new T.InstancedMesh(bladeG, mat(vs(true), fs), Math.max(1, spots.length));
+    spots.forEach((s, i) => {
+      e.set(0, (rnd() - .5) * .3, 0); q.setFromEuler(e);
+      M.compose(new T.Vector3(s[0], 0, s[1]), q, new T.Vector3(1, 1, 1));
+      body.setMatrixAt(i, M); rot.setMatrixAt(i, M);
+      seeds.set([rnd(), rnd(), 0, 0], i * 4);
+      BEACONS.push([s[0], HUB + 6, s[1], 0, 2]);
+    });
+    body.count = rot.count = spots.length;
+    bodyG.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
+    bladeG.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
+    body.frustumCulled = rot.frustumCulled = false;
+    scene.add(body, rot);
+  }
+
+  // ------------------------------------------------ beacons (aviation lights)
+  {
+    const P = [], K = [];
+    BEACONS.forEach((b) => { P.push(b[0], b[1], b[2]); K.push(b[3], b[4]); });
+    if (P.length) {
+      const g = new T.BufferGeometry();
+      g.setAttribute('position', new T.Float32BufferAttribute(P, 3));
+      g.setAttribute('aK', new T.Float32BufferAttribute(K, 2));
+      const m = mat(`attribute vec2 aK; varying vec3 vC; varying float vA;
+      void main(){ vec3 p=position; float a=1.;
+        if(aK.y>1.5){ float d=length(p.xz-uScanC); float r=clamp((uScanR-d-1800.)/14000.,0.,1.); a=step(.98,r); }
+        if(aK.y>.5&&aK.y<1.5){ float d=length(p.xz-uScanC); a=step(d,uScanR-6000.); }
+        float blink=aK.x<.5? step(.55,fract(uTime*.5)) : 1.;
+        vC=aK.x<.5?vec3(1.,.08,.04)*6.:vec3(1.,.95,.85)*5.; vA=a*blink*max(uNight,.25);
+        vec4 mv=viewMatrix*vec4(p,1.); gl_PointSize=clamp(320.*uPx/-mv.z,1.5,20.); gl_Position=projectionMatrix*mv; }`,
+      `varying vec3 vC; varying float vA; void main(){ vec2 c=gl_PointCoord-.5; float d=length(c); float a=smoothstep(.5,.0,d); if(vA<.01) discard; gl_FragColor=vec4(vC*a*a*vA,1.); }`,
+      {}, { transparent: true, blending: T.AdditiveBlending, depthWrite: false });
+      const pts = new T.Points(g, m); pts.frustumCulled = false; pts.renderOrder = 5; scene.add(pts);
+    }
+  }
+
+  // ------------------------------------------------ traffic, along the real road corridors
+  {
+    seedN = 31;
+    const st = [], dir = [], prm = [];
+    const corridor = (a, b, lanes, speed, kind) => {
+      const ax = gx(a[0]), az = gz(a[1]), bx = gx(b[0]), bz = gz(b[1]);
+      const len = Math.hypot(bx - ax, bz - az);
+      const ux = (bx - ax) / len, uz = (bz - az) / len, nx = -uz, nz = ux;
+      for (let k = 0; k < lanes; k++) {
+        const side = k % 2 ? 1 : -1, off = side * 4;
+        const fwd = side;
+        st.push(ax + nx * off, Math.max(heightAt(ax, az), 1) + 5, az + nz * off);
+        dir.push(ux * fwd, 0, uz * fwd);
+        prm.push(len, speed * (.85 + rnd() * .3), rnd() * len, kind === 'car' ? (fwd > 0 ? 0 : 1) : 2);
+      }
+    };
+    const chain = (pts, lanes, speed, kind) => { for (let i = 0; i < pts.length - 1; i++) corridor(pts[i], pts[i + 1], lanes, speed, kind); };
+    chain(ROUTES.cork, 26, 30, 'car'); chain(ROUTES.belfast, 26, 30, 'car');
+    chain(ROUTES.galway, 22, 30, 'car'); chain(ROUTES.metro, 10, 22, 'car');
+    // dense street traffic inside the larger cities
+    for (const [, lon, lat, radius, weight] of CITIES) {
+      if (weight < .4) continue;
+      const cx = gx(lon), cz = gz(lat), n = Math.round(weight * 900);
+      for (let i = 0; i < n; i++) {
+        const alongX = rnd() < .5;
+        const lane = (Math.floor(rnd() * (radius / 220)) - radius / 440) * 220;
+        const x = alongX ? cx - radius : cx + lane, z = alongX ? cz + lane : cz - radius;
+        if (heightAt(alongX ? cx : x, alongX ? z : cz) < 2) continue;
+        const fwd = rnd() < .5 ? 1 : -1, car = rnd() < .75;
+        st.push(x, Math.max(heightAt(x, z), 1) + 5, z);
+        dir.push(alongX ? 1 : 0, 0, alongX ? 0 : 1);
+        prm.push(radius * 2, car ? (11 + rnd() * 6) * fwd : (1.4 + rnd() * .6) * fwd, rnd() * radius * 2, car ? (fwd > 0 ? 0 : 1) : 2);
+      }
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(st, 3));
+    g.setAttribute('aDir', new T.Float32BufferAttribute(dir, 3));
+    g.setAttribute('aP', new T.Float32BufferAttribute(prm, 4));
+    const m = mat(`attribute vec3 aDir; attribute vec4 aP; varying vec3 vC; varying float vA;
+    void main(){
+      float s=mod(uTime*aP.y+aP.z,aP.x); vec3 p=position+aDir*s;
+      p.y=max(terrainAt(p.xz),1.)+5.;
+      vC=aP.w<.5?vec3(1.,.93,.8)*3.:(aP.w<1.5?vec3(1.,.12,.06)*2.6:vec3(1.,.7,.35)*2.);
+      float inside=scanInside(p.xz); if(aP.w>1.5) vC=mix(vC,TEAL*2.2,inside*step(.5,fract(aP.z*.37)));
+      vA=smoothstep(.15,.7,uNight)*step(-.5,terrainAt(p.xz));
+      vec4 mv=viewMatrix*vec4(p,1.); gl_PointSize=clamp((aP.w>1.5?30.:60.)*uPx/-mv.z,1.,7.); gl_Position=projectionMatrix*mv; }`,
+    `varying vec3 vC; varying float vA; void main(){ if(vA<.01) discard; float d=length(gl_PointCoord-.5); gl_FragColor=vec4(vC*smoothstep(.5,.1,d)*vA,1.); }`,
+    {}, { transparent: true, blending: T.AdditiveBlending, depthWrite: false });
+    const pts = new T.Points(g, m); pts.frustumCulled = false; pts.renderOrder = 4; scene.add(pts);
+  }
+
+  // ------------------------------------------------ light ribbons on the real corridors
+  function ribbon(lonlats, width, color, speed, spacing, lift = 20) {
+    const curve = new T.CatmullRomCurve3(lonlats.map((p) => new T.Vector3(gx(p[0]), 0, gz(p[1]))));
+    const n = Math.max(60, Math.floor(curve.getLength() / 600));
+    const P = [], A = [], idx = [];
+    let dist = 0, prev = null;
+    for (let i = 0; i <= n; i++) {
+      const p = curve.getPoint(i / n), t = curve.getTangent(i / n);
+      if (prev) dist += p.distanceTo(prev); prev = p.clone();
+      const nx = -t.z, nz = t.x, l = Math.hypot(nx, nz) || 1;
+      for (const s of [-1, 1]) {
+        const x = p.x + nx / l * width * .5 * s, z = p.z + nz / l * width * .5 * s;
+        P.push(x, Math.max(heightAt(x, z), 0) + lift, z); A.push(dist, s);
+      }
+      if (i < n) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(P, 3));
+    g.setAttribute('aD', new T.Float32BufferAttribute(A, 2));
+    g.setIndex(idx);
+    const m = mat(`attribute vec2 aD; varying vec2 vD; varying vec3 vW; void main(){ vD=aD; vW=position; gl_Position=projectionMatrix*viewMatrix*vec4(position,1.); }`, `
+    uniform vec3 uColor; uniform float uSpeed; uniform float uSpacing;
+    varying vec2 vD; varying vec3 vW;
+    void main(){ float inside=scanInside(vW.xz); if(inside<.01) discard;
+      float ph=fract((vD.x-uTime*uSpeed)/uSpacing);
+      float pulse=smoothstep(0.,.015,ph)*smoothstep(.09,.015,ph);
+      float core=1.-abs(vD.y);
+      vec3 c=uColor*(.35+pulse*5.)*(.35+core*.65)*(.5+.5*uNight+.3);
+      float f=exp(-length(vW-uCam)*uFogD*.6);
+      gl_FragColor=vec4(c*inside*f,1.); }`,
+    { uColor: { value: new T.Color(color) }, uSpeed: { value: speed }, uSpacing: { value: spacing } },
+    { transparent: true, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide });
+    const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 3; scene.add(mesh);
+  }
+  ribbon(ROUTES.metro, 260, 0x7fe8d6, 900, 5000, 40);      // MetroLink, Swords to Charlemont
+  ribbon(ROUTES.cork, 420, 0x9fd8ff, 2600, 26000, 30);     // Dublin to Cork
+  ribbon(ROUTES.belfast, 380, 0x9fd8ff, 2400, 24000, 30);  // Dublin to Belfast
+  ribbon(ROUTES.galway, 380, 0x9fd8ff, 2400, 24000, 30);   // Dublin to Galway
+  ribbon(ROUTES.ewic, 420, 0xf2c14e, 3400, 22000, 12);     // East-West Interconnector
+  ribbon(ROUTES.celtic, 420, 0xf2c14e, 3400, 22000, 12);   // Celtic Interconnector
+  ribbon(ROUTES.greenlink, 420, 0xf2c14e, 3400, 22000, 12);// Greenlink
+
+  // ------------------------------------------------ seabirds at the Cliffs of Moher
+  {
+    const N = 70;
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute([0, 0, .5, -1.6, .1, -.2, 0, 0, -.4, 0, 0, .5, 0, 0, -.4, 1.6, .1, -.2], 3));
+    g.setAttribute('normal', new T.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0], 3));
+    const seeds = new Float32Array(N * 4); seedN = 5;
+    for (let i = 0; i < N; i++) seeds.set([rnd(), rnd(), rnd(), rnd()], i * 4);
+    g.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
+    const cx = gx(PLACES.cliffs[0]) - 700, cz = gz(PLACES.cliffs[1]);
+    const m = mat(`attribute vec4 aSeed; varying vec3 vW; varying float vS;
+    void main(){ float r=60.+aSeed.x*320.; float sp=(.08+aSeed.y*.08)*(aSeed.z<.5?1.:-1.); float a=uTime*sp+aSeed.w*6.2831;
+      vec3 c=vec3(${cx.toFixed(1)}+sin(aSeed.w*9.)*300.,60.+aSeed.z*160.+sin(uTime*.3+aSeed.x*9.)*12.,${cz.toFixed(1)}+cos(aSeed.x*7.)*500.);
+      vec3 p=position*1.6; p.y+=abs(p.x)*sin(uTime*7.+aSeed.x*30.)*.55;
+      vec3 fwd=normalize(vec3(-sin(a),0.,cos(a))*sign(sp)); vec3 rt=normalize(cross(fwd,vec3(0,1,0)));
+      vec3 w=c+vec3(cos(a)*r,0.,sin(a)*r)+rt*p.x+vec3(0,p.y,0)+fwd*p.z;
+      vW=w; vS=aSeed.y; gl_Position=projectionMatrix*viewMatrix*vec4(w,1.); }`,
+    `varying vec3 vW; varying float vS; void main(){ vec3 c=mix(vec3(.9),vec3(.25),step(.7,vS))*(uAmb*1.3+uLightCol*.7); gl_FragColor=vec4(applyFog(c,vW),1.); }`,
+    {}, { side: T.DoubleSide });
+    const mesh = new T.InstancedMesh(g, m, N); mesh.frustumCulled = false; scene.add(mesh);
+    const M = new T.Matrix4(); for (let i = 0; i < N; i++) mesh.setMatrixAt(i, M);
+  }
+}
+// ---------------------------------------------------------------- HUD in the world: captions on four walls, year ring on the floor
+const hudRig = new T.Group(); scene.add(hudRig);
+function captionTexture(c) {
+  const W = 2048, H = 640, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  const bg = x.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * .48);
+  bg.addColorStop(0, 'rgba(2,6,10,.5)'); bg.addColorStop(.6, 'rgba(2,6,10,.28)'); bg.addColorStop(1, 'rgba(2,6,10,0)');
+  x.save(); x.scale(1, H / W * 1.6); x.fillStyle = bg; x.fillRect(0, 0, W, W); x.restore();
+  x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+  x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 28;
+  x.fillStyle = '#f2c14e'; x.font = '600 40px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
+  if ('letterSpacing' in x) x.letterSpacing = '12px';
+  x.fillText(c.eb.toUpperCase(), W / 2, 150);
+  if ('letterSpacing' in x) x.letterSpacing = '0px';
+  x.shadowBlur = 0; x.fillRect(W / 2 - 60, 180, 120, 3); x.shadowBlur = 36;
+  x.fillStyle = '#ffffff'; let size = 196; x.font = `400 ${size}px "Instrument Serif", Georgia, serif`;
+  while (x.measureText(c.ti).width > W - 120 && size > 90) { size -= 6; x.font = `400 ${size}px "Instrument Serif", Georgia, serif`; }
+  x.fillText(c.ti, W / 2, c.sub ? 380 : 420);
+  if (c.sub) { x.fillStyle = '#e4dfd3'; x.font = '400 56px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif'; x.fillText(c.sub, W / 2, 490); }
+  const t = new T.CanvasTexture(cv); t.anisotropy = 8; t.generateMipmaps = true; return t;
+}
+// floor ring
+const ring = (() => {
+  const S = 2048, cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const tex = new T.CanvasTexture(cv);
+  let shown = null;
+  function draw(year) {
+    if (year === shown) return; shown = year;
+    const c = cv.getContext('2d'); c.clearRect(0, 0, S, S);
+    c.translate(S / 2, S / 2);
+    c.strokeStyle = 'rgba(255,255,255,.9)';
+    for (let i = 0; i < 360; i += 2) {
+      const a = i * Math.PI / 180, big = i % 30 === 0, r0 = big ? 930 : 960;
+      c.lineWidth = big ? 5 : 2; c.beginPath(); c.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); c.lineTo(Math.cos(a) * 1000, Math.sin(a) * 1000); c.stroke();
+    }
+    c.lineWidth = 3; c.beginPath(); c.arc(0, 0, 900, 0, 6.2832); c.stroke();
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    for (let k = 0; k < 4; k++) {
+      c.save(); c.rotate(k * Math.PI / 2);
+      c.fillStyle = '#ffffff'; c.font = '400 170px "Instrument Serif", Georgia, serif'; c.fillText(String(year), 0, -770);
+      c.fillStyle = '#f2c14e'; c.font = '600 34px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
+      if ('letterSpacing' in c) c.letterSpacing = '10px';
+      c.fillText(year >= 2036 ? 'IRELAND 2036' : (year > 2026 ? 'BUILDING THE DECADE' : 'IRELAND TODAY'), 0, -650);
+      if ('letterSpacing' in c) c.letterSpacing = '0px';
+      c.restore();
+    }
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    tex.needsUpdate = true;
+  }
+  const m = new T.ShaderMaterial({
+    uniforms: { uTex: { value: tex }, uA: { value: 0 }, uTime: U.uTime, uFlash: { value: 0 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+    fragmentShader: `uniform sampler2D uTex; uniform float uA; uniform float uTime; uniform float uFlash; varying vec2 vUv;
+    void main(){ vec2 p=vUv-.5; float r=length(p)*2.; float a=atan(p.y,p.x);
+      vec4 t=texture2D(uTex,vUv);
+      float sweep=pow(fract((a/6.2831)+uTime*.05),6.)*step(.9,r)*step(r,1.);
+      vec3 c=t.rgb*t.a*(1.+uFlash*1.5)+vec3(1.,.75,.35)*sweep*.9;
+      c+=vec3(1.,.75,.35)*exp(-abs(r-.88-uFlash*.1)*80.)*uFlash*2.;
+      gl_FragColor=vec4(c*uA,1.); }`,
+    transparent: true, depthTest: false, depthWrite: false, blending: T.AdditiveBlending,
+  });
+  const g = new T.PlaneGeometry(34, 34); g.rotateX(-Math.PI / 2);
+  const mesh = new T.Mesh(g, m); mesh.position.y = -14; mesh.renderOrder = 18; mesh.frustumCulled = false; hudRig.add(mesh);
+  return { draw, m, tex };
+})();
+
+let capTextures = [];
+function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures = CAPTIONS.map(captionTexture); ring.draw(-1); }
+
+// ---------------------------------------------------------------- final projection pass
+// Every output pixel is resolved to a point in the physical room (wall s/t or floor x/z).
+// Footage wraps the four walls as one seamless mirrored panorama; the floor becomes a rippling
+// vortex reflection of it. Scenes without footage fall back to the live 3D world (cube map).
+const BLANK = new T.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); BLANK.needsUpdate = true;
+const post = (() => {
+  const m = new T.ShaderMaterial({
+    uniforms: {
+      uCube: { value: null }, uYaw: { value: 0 }, uMode: { value: 0 }, uRect: { value: new T.Vector4(0, 0, 1, 1) },
+      uRoom: { value: new T.Vector3(6, 6, 3) }, uEye: { value: 1.6 }, uPrev: { value: new T.Vector3(0, 0, Math.tan(40 * Math.PI / 180)) },
+      uFade: { value: 1 }, uExp: { value: 1 }, uBloom: { value: halfOK ? 1 : 0 }, uTime: U.uTime, uFloorRot: { value: 0 },
+      uA: { value: BLANK }, uB: { value: BLANK }, uHasA: { value: 0 }, uHasB: { value: 0 }, uAspA: { value: 1.7778 }, uAspB: { value: 1.7778 },
+      uMix: { value: 0 }, uDrift: { value: 0 }, uZoomA: { value: 1 }, uZoomB: { value: 1 }, uSwirl: { value: 0 },
+      uFuture: { value: 0 }, uScan: { value: 0 },
+      uCap: { value: BLANK }, uCapA: { value: 0 }, uCapRev: { value: 0 },
+      uRing: { value: BLANK }, uRingA: { value: 0 }, uFlash: { value: 0 },
+      uMap: { value: BLANK }, uMapT: { value: 0 }, uCities: { value: [0, 1, 2, 3, 4].map(() => new T.Vector2()) },
+    },
+    vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
+    fragmentShader: `
+    uniform samplerCube uCube; uniform float uYaw; uniform int uMode; uniform vec4 uRect; uniform vec3 uRoom; uniform float uEye; uniform vec3 uPrev;
+    uniform float uFade; uniform float uExp; uniform float uBloom; uniform float uTime; uniform int uFloorRot;
+    uniform sampler2D uA; uniform sampler2D uB; uniform float uHasA; uniform float uHasB; uniform float uAspA; uniform float uAspB;
+    uniform float uMix; uniform float uDrift; uniform float uZoomA; uniform float uZoomB; uniform float uSwirl;
+    uniform float uFuture; uniform float uScan;
+    uniform sampler2D uCap; uniform float uCapA; uniform float uCapRev;
+    uniform sampler2D uRing; uniform float uRingA; uniform float uFlash;
+    uniform sampler2D uMap; uniform float uMapT; uniform vec2 uCities[5];
+    const vec3 GOLD=vec3(1.,.74,.36); const vec3 TEAL=vec3(.4,1.,.88);
+    float hash12(vec2 p){ vec3 p3=fract(vec3(p.xyx)*.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
+    float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
+      return mix(mix(hash12(i),hash12(i+vec2(1,0)),u.x), mix(hash12(i+vec2(0,1)),hash12(i+vec2(1,1)),u.x), u.y); }
+    float fbm(vec2 p){ float a=.5,s=0.; for(int i=0;i<4;i++){ s+=a*vnoise(p); p=p*2.03+vec2(17.1,9.2); a*=.5; } return s; }
+    vec3 rotY(vec3 d,float a){ float c=cos(a),s=sin(a); return vec3(d.x*c+d.z*s,d.y,-d.x*s+d.z*c); }
+    vec3 aces(vec3 x){ return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.); }
+    float W,D,H,PER;
+    // perimeter coordinate (metres, clockwise from the front-left corner, seen from inside) of a point on the walls' footprint
+    float perim(vec2 xz){
+      vec2 n=vec2(xz.x/(W*.5),xz.y/(D*.5));
+      if(abs(n.y)>=abs(n.x)){ return n.y<0.? xz.x+W*.5 : W+D+(W*.5-xz.x); }
+      return n.x>0.? W+(xz.y+D*.5) : 2.*W+D+(D*.5-xz.y);
+    }
+    // footage sample: mirrored tiles around the perimeter so every seam matches; v is height (0 floor edge, 1 wall top)
+    vec3 foot(sampler2D tex, float asp, float P, float v, float zoom){
+      float n=max(2.,floor(PER/(H*asp)*.5+.5)*2.);
+      float x=P/PER*n+uDrift;
+      float u=1.-abs(fract(x*.5)*2.-1.);
+      vec2 uv=(vec2(u,v)-.5)/zoom+.5;
+      uv.y=clamp(uv.y,.002,.998);
+      return textureLod(tex,uv,0.).rgb;
+    }
+    vec3 cubeDisp(vec3 d){
+      vec3 c=textureLod(uCube,d,0.).rgb;
+      if(uBloom>0.){ c+=(max(textureLod(uCube,d,2.5).rgb-1.,0.)*.35+max(textureLod(uCube,d,4.).rgb-.85,0.)*.45+max(textureLod(uCube,d,5.5).rgb-.7,0.)*.6+max(textureLod(uCube,d,7.).rgb-.6,0.)*.5)*uBloom; }
+      return pow(aces(c*uExp),vec3(1./2.2));
+    }
+    void main(){
+      W=uRoom.x; D=uRoom.y; H=uRoom.z; PER=2.*W+2.*D;
+      vec2 uv=(gl_FragCoord.xy-uRect.xy)/uRect.zw;
+      if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.){ gl_FragColor=vec4(0,0,0,1); return; }
+      vec3 eye=vec3(0.,uEye,0.);
+      vec3 d; bool onFloor=false; float P=0.,t=0.,wallL=W; float ws=0.; vec2 q=vec2(0.);
+      if(uMode==1){
+        // canvas: Front | Right | Back | Left walls across the top, floor panel on the right
+        float LW=PER, TW=LW+W, TH=max(H,D); float x=uv.x*TW, y=uv.y*TH;
+        if(x<LW){
+          if(y<TH-H){ gl_FragColor=vec4(0,0,0,1); return; }
+          t=(y-(TH-H))/H; P=x; vec3 p;
+          if(x<W){ p=vec3(-W*.5+x,t*H,-D*.5); ws=x/W; wallL=W; }
+          else if(x<W+D){ p=vec3(W*.5,t*H,-D*.5+(x-W)); ws=(x-W)/D; wallL=D; }
+          else if(x<2.*W+D){ p=vec3(W*.5-(x-W-D),t*H,D*.5); ws=(x-W-D)/W; wallL=W; }
+          else { p=vec3(-W*.5,t*H,D*.5-(x-2.*W-D)); ws=(x-2.*W-D)/D; wallL=D; }
+          d=normalize(p-eye);
+        } else {
+          if(y>D){ gl_FragColor=vec4(0,0,0,1); return; }
+          vec2 f=vec2((x-LW)/W,y/D)-.5;
+          for(int i=0;i<4;i++){ if(i<uFloorRot) f=vec2(-f.y,f.x); }
+          q=vec2(f.x*W,-f.y*D); onFloor=true; d=normalize(vec3(q.x,0.,q.y)-eye);
+        }
+      } else {
+        if(uMode==0){ float lon=(uv.x-.5)*6.2831853; float lat=(uv.y-.5)*3.1415927; d=vec3(cos(lat)*sin(lon),sin(lat),-cos(lat)*cos(lon)); }
+        else { vec2 n=uv*2.-1.; float asp=uRect.z/uRect.w; d=normalize(vec3(n.x*uPrev.z*asp,n.y*uPrev.z,-1.));
+          float cp=cos(uPrev.y),sp=sin(uPrev.y); d=vec3(d.x,d.y*cp+d.z*sp,-d.y*sp+d.z*cp); d=rotY(d,uPrev.x); }
+        // resolve the view ray against the physical room
+        if(d.y<0.){ float k=-uEye/d.y; q=d.xz*k; onFloor=abs(q.x)<=W*.5&&abs(q.y)<=D*.5; }
+        if(!onFloor){
+          float kx=abs(d.x)>1e-5?(W*.5)/abs(d.x):1e9, kz=abs(d.z)>1e-5?(D*.5)/abs(d.z):1e9, k=min(kx,kz);
+          vec3 p=eye+d*k; t=p.y/H; P=perim(p.xz);
+          if(kz<kx){ wallL=W; ws=d.z<0.?(p.x+W*.5)/W:(W*.5-p.x)/W; } else { wallL=D; ws=d.x>0.?(p.z+D*.5)/D:(D*.5-p.z)/D; }
+        }
+      }
+      // floor: square-polar reflection with a slow vortex toward the centre
+      float r=0.,fv=0.;
+      if(onFloor){
+        r=max(abs(q.x)/(W*.5),abs(q.y)/(D*.5));
+        float sw=pow(1.-r,2.)*(uSwirl+.06*sin(uTime*.2));
+        float ca=cos(sw*6.2831),sa=sin(sw*6.2831); vec2 qs=vec2(q.x*ca-q.y*sa,q.x*sa+q.y*ca);
+        P=perim(qs/max(r,1e-4));
+        float rip=sin(r*46.-uTime*2.2)*.006+(vnoise(q*2.6+uTime*.35)-.5)*.018;
+        fv=clamp((1.-r)+rip,0.,1.);
+      }
+      float v=onFloor?fv:(t<=1.?max(t,0.):2.-min(t,2.));
+      bool needCube=uHasA<.5||(uMix<.999&&uHasB<.5);
+      vec3 cub=needCube?cubeDisp(rotY(d,uYaw)):vec3(0.);
+      // liquid dissolve from B (outgoing) to A (incoming)
+      vec2 nc=onFloor?q*.9:vec2(P,t*H)*.55;
+      float n=fbm(nc+vec2(uTime*.05,0.));
+      float edgeP=uMix*1.25-.12;
+      float warp=(1.-abs(uMix*2.-1.))*.05*(n-.5);
+      vec3 ca=uHasA>.5?foot(uA,uAspA,P+warp*PER*.3,v+warp,uZoomA):cub;
+      vec3 cb=uHasB>.5?foot(uB,uAspB,P-warp*PER*.3,v-warp,uZoomB):cub;
+      float m=smoothstep(n-.06,n+.06,edgeP);
+      vec3 col=mix(cb,ca,m);
+      float edge=exp(-abs(edgeP-n)*42.)*step(.001,uMix)*step(uMix,.999);
+      if(!onFloor&&t>1.) col*=1.-.55*smoothstep(1.,1.8,t);
+      col+=mix(GOLD,TEAL,uFuture)*edge*.9;
+      if(onFloor){
+        col*=vec3(.82,.9,1.)*(.8+.2*r);
+        float caust=pow(vnoise(q*3.2+vec2(uTime*.4,-uTime*.3))*vnoise(q*4.1-vec2(uTime*.3,uTime*.2)),2.);
+        col+=vec3(.9,.95,1.)*caust*.25;
+        col+=GOLD*exp(-abs(r-1.)*60.)*.25;
+      }
+      // Ireland 2036: colour grade, scan sweep (floor, then up the walls), holographic grid, rising light
+      if(uFuture>0.){
+        float l=dot(col,vec3(.299,.587,.114));
+        vec3 g=mix(vec3(.02,.1,.16),vec3(1.,.84,.6),smoothstep(.05,.9,l))*(l*1.25+.05);
+        col=mix(col,mix(col,g,.45),uFuture);
+      }
+      if(uScan>0.){
+        float sf=min(uScan,1.05), sh=uScan-1.;
+        if(onFloor){
+          col+=GOLD*exp(-abs(r-sf)*22.)*step(uScan,1.4)*2.;
+          float inside=step(r,sf);
+          vec2 g=abs(fract(q/.5)-.5); float gl=smoothstep(.47,.5,max(g.x,g.y));
+          col+=TEAL*gl*inside*.35*uFuture;
+        } else {
+          col+=GOLD*exp(-abs(t-sh)*28.)*step(0.,sh)*step(sh,1.15)*1.8;
+          float inside=step(t,sh);
+          vec2 cell=floor(vec2(P,t*H)/.32); float rn=hash12(cell);
+          vec2 lc=fract(vec2(P,t*H)/.32);
+          float py=fract(uTime*.18*(.5+rn)+rn*7.);
+          float dd=length(lc-vec2(.5+.3*sin(rn*40.+uTime*.7),py));
+          col+=GOLD*smoothstep(.09,.0,dd)*step(.55,rn)*inside*uFuture*1.3;
+          vec2 g=abs(fract(vec2(P,t*H)/.75)-.5); col+=TEAL*smoothstep(.485,.5,max(g.x,g.y))*inside*.12*uFuture;
+        }
+      }
+      // captions, one per wall
+      if(!onFloor&&uCapA>0.){
+        float cw=min(wallL*.88,H*2.9), ch=cw/3.2;
+        vec2 cu=vec2((ws-.5)*wallL/cw+.5,(t*H-H*.64)/ch+.5);
+        if(cu.x>0.&&cu.x<1.&&cu.y>0.&&cu.y<1.){
+          vec4 c=texture2D(uCap,cu); float dd=abs(cu.x-.5)*2.; float rr=uCapRev*1.2;
+          float vis=smoothstep(dd-.12,dd,rr);
+          col=mix(col,c.rgb*1.08,c.a*vis*uCapA);
+          col+=GOLD*exp(-abs(rr-dd)*30.)*step(rr,1.1)*smoothstep(.25,.45,cu.y)*smoothstep(.8,.6,cu.y)*.6*uCapA;
+        }
+      }
+      // floor: year ring and the island map
+      if(onFloor){
+        float S=min(W,D)*.98; vec2 fu=vec2(.5+q.x/S,.5-q.y/S);
+        if(uRingA>0.&&fu.x>0.&&fu.x<1.&&fu.y>0.&&fu.y<1.){
+          vec4 c=texture2D(uRing,fu); vec2 pp=fu-.5; float rr=length(pp)*2.; float a=atan(pp.y,pp.x);
+          float sweep=pow(fract(a/6.2831+uTime*.05),6.)*step(.9,rr)*step(rr,1.);
+          col=mix(col,col*.45,smoothstep(.6,.9,rr)*step(rr,1.02)*uRingA*.6);
+          col+=(c.rgb*c.a*(1.+uFlash*1.5)+GOLD*sweep*.8+GOLD*exp(-abs(rr-.88-uFlash*.1)*80.)*uFlash*2.)*uRingA;
+        }
+        if(uMapT>0.){
+          float SM=min(W,D)*1.02; vec2 mu=vec2(.5+q.x/SM,.5-q.y/SM);
+          if(mu.x>0.&&mu.x<1.&&mu.y>0.&&mu.y<1.){
+            vec4 tm=texture2D(uMap,mu); float rr=length(mu-uCities[0]);
+            float rev=1.-smoothstep(uMapT*1.1-.06,uMapT*1.1,rr);
+            float front=exp(-abs(rr-uMapT*1.1)*60.)*step(uMapT,1.);
+            float flow=.5+.5*sin(rr*120.-uTime*4.);
+            vec3 mc=vec3(.5,1.,.92)*pow(tm.r,2.6)*1.6+GOLD*tm.g*(.8+flow*1.2)+vec3(.35,.7,.9)*tm.b*(.05+.12*vnoise(mu*40.+uTime*.5));
+            for(int i=0;i<5;i++){ float dc=length(mu-uCities[i]); mc+=GOLD*(smoothstep(.012,.0,dc)*2.5+exp(-abs(fract(uTime*.35+float(i)*.2)*.08-dc)*300.)*.8*smoothstep(.09,.0,dc)); }
+            col=col*(1.-.65*uMapT)+(mc*rev+TEAL*front)*uMapT;
+          }
+        }
+      }
+      col+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)*.016;
+      gl_FragColor=vec4(clamp(col,0.,1.)*uFade,1.);
+    }`,
+    depthTest: false, depthWrite: false,
+  });
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
+  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false;
+  const s = new T.Scene(); s.add(mesh);
+  return { scene: s, cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), material: m };
+})();
+makeCube();
+hudRig.visible = false; // captions, ring and map are composited in room space by the projection pass
+post.material.uniforms.uRing.value = ring.tex;
+post.material.uniforms.uMap.value = mapMat.tex;
+mapMat.cu.forEach((c, i) => post.material.uniforms.uCities.value[i].copy(c));
+
+
+// ---------------------------------------------------------------- timeline evaluation
+// The flight path is written as real places: time, longitude, latitude, height above
+// sea level in metres, and compass bearing. Nothing is expressed in invented units.
+const CAM_LL = [
+  // Act 1: low and slow along the Clare coast, the sun coming up behind the cliffs.
+  [0,   -9.615, 52.955,    800,   90],
+  [10,  -9.585, 52.960,    850,   88],
+  [18,  -9.540, 52.970,   1400,   95],
+  // Act 2: the climb. Crossing the country fast only works from high up, so the
+  // camera rises to near-orbit, shows the whole island, then dives into Dublin.
+  [26,  -9.300, 53.020,  14000,  100],
+  [34,  -8.300, 53.200,  75000,   95],
+  [42,  -6.450, 53.340,  14000,   92],
+  [50,  -6.300, 53.352,   2600,   88],
+  // The capital and the Docklands, close and slow.
+  [58,  -6.270, 53.350,   1800,   84],
+  [66,  -6.215, 53.347,   1400,   72],
+  [74,  -6.140, 53.335,   2600,   36],
+  // Act 3: out over Dublin Bay, turning back as the sweep crosses the city.
+  [82,  -6.080, 53.300,   3000,  -70],
+  // Energy: a slow low orbit of Dublin Array rather than a dash down the coast.
+  [92,  -6.035, 53.262,   1500, -110],
+  [104, -6.010, 53.240,   1300, -160],
+  // Transport and housing: the metro and rail corridors, then the western edge.
+  [112, -6.100, 53.270,   5000, -205],
+  [122, -6.400, 53.320,   9000, -250],
+  [132, -6.650, 53.330,   7000, -295],
+  [142, -6.900, 53.320,   4000, -340],
+  // Act 4: up through the cirrus and away, until the whole island is in the room.
+  [148, -7.000, 53.320,  12000, -366],
+  [156, -7.300, 53.300,  45000, -395],
+  [166, -7.600, 53.250, 110000, -420],
+  [180, -8.000, 53.100, 230000, -450],
+];
+// [t, x, y, z, yawDeg]; the renderer's yaw is the negative of a compass bearing.
+const CAM = CAM_LL.map(([t, lon, lat, alt, bearing]) => [t, gx(lon), alt, gz(lat), -bearing]);
+
+// atmosphere keys: t, sunElev, sunAz, zenith, horizon, sunCol, night, cloud, aurora, fog, exposure
+const ATM = [
+  [0,   2,  88, [.07,.12,.26], [.98,.52,.30], [1.7,.85,.45], .15, .55, 0, .0000090, 1.15],
+  [22,  9,  96, [.12,.24,.48], [.95,.66,.48], [1.8,1.2,.8], 0, .5, 0, .0000060, 1.0],
+  [42,  24, 150, [.16,.33,.64], [.70,.80,.90], [1.7,1.6,1.4], 0, .42, 0, .0000030, 1.0],
+  [62,  9,  250, [.18,.26,.52], [1.0,.60,.34], [1.9,1.05,.5], 0, .45, 0, .0000038, 1.05],
+  [80,  -1, 262, [.06,.09,.22], [.62,.34,.34], [1.2,.45,.25], .45, .4, 0, .0000045, 1.15],
+  [100, -7, 272, [.02,.035,.09], [.12,.12,.22], [.4,.2,.2], .85, .3, 0, .0000040, 1.3],
+  [140, -14, 285, [.006,.012,.035], [.035,.05,.1], [0,0,0], 1, .2, .35, .0000028, 1.35],
+  [158, -16, 290, [.004,.009,.028], [.03,.045,.09], [0,0,0], 1, .15, 1, .0000009, 1.35],
+  [180, -16, 292, [.004,.009,.028], [.03,.045,.09], [0,0,0], 1, .15, 1, .0000007, 1.35],
+];
+const SCAN_T0 = 76;
+
+function camAt(t) {
+  let i = 0; while (i < CAM.length - 2 && CAM[i + 1][0] <= t) i++;
+  const k0 = CAM[Math.max(0, i - 1)], k1 = CAM[i], k2 = CAM[i + 1], k3 = CAM[Math.min(CAM.length - 1, i + 2)];
+  const u = clamp((t - k1[0]) / (k2[0] - k1[0]), 0, 1);
+  const out = [];
+  for (let c = 1; c <= 4; c++) {
+    const dt = k2[0] - k1[0];
+    const m1 = (k2[c] - k0[c]) / Math.max(1e-3, k2[0] - k0[0]) * dt, m2 = (k3[c] - k1[c]) / Math.max(1e-3, k3[0] - k1[0]) * dt;
+    const u2 = u * u, u3 = u2 * u;
+    out.push((2 * u3 - 3 * u2 + 1) * k1[c] + (u3 - 2 * u2 + u) * m1 + (-2 * u3 + 3 * u2) * k2[c] + (u3 - u2) * m2);
+  }
+  // Never fly into the real ground, and never below a safe height over the sea.
+  const ground = heightAt(out[0], out[2]);
+  const floorY = Math.max(ground + 120, 90);
+  if (out[1] < floorY) out[1] = floorY;
+  out[1] += Math.sin(t * .6) * 4;
+  return out;
+}
+function atmAt(t) {
+  let i = 0; while (i < ATM.length - 2 && ATM[i + 1][0] <= t) i++;
+  const a = ATM[i], b = ATM[i + 1], u = smooth(a[0], b[0], t);
+  const mix = (x, y) => Array.isArray(x) ? x.map((v, k) => lerp(v, y[k], u)) : lerp(x, y, u);
+  return a.map((v, k) => k === 0 ? t : mix(v, b[k]));
+}
+
+const tmpV = new T.Vector3();
+function applyTime(t) {
+  const [x, y, z, yawD] = camAt(t);
+  U.uCam.value.set(x, y, z);
+  cubeCam.position.set(x, y, z);
+  scene.userData.sky.position.set(x, y, z);
+  hudRig.position.set(x, y, z);
+  // Depth precision has to stretch from a low pass over the Liffey to 200 km up,
+  // so the near plane follows how high the camera is.
+  const near = clamp(y * .02, 12, 6000);
+  cubeCam.children.forEach((c) => { if (c.isPerspectiveCamera && c.near !== near) { c.near = near; c.far = 1400000; c.updateProjectionMatrix(); } });
+  const yaw = yawD * Math.PI / 180;
+  hudRig.rotation.y = yaw;
+  post.material.uniforms.uYaw.value = yaw;
+
+  const a = atmAt(t);
+  const el = a[1] * Math.PI / 180, az = a[2] * Math.PI / 180;
+  const sun = U.uSunDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).normalize();
+  U.uZenith.value.fromArray(a[3]); U.uHorizon.value.fromArray(a[4]); U.uSunCol.value.fromArray(a[5]);
+  U.uNight.value = a[6]; U.uCloud.value = a[7]; U.uAurora.value = a[8]; U.uFogD.value = a[9];
+  post.material.uniforms.uExp.value = a[10];
+  const sunUp = smooth(-.06, .12, sun.y);
+  const moon = tmpV.set(.5, .55, -.65).normalize();
+  U.uLightDir.value.copy(sun).multiplyScalar(sunUp).addScaledVector(moon, 1 - sunUp).normalize();
+  const sc = a[5];
+  U.uLightCol.value.set(lerp(.1, sc[0], sunUp), lerp(.13, sc[1], sunUp), lerp(.2, sc[2], sunUp));
+  U.uAmb.value.set(a[3][0] * .9 + a[4][0] * .35, a[3][1] * .9 + a[4][1] * .35, a[3][2] * .9 + a[4][2] * .35);
+
+  // The 2036 sweep leaves Dublin and crosses the island in about thirteen seconds,
+  // which at real distances means roughly three hundred kilometres of ground.
+  const s = t - SCAN_T0;
+  U.uScanR.value = s > 0 ? 6000 * s + 1400 * s * s : 0;
+  cloudDeck.uniforms.uOp.value = smooth(126, 140, t);
+  mapGroup.visible = false;
+
+  const P = post.material.uniforms;
+  // scenes: A is the scene playing now, B the one dissolving out
+  let si = 0; SCENES.forEach((s, i) => { if (t >= s.t0) si = i; });
+  const A = SCENES[si], B = SCENES[Math.max(0, si - 1)];
+  const mix = si === 0 ? 1 : smooth(A.t0, A.t0 + XFADE, t);
+  const ma = media[A.id], mb = media[B.id];
+  P.uHasA.value = ma && ma.tex ? 1 : 0; P.uA.value = ma && ma.tex ? ma.tex : BLANK; P.uAspA.value = ma && ma.asp || 1.7778;
+  P.uHasB.value = mb && mb.tex ? 1 : 0; P.uB.value = mb && mb.tex ? mb.tex : BLANK; P.uAspB.value = mb && mb.asp || 1.7778;
+  P.uMix.value = mix;
+  P.uZoomA.value = 1 + .09 * (t - A.t0) / (A.t1 - A.t0 + XFADE);
+  P.uZoomB.value = 1 + .09 * (t - B.t0) / (B.t1 - B.t0 + XFADE);
+  P.uDrift.value = t * .016;
+  P.uSwirl.value = .08 + .25 * smooth(140, 176, t);
+  syncVideos(t, [si, mix < 1 ? si - 1 : -1]);
+
+  // 2036 transformation: floor sweep, then up the walls; year ring counts 2026 → 2036
+  P.uFuture.value = smooth(SCAN_T0, SCAN_T0 + 8, t);
+  P.uScan.value = t < SCAN_T0 ? 0 : Math.min(2.2, (t - SCAN_T0) / 3);
+  const yr = t < SCAN_T0 ? 2026 : Math.min(2036, 2026 + Math.floor((t - SCAN_T0) / 1.2));
+  ring.draw(yr);
+  const flashT = t < SCAN_T0 ? 99 : ((t - SCAN_T0) % 1.2);
+  P.uFlash.value = t >= SCAN_T0 && t < SCAN_T0 + 13.2 ? Math.exp(-flashT * 3) : 0;
+  P.uRingA.value = smooth(2, 6, t) * (1 - smooth(142, 148, t)) * .85;
+  P.uMapT.value = smooth(146, 158, t);
+
+  // captions
+  const cap = CAPTIONS.findIndex((c) => t >= c.t0 - .1 && t <= c.t1 + 1.2);
+  if (cap < 0) P.uCapA.value = 0;
+  else {
+    const c = CAPTIONS[cap];
+    P.uCap.value = capTextures[cap]; P.uCapRev.value = smooth(c.t0, c.t0 + 1.6, t);
+    P.uCapA.value = 1 - smooth(c.t1, c.t1 + 1.1, t);
+  }
+  P.uFade.value = smooth(0, 3.5, t) * (1 - smooth(DURATION - 2.2, DURATION, t)) * (blackout ? 0 : 1);
+}
+// cube render is only needed when a playing scene has no footage
+function needsWorld() { const u = post.material.uniforms; return u.uHasA.value < .5 || (u.uMix.value < .999 && u.uHasB.value < .5); }
+// ---------------------------------------------------------------- footage library (assets + db)
+const media = {}; // sceneId -> {tex, asp, kind, video, url, name}
+function syncVideos(t, live) {
+  SCENES.forEach((s, i) => {
+    const m = media[s.id]; if (!m || !m.video) return;
+    const v = m.video;
+    if (live.includes(i)) {
+      const want = Math.max(0, t - s.t0 + .01);
+      if (v.duration && isFinite(v.duration)) {
+        const target = want % v.duration;
+        if (Math.abs(v.currentTime - target) > 1.2) { try { v.currentTime = target; } catch (e) {} }
+      }
+      v.playbackRate = playing ? 1 : 0.0001;
+      if (v.paused && playing) v.play().catch(() => {});
+      if (!playing && !v.paused) v.pause();
+    } else if (!v.paused) v.pause();
+  });
+}
+function loadMedia(id, row) {
+  const old = media[id];
+  if (old) { if (old.tex) old.tex.dispose(); if (old.video) { old.video.pause(); old.video.removeAttribute('src'); old.video.load(); } delete media[id]; }
+  if (!row || !(row.asset || row.url)) { renderSlots(); return; }
+  const url = row.url || '/_blob/' + row.asset;
+  const entry = { kind: row.kind, url, name: row.name || '', credit: row.credit || '' };
+  media[id] = entry;
+  if (row.kind === 'video') {
+    const v = document.createElement('video');
+    v.src = url; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
+    v.addEventListener('loadeddata', () => { entry.asp = v.videoWidth / v.videoHeight || 1.7778; entry.tex = new T.VideoTexture(v); entry.tex.minFilter = T.LinearFilter; entry.tex.generateMipmaps = false; renderSlots(); });
+    v.addEventListener('error', () => { entry.error = true; renderSlots(); });
+    entry.video = v;
+  } else {
+    new T.TextureLoader().load(url, (tex) => { entry.tex = tex; entry.asp = tex.image.width / tex.image.height; renderSlots(); },
+      undefined, () => { entry.error = true; renderSlots(); });
+  }
+  renderSlots();
+}
+let assetsApi = null, dbApi = null;
+function renderSlots() {
+  const box = $('slots'); box.textContent = '';
+  SCENES.forEach((s) => {
+    const m = media[s.id];
+    const row = document.createElement('div'); row.className = 'slot';
+    const th = document.createElement('div'); th.className = 'thumb';
+    if (m && m.kind === 'video' && !m.error) { const v = document.createElement('video'); v.src = m.url; v.muted = true; th.appendChild(v); }
+    else if (m && !m.error) th.style.backgroundImage = `url("${m.url}")`;
+    else th.textContent = m && m.error ? 'Missing' : 'Live 3D';
+    const info = document.createElement('div');
+    const b = document.createElement('b'); b.textContent = `${fmt(s.t0)} · ${s.name}`;
+    const sm = document.createElement('small'); sm.textContent = m ? (m.name + (m.credit ? ' · ' + m.credit : '')) : s.want;
+    const acts = document.createElement('div'); acts.className = 'acts-row';
+    if (assetsApi) {
+      const lab = document.createElement('label'); lab.textContent = m ? 'Replace clip' : 'Add clip';
+      const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'video/mp4,video/webm,image/jpeg,image/png,image/webp'; inp.id = 'file-' + s.id;
+      inp.addEventListener('change', () => inp.files[0] && upload(s.id, inp.files[0]));
+      lab.appendChild(inp); acts.appendChild(lab);
+      if (m) { const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.addEventListener('click', () => removeSlot(s.id)); acts.appendChild(rm); }
+    }
+    info.append(b, sm, acts); row.append(th, info); box.appendChild(row);
+  });
+}
+function note(msg, err) { const n = $('media-note'); n.textContent = msg; n.classList.toggle('err', !!err); }
+async function upload(id, file) {
+  if (file.size > 20 * 1024 * 1024) { note('That file is over 20 MB. Export 1920 px wide H.264 MP4 (about 15–20 s) and try again.', true); return; }
+  note('Uploading ' + file.name + '…');
+  try {
+    const old = media[id] && media[id].url;
+    const r = await assetsApi.upload(file);
+    await dbApi.doc('media/' + id).set({ asset: r.id, kind: r.contentType.startsWith('video') ? 'video' : 'image', name: file.name, at: Date.now() });
+    note('Saved. It now plays in this scene.');
+    if (old && old.startsWith('/_blob/')) assetsApi.delete(old.split('/').pop()).catch(() => {});
+  } catch (e) {
+    const code = e && e.code;
+    note(code === 'unsupported_type' ? 'Use an MP4, WebM, JPG, PNG or WebP file.' : code === 'quota_or_state' ? 'Storage is full. Remove a clip first.' : code === 'not_granted' ? 'You need edit access to add clips.' : 'Upload failed. Try again in a moment.', true);
+  }
+}
+async function removeSlot(id) {
+  const m = media[id]; if (!m) return;
+  try { await dbApi.doc('media/' + id).delete(); if (m.url.startsWith('/_blob/')) await assetsApi.delete(m.url.split('/').pop()); note('Removed. This scene now shows the live 3D world.'); }
+  catch (e) { note('Could not remove that clip. Try again.', true); }
+}
+(async () => {
+  renderSlots();
+  if (!window.claude || !window.claude.use) { note('The footage library loads from the published link.'); return; }
+  try { dbApi = await window.claude.use('db'); assetsApi = await window.claude.use('assets'); } catch (e) { /* stays null */ }
+  if (!dbApi) { note('Footage library is not available in this view. Scenes without footage show the live 3D world.'); return; }
+  note(assetsApi ? '' : 'Only editors can change clips. Saved clips still play here.');
+  renderSlots();
+  dbApi.collection('media').onSnapshot((snap) => {
+    snap.docChanges().forEach((ch) => loadMedia(ch.doc.id, ch.type === 'removed' ? null : ch.doc.data()));
+  }, () => note('Footage library is offline. Scenes without footage show the live 3D world.', true));
+})();
+
+// ---------------------------------------------------------------- generative sound
+const audio = (() => {
+  let ctx = null, master, padF, voices = [], ocean, oceanG, rev, on = false, lastCap = -1, lastScan = false, lastChord = -1;
+  const CH = [[146.83, 220, 329.63, 369.99, 440], [123.47, 185, 293.66, 440, 554.37], [98, 196, 293.66, 369.99, 493.88], [146.83, 220, 369.99, 440, 659.25]];
+  function impulse(sec) {
+    const n = ctx.sampleRate * sec, b = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6); }
+    return b;
+  }
+  function init() {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    rev = ctx.createConvolver(); rev.buffer = impulse(4.5); const rg = ctx.createGain(); rg.gain.value = .55; rev.connect(rg); rg.connect(master);
+    padF = ctx.createBiquadFilter(); padF.type = 'lowpass'; padF.frequency.value = 700; padF.Q.value = .4;
+    const pg = ctx.createGain(); pg.gain.value = .05; padF.connect(pg); pg.connect(master); pg.connect(rev);
+    CH[0].forEach((f) => {
+      for (const det of [-5, 5]) { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det; o.connect(padF); o.start(); voices.push(o); }
+    });
+    const nb = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate); const nd = nb.getChannelData(0); let last = 0;
+    for (let i = 0; i < nd.length; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; nd[i] = last * 3.5; }
+    ocean = ctx.createBufferSource(); ocean.buffer = nb; ocean.loop = true;
+    const of = ctx.createBiquadFilter(); of.type = 'lowpass'; of.frequency.value = 900;
+    oceanG = ctx.createGain(); oceanG.gain.value = .0;
+    ocean.connect(of); of.connect(oceanG); oceanG.connect(master); ocean.start();
+  }
+  function chime(freq, when = 0, vol = .08) {
+    const t = ctx.currentTime + when;
+    [1, 2.01, 3.02].forEach((m, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = freq * m;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol / (i + 1), t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + 3.5 / (i + 1));
+      o.connect(g); g.connect(rev); g.connect(master); o.start(t); o.stop(t + 4);
+    });
+  }
+  function whoosh() {
+    const t = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = ocean.buffer;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(120, t); f.frequency.exponentialRampToValueAtTime(3200, t + 3.5);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.9, t + 1.5); g.gain.exponentialRampToValueAtTime(.001, t + 6);
+    src.connect(f); f.connect(g); g.connect(master); g.connect(rev); src.start(t); src.stop(t + 6.5);
+    const o = ctx.createOscillator(), og = ctx.createGain(); o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(34, t + 3);
+    og.gain.setValueAtTime(.35, t); og.gain.exponentialRampToValueAtTime(.001, t + 4); o.connect(og); og.connect(master); o.start(t); o.stop(t + 4.2);
+  }
+  return {
+    get on() { return on; },
+    toggle(v) {
+      on = v === undefined ? !on : v;
+      if (on && !ctx) { try { init(); } catch (e) { on = false; return false; } }
+      if (ctx) { if (on) ctx.resume(); master.gain.setTargetAtTime(on ? .9 : 0, ctx.currentTime, .4); }
+      return on;
+    },
+    update(t, playing, cap) {
+      if (!ctx || !on) return;
+      const now = ctx.currentTime;
+      master.gain.setTargetAtTime(playing ? .9 * Math.min(1, (DURATION - t) / 2.5) : .25, now, .5);
+      const act = t < 36 ? 0 : t < 72 ? 1 : t < 144 ? 2 : 3;
+      if (act !== lastChord) {
+        lastChord = act;
+        CH[act].forEach((f, i) => { voices[i * 2].frequency.setTargetAtTime(f, now, 1.8); voices[i * 2 + 1].frequency.setTargetAtTime(f, now, 1.8); });
+      }
+      padF.frequency.setTargetAtTime(500 + 1600 * smooth(74, 100, t) + 600 * smooth(150, 170, t), now, 1.5);
+      oceanG.gain.setTargetAtTime(.5 * (1 - smooth(30, 50, t)) + .18 * smooth(90, 100, t) * (1 - smooth(106, 115, t)) + .3 * smooth(160, 168, t), now, 1.2);
+      if (cap !== lastCap && cap >= 0 && playing) { const pent = [587.33, 659.25, 739.99, 880, 987.77]; chime(pent[cap % 5], 0, .06); }
+      lastCap = cap;
+      const sc = t > SCAN_T0 && t < SCAN_T0 + 1;
+      if (sc && !lastScan && playing) { whoosh(); [293.66, 440, 587.33, 739.99].forEach((f, i) => chime(f, .9 + i * .18, .05)); }
+      lastScan = sc;
+    },
+  };
+})();
+
+// ---------------------------------------------------------------- operator state + controls
+let showT = 0, playing = false, started = false, blackout = false, mode = 0, last = performance.now();
+const MODES = ['360° Igloo', 'Walls + floor', 'Desk preview'];
+const look = { yaw: 0, pitch: 0, drag: null };
+const actsEl = $('acts');
+ACTS.forEach((a, i) => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'act'; b.id = 'act-' + i;
+  b.innerHTML = '<div class="bar"><i></i></div><span></span>'; b.querySelector('span').textContent = a.name;
+  b.addEventListener('click', () => seek(a.t + .01)); actsEl.appendChild(b);
+});
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('off'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('off'), 1600); }
+function seek(t) { showT = clamp(t, 0, DURATION - .01); }
+function currentAct() { let i = 0; ACTS.forEach((a, k) => { if (showT >= a.t) i = k; }); return i; }
+function setMode(m) {
+  mode = m; post.material.uniforms.uMode.value = m; resize();
+  document.querySelectorAll('#mode-seg button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.mode === m)));
+  $('b-mode').textContent = MODES[m];
+  try { localStorage.setItem('ire2036-mode', String(m)); } catch (e) {}
+}
+function setPlaying(p) { playing = p; $('b-play').textContent = p ? 'Pause' : 'Play'; }
+function fullscreen() {
+  const el = document.documentElement;
+  if (!document.fullscreenElement) { (el.requestFullscreen ? el.requestFullscreen() : Promise.reject()).catch(() => toast('Full screen is not available here')); }
+  else document.exitFullscreen().catch(() => {});
+}
+function start() {
+  if ($('start').disabled) return;
+  started = true; $('gate').hidden = true; $('hud').hidden = false;
+  seek(0); setPlaying(true);
+  if (!document.fullscreenElement && mode !== 2) fullscreen();
+  audio.toggle(true); $('b-audio').textContent = 'Sound off';
+  poke();
+}
+$('start').addEventListener('click', start);
+document.querySelectorAll('#mode-seg button').forEach((b) => b.addEventListener('click', () => setMode(+b.dataset.mode)));
+$('b-play').addEventListener('click', () => setPlaying(!playing));
+$('b-restart').addEventListener('click', () => { seek(0); setPlaying(true); });
+$('b-mode').addEventListener('click', () => setMode((mode + 1) % 3));
+$('b-audio').addEventListener('click', () => { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; });
+$('b-full').addEventListener('click', fullscreen);
+const openMedia = () => { $('media').hidden = false; poke(); };
+$('b-media').addEventListener('click', () => { $('media').hidden = !$('media').hidden; });
+$('open-media').addEventListener('click', openMedia);
+$('close-media').addEventListener('click', () => { $('media').hidden = true; });
+
+let idle;
+function poke() { document.body.classList.remove('show-hidden'); clearTimeout(idle); idle = setTimeout(() => { if (started && $('media').hidden) document.body.classList.add('show-hidden'); }, 2800); }
+addEventListener('pointermove', poke);
+addEventListener('keydown', (e) => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
+  const k = e.key;
+  if (!started && (k === 'Enter' || k === ' ')) { e.preventDefault(); if (!$('start').disabled) start(); return; }
+  if (k === ' ' || k === 'k') { e.preventDefault(); setPlaying(!playing); toast(playing ? 'Playing' : 'Paused'); }
+  else if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); const i = currentAct(); if (i < ACTS.length - 1) seek(ACTS[i + 1].t + .01); toast(ACTS[currentAct()].name); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); const i = currentAct(); seek(showT - ACTS[i].t > 3 ? ACTS[i].t + .01 : ACTS[Math.max(0, i - 1)].t + .01); toast(ACTS[currentAct()].name); }
+  else if (k === 'r' || k === 'R' || k === 'Home') { seek(0); setPlaying(true); toast('Restarted'); }
+  else if (k === 'v' || k === 'V') { setMode((mode + 1) % 3); toast(MODES[mode]); }
+  else if (k === 'f' || k === 'F') fullscreen();
+  else if (k === 'a' || k === 'A') { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; toast(on ? 'Sound on' : 'Sound off'); }
+  else if (k === 'h' || k === 'H') { if (document.body.classList.contains('show-hidden')) poke(); else document.body.classList.add('show-hidden'); return; }
+  else if (k === 'b' || k === 'B' || k === '.') { blackout = !blackout; toast(blackout ? 'Blackout' : 'Picture on'); }
+  else if (k === 'q' || k === 'Q') { qIndex = (qIndex + 1) % QUALITY.length; makeCube(); toast('Detail ' + QUALITY[qIndex] + ' px per face'); }
+  else if (k === 'o' || k === 'O') { const u = post.material.uniforms.uFloorRot; u.value = (u.value + 1) % 4; toast('Floor rotated ' + u.value * 90 + '°'); saveRoom(); }
+  else if (k >= '1' && k <= '4') { seek(ACTS[+k - 1].t + .01); toast(ACTS[+k - 1].name); }
+  else return;
+  poke();
+});
+canvas.addEventListener('pointerdown', (e) => { if (mode === 2) { look.drag = [e.clientX, e.clientY, look.yaw, look.pitch]; canvas.setPointerCapture(e.pointerId); } });
+canvas.addEventListener('pointermove', (e) => { if (look.drag) { look.yaw = look.drag[2] + (e.clientX - look.drag[0]) * .005; look.pitch = clamp(look.drag[3] + (e.clientY - look.drag[1]) * .005, -1.4, 1.4); } });
+canvas.addEventListener('pointerup', () => { look.drag = null; });
+
+function saveRoom() {
+  const R = post.material.uniforms.uRoom.value;
+  try { localStorage.setItem('ire2036-room', JSON.stringify([R.x, R.y, R.z, post.material.uniforms.uEye.value, post.material.uniforms.uFloorRot.value])); } catch (e) {}
+}
+function applyRoom() {
+  const g = (id, lo, hi, dv) => { const v = parseFloat($(id).value); return isFinite(v) ? clamp(v, lo, hi) : dv; };
+  post.material.uniforms.uRoom.value.set(g('r-w', 2, 30, 6), g('r-d', 2, 30, 6), g('r-h', 1.5, 10, 3));
+  post.material.uniforms.uEye.value = g('r-e', 1, 2.2, 1.6);
+  saveRoom(); resize();
+}
+['r-w', 'r-d', 'r-h', 'r-e'].forEach((id) => $(id).addEventListener('change', applyRoom));
+try {
+  const r = JSON.parse(localStorage.getItem('ire2036-room') || 'null');
+  if (Array.isArray(r) && r.length >= 4) { $('r-w').value = r[0]; $('r-d').value = r[1]; $('r-h').value = r[2]; $('r-e').value = r[3]; post.material.uniforms.uFloorRot.value = (r[4] | 0) % 4; }
+} catch (e) {}
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  let rx = 0, ry = 0, rw = w, rh = h;
+  if (mode === 1) {
+    const R = post.material.uniforms.uRoom.value, asp = (3 * R.x + 2 * R.y) / Math.max(R.z, R.y);
+    if (w / h > asp) { rw = h * asp; rx = (w - rw) / 2; } else { rh = w / asp; ry = (h - rh) / 2; }
+  }
+  post.material.uniforms.uRect.value.set(rx, ry, rw, rh);
+}
+addEventListener('resize', resize);
+
+// ---------------------------------------------------------------- loop
+let fpsAcc = 0, fpsN = 0, fpsShown = 0, wake = null;
+async function keepAwake() { try { if (navigator.wakeLock && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && started) keepAwake(); });
+function frame(now) {
+  const dt = Math.min(.1, (now - last) / 1000); last = now;
+  if (playing) { showT += dt; if (showT >= DURATION) { showT = 0; } }
+  const idleT = started ? showT : 40 + (now / 1000) % 30;
+  U.uTime.value = now / 1000; U.uShow.value = idleT;
+  applyTime(idleT);
+  post.material.uniforms.uPrev.value.set(look.yaw, look.pitch, Math.tan(40 * Math.PI / 180));
+  if (needsWorld()) cubeCam.update(renderer, scene);
+  renderer.setRenderTarget(null);
+  renderer.render(post.scene, post.cam);
+  const cap = CAPTIONS.findIndex((c) => idleT >= c.t0 && idleT <= c.t1);
+  audio.update(idleT, playing, cap);
+  // HUD
+  if (started) {
+    $('clock').firstChild.nodeValue = fmt(showT) + ' ';
+    const ai = currentAct();
+    ACTS.forEach((a, i) => {
+      const end = i < ACTS.length - 1 ? ACTS[i + 1].t : DURATION;
+      const el = $('act-' + i); el.classList.toggle('on', i === ai);
+      el.querySelector('i').style.width = (clamp((showT - a.t) / (end - a.t), 0, 1) * 100).toFixed(1) + '%';
+    });
+  }
+  fpsAcc += dt; fpsN++;
+  if (fpsAcc > 1) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; $('stat').textContent = `${fpsShown} fps · ${QUALITY[qIndex]} px/face · ${FIELD_SOURCE} · Q to change`; }
+  requestAnimationFrame(frame);
+}
+window.__ireland = { seek: (t) => { started = true; seek(t); }, pause: () => setPlaying(false), mode: setMode, media: loadMedia };
+
+let savedMode = 0; try { savedMode = +(localStorage.getItem('ire2036-mode') || 0) || 0; } catch (e) {}
+setMode(clamp(savedMode, 0, 2));
+applyRoom();
+const fontsReady = document.fonts && document.fonts.load
+  ? Promise.all(['400 100px "Instrument Serif"', '600 40px "IBM Plex Sans Condensed"', '400 56px "IBM Plex Sans Condensed"'].map((f) => document.fonts.load(f))).catch(() => {})
+  : Promise.resolve();
+buildCaptions();
+Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]).then(buildCaptions);
+keepAwake();
+
+// ---------------------------------------------------------------- bring Ireland in
+// The show cannot be built until the real ground is resolved, so the start button
+// stays disabled until the elevation field and, where available, the imagery are in.
+(async () => {
+  const noteEl = $('load-note'), startBtn = $('start');
+  const say = (msg) => { noteEl.textContent = msg; };
+  const pct = (p) => Math.round(clamp(p, 0, 1) * 100);
+  startBtn.disabled = true;
+
+  let field = null;
+  try {
+    say('Loading real elevation for Ireland…');
+    field = await realField((p) => say(`Loading real elevation for Ireland… ${pct(p / .63)}%`));
+    FIELD_SOURCE = 'SRTM elevation';
+    try {
+      imageryTex = await realImagery((p) => say(`Loading satellite imagery… ${pct(p)}%`));
+      FIELD_SOURCE = 'satellite + SRTM';
+      try { detailTex = await detailImagery((p) => say(`Loading Dublin at full detail… ${pct(p)}%`)); }
+      catch (e) { detailTex = null; }
+    } catch (e) {
+      imageryTex = null; detailTex = null;
+      say('Imagery service unavailable. Using real elevation with generated land cover.');
+    }
+  } catch (e) {
+    field = null;
+  }
+
+  if (!field) {
+    say('Map services unreachable. Building Ireland from the offline model…');
+    FIELD_SOURCE = 'offline island model';
+    await new Promise((r) => setTimeout(r, 30));
+    field = syntheticField();
+  }
+
+  FIELD = field;
+  elevTex.image.data.set(field);
+  elevTex.needsUpdate = true;
+
+  buildWorld();
+
+  say(imageryTex
+    ? (detailTex ? 'Ready. Real terrain, satellite imagery and a full-detail Dublin.' : 'Ready. Real terrain and satellite imagery loaded.')
+    : FIELD_SOURCE === 'SRTM elevation'
+      ? 'Ready. Real terrain loaded, land cover generated.'
+      : 'Ready. Offline island model: real coastline, real uplands, real cities.');
+  noteEl.classList.remove('err');
+  startBtn.disabled = false;
+  requestAnimationFrame(frame);
+})();
+})();
+</script>
