@@ -894,43 +894,6 @@ const skyLUT = (() => {
       float north=smoothstep(.5,-.9,d.z);
       c+=aur*uAurora*north*.55*smoothstep(0.,.1,d.y);
     }
-    // Clouds, raymarched through a real cumulus layer (1.4 to 3.6 km) with light
-    // marched toward the sun: dark bases, bright tops, silver edges against the light.
-    if(d.y>.004&&uCam.y<1400.&&uCloud>.01){
-      const float CB=1400., CT=3600.;
-      float t0=(CB-uCam.y)/d.y, t1=min((CT-uCam.y)/d.y,t0+22000.);
-      const int NC=20;
-      float stp=(t1-t0)/float(NC);
-      float Tr=1.; vec3 Ls=vec3(0.);
-      vec3 L=normalize(uLightDir);
-      float mu=dot(d,L);
-      float ph=mix(.08*(1.-.49)/pow(1.+.49-2.*.7*mu,1.5)*6.,.9,.35)+.55*pow(max(mu,0.),12.);
-      vec3 amb=skyCol(vec3(0.,1.,0.))*1.2+uAmb*.35;
-      float jit=hash12(gl_FragCoord.xy+fract(uTime)*37.);
-      for(int i=0;i<NC;i++){
-        float tt=t0+stp*(float(i)+jit);
-        vec3 p=uCam+d*tt;
-        vec2 w=p.xz*.000035+uTime*vec2(.0035,.0012);
-        float hf=(p.y-CB)/(CT-CB);
-        float base=texture2D(uNoise,w).r*.62+texture2D(uNoise,w*2.7+.31).g*.38;
-        float prof=smoothstep(0.,.12,hf)*smoothstep(1.,.35,hf);
-        float den=(base-(1.-uCloud*1.05))*prof*3.2-texture2D(uNoise,w*9.+hf*.4).b*.28*(1.-hf*.6);
-        if(den>.001){
-          den=min(den,1.);
-          vec3 q=p+L*260.; vec2 wq=q.xz*.000035+uTime*vec2(.0035,.0012);
-          float hq=(q.y-CB)/(CT-CB);
-          float dl=max((texture2D(uNoise,wq).r*.62+texture2D(uNoise,wq*2.7+.31).g*.38-(1.-uCloud*1.05))*smoothstep(0.,.12,hq)*smoothstep(1.,.35,hq)*3.2,0.);
-          float sun=exp(-dl*6.)*(1.-exp(-den*4.));   // Beer-powder
-          vec3 S=uLightCol*3.2*sun*ph+amb*(.35+.65*hf);
-          float a=1.-exp(-den*stp*.0065);
-          Ls+=Tr*a*S; Tr*=1.-a;
-          if(Tr<.02) break;
-        }
-      }
-      // Distant cloud melts into the sky's own colour.
-      float fade=exp(-t0*.000045);
-      c=mix(c,c*Tr+Ls,fade);
-    }
     gl_FragColor=vec4(c,1.);
   }`, {}, { side: T.BackSide, depthWrite: false });
   const sky = new T.Mesh(new T.SphereGeometry(1600000, 48, 24), m);
@@ -953,6 +916,67 @@ const cloudDeck = (() => {
   { uOp: { value: 0 } }, { transparent: true, depthWrite: false, side: T.DoubleSide });
   const g = new T.PlaneGeometry(1600000, 1600000, 1, 1); g.rotateX(-Math.PI / 2); g.translate(0, 10500, 0);
   const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 6; scene.add(mesh);
+  return m;
+})();
+
+// ---------------------------------------------------------------- cloud layer
+// A real altocumulus layer from 4.2 to 6.5 km, raymarched through its full thickness
+// with light marched toward the sun: dark bases, bright tops, silver edges against the
+// light. It lives in the world, not painted on the sky, so it is a ceiling on the low
+// passes, a sea of cloud beneath the high ones, and the climbs punch through it.
+const cloudLayer = (() => {
+  const CB = 4200, CT = 6500;
+  const m = mat(`varying vec3 vW; void main(){ vec3 p=position; p.xz+=uCam.xz; vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
+  varying vec3 vW;
+  const float CB=${CB}., CT=${CT}.;
+  float dens(vec3 p){
+    vec2 w=p.xz*.000030+uTime*vec2(.0030,.0010);
+    float hf=clamp((p.y-CB)/(CT-CB),0.,1.);
+    float base=texture2D(uNoise,w).r*.62+texture2D(uNoise,w*2.7+.31).g*.38;
+    float prof=smoothstep(0.,.18,hf)*smoothstep(1.,.4,hf);
+    return (base-(1.-uCloud*1.05))*prof*3.4-texture2D(uNoise,w*9.+hf*.4).b*.30*(1.-hf*.6);
+  }
+  void main(){
+    vec3 d=normalize(vW-uCam); float tp=length(vW-uCam);
+    if(abs(d.y)<1e-4) discard;
+    float tA=(CB-uCam.y)/d.y, tB=(CT-uCam.y)/d.y;
+    float t0=max(min(tA,tB),0.), t1=max(tA,tB);
+    t0=max(t0,tp-14000.); t1=min(t1,tp+14000.);
+    if(t1<=t0) discard;
+    const int NC=22;
+    float stp=(t1-t0)/float(NC);
+    vec3 L=normalize(uLightDir); float mu=dot(d,L);
+    float g=.62; float hg=(1.-g*g)/(4.*PI*pow(1.+g*g-2.*g*mu,1.5));
+    float ph=mix(.09,hg*4.,.55)+.35;
+    vec3 amb=skyCol(vec3(0.,1.,0.))*1.1+uAmb*.4;
+    float Tr=1.; vec3 Ls=vec3(0.); float tHit=-1.;
+    float jit=hash12(gl_FragCoord.xy+fract(uTime)*37.);
+    for(int i=0;i<NC;i++){
+      float tt=t0+stp*(float(i)+jit);
+      vec3 p=uCam+d*tt;
+      float den=dens(p);
+      if(den>.001){
+        den=min(den,1.);
+        if(tHit<0.) tHit=tt;
+        float dl=max(dens(p+L*300.),0.)+max(dens(p+L*900.),0.)*.6;
+        float hf=clamp((p.y-CB)/(CT-CB),0.,1.);
+        float sun=exp(-dl*5.)*(1.-exp(-den*4.));
+        vec3 S=uLightCol*3.4*sun*ph+amb*(.3+.7*hf);
+        float a=1.-exp(-den*stp*.0055);
+        Ls+=Tr*a*S; Tr*=1.-a;
+        if(Tr<.02) break;
+      }
+    }
+    float A=1.-Tr;
+    if(A<.004) discard;
+    // Fade out toward the far edge of the layer, then let the air sit in front of it.
+    float edge=1.-smoothstep(160000.,260000.,length(vW.xz-uCam.xz));
+    vec3 C=applyFog(Ls/max(A,1e-3),uCam+d*max(tHit,t0));
+    A*=edge;
+    gl_FragColor=vec4(C*A,A);
+  }`, {}, { transparent: true, depthWrite: false, side: T.DoubleSide, blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor });
+  const g = new T.PlaneGeometry(560000, 560000, 1, 1); g.rotateX(-Math.PI / 2); g.translate(0, (CB + CT) / 2, 0);
+  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 4; scene.add(mesh);
   return m;
 })();
 
