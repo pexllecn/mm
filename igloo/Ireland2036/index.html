@@ -1,0 +1,987 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Ireland 2036</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  /* Bundled copies of the two typefaces, so the show looks the same offline on the Igloo PC. */
+  @font-face { font-family: "Instrument Serif"; font-style: normal; font-weight: 400; font-display: swap; src: url("assets/fonts/instrument-serif-latin-400-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap; src: url("assets/fonts/instrument-serif-latin-400-italic.woff2") format("woff2"); }
+  @font-face { font-family: "IBM Plex Sans Condensed"; font-weight: 400; font-display: swap; src: url("assets/fonts/ibm-plex-sans-condensed-latin-400-normal.woff2") format("woff2"); }
+  @font-face { font-family: "IBM Plex Sans Condensed"; font-weight: 500; font-display: swap; src: url("assets/fonts/ibm-plex-sans-condensed-latin-500-normal.woff2") format("woff2"); }
+  @font-face { font-family: "IBM Plex Sans Condensed"; font-weight: 600; font-display: swap; src: url("assets/fonts/ibm-plex-sans-condensed-latin-600-normal.woff2") format("woff2"); }
+
+  /* Single-look design: this page drives a projection room, so it stays dark in every theme. */
+  :root {
+    color-scheme: dark;
+    --void: #030609;
+    --panel: rgba(6, 14, 19, 0.84);
+    --panel-solid: #08131a;
+    --line: rgba(217, 212, 199, 0.16);
+    --stone: #d9d4c7;
+    --mute: #8a9ea1;
+    --gold: #f2c14e;
+    --sea: #7fd1c7;
+    --alert: #ef8a6b;
+    --sans: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --serif: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  }
+  html, body { height: 100%; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--void); color: var(--stone); font-family: var(--sans); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #000; }
+  body.show-hidden, body.show-hidden * { cursor: none !important; }
+
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold); }
+  button, select, input { font: inherit; color: inherit; }
+  button:focus-visible, select:focus-visible, input:focus-visible, label:focus-within { outline: 2px solid var(--sea); outline-offset: 2px; }
+
+  /* Start gate */
+  #gate {
+    position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: flex-start;
+    padding-inline: clamp(16px, 5vw, 72px); padding-block: clamp(24px, 6vh, 72px);
+    background: linear-gradient(90deg, rgba(3,6,9,.94) 0%, rgba(3,6,9,.74) 40%, rgba(3,6,9,.12) 78%);
+    overflow-y: auto;
+  }
+  .gate-card { max-width: 580px; display: grid; gap: 20px; }
+  .gate-card h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(56px, 9vw, 120px); line-height: .9; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+  .gate-card h1 em { color: var(--gold); font-style: italic; }
+  .gate-card p { margin: 0; font-size: 17px; line-height: 1.5; max-width: 52ch; }
+  .spec { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--mute); font-variant-numeric: tabular-nums; }
+  .spec b { color: var(--stone); font-weight: 500; }
+  .spec .warn { color: var(--gold); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: rgba(8,19,26,.6); flex-wrap: wrap; }
+  .seg button { border: 0; background: transparent; padding: 8px 14px; border-radius: 999px; font-size: 14px; cursor: pointer; color: var(--mute); }
+  .seg button[aria-pressed="true"] { background: var(--stone); color: var(--void); }
+  .room { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--mute); }
+  .room input { width: 4.2em; background: rgba(8,19,26,.7); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--stone); font-variant-numeric: tabular-nums; }
+  .go { border: 0; border-radius: 999px; padding: 16px 30px; font-size: 17px; font-weight: 600; letter-spacing: .04em; background: var(--gold); color: #1a1405; cursor: pointer; }
+  .go:hover { filter: brightness(1.08); }
+  .ghost { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 14px 20px; font-size: 15px; cursor: pointer; }
+  .ghost:hover { border-color: var(--stone); }
+  .credit { margin: 0; font-size: 12px; line-height: 1.45; color: var(--mute); max-width: 60ch; }
+  .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 16px; font-size: 13px; color: var(--mute); }
+  kbd { font-family: var(--sans); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; color: var(--stone); margin-right: 6px; }
+
+  /* Operator bar */
+  #hud {
+    position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    width: min(1000px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    backdrop-filter: blur(10px); padding: 12px 14px; display: grid; gap: 10px; transition: opacity .5s, transform .5s;
+  }
+  body.show-hidden #hud { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
+  .acts { display: grid; grid-template-columns: 36fr 36fr 72fr 36fr; gap: 4px; }
+  .act { border: 0; background: transparent; text-align: left; padding: 0; cursor: pointer; display: grid; gap: 6px; }
+  .act .bar { height: 4px; border-radius: 2px; background: rgba(217,212,199,.14); overflow: hidden; }
+  .act .bar i { display: block; height: 100%; width: 0; background: var(--stone); }
+  .act.on .bar i { background: var(--gold); }
+  .act span { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+  .act.on span { color: var(--stone); }
+  .ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ctl button { border: 1px solid var(--line); background: rgba(217,212,199,.04); border-radius: 8px; padding: 7px 12px; font-size: 14px; cursor: pointer; }
+  .ctl button:hover { border-color: var(--stone); }
+  .ctl button.primary { background: var(--stone); color: var(--void); border-color: var(--stone); min-width: 84px; }
+  .clock { font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 500; letter-spacing: .02em; margin-right: 6px; }
+  .clock small { font-size: 14px; color: var(--mute); }
+  .spacer { flex: 1; }
+  .stat { font-size: 12px; color: var(--mute); font-variant-numeric: tabular-nums; }
+  .stat b { color: var(--gold); font-weight: 500; }
+
+  /* Footage library */
+  #media {
+    position: fixed; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); width: min(440px, calc(100% - 32px));
+    max-height: calc(100% - 150px); overflow-y: auto; background: var(--panel-solid); border: 1px solid var(--line);
+    border-radius: 14px; padding: 18px; display: grid; gap: 12px;
+  }
+  #media h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0; }
+  #media p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--mute); }
+  .slot { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; }
+  .thumb { width: 96px; aspect-ratio: 16/9; border-radius: 6px; background: #0e1c24 center/cover no-repeat; display: grid; place-items: center; font-size: 11px; color: var(--mute); overflow: hidden; }
+  .thumb video { width: 100%; height: 100%; object-fit: cover; }
+  .thumb.miss { outline: 1px dashed rgba(242,193,78,.5); color: var(--gold); }
+  .slot b { font-weight: 500; display: block; }
+  .slot small { color: var(--mute); font-size: 12px; display: block; }
+  .slot .acts-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .slot label, .slot button { font-size: 13px; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; background: transparent; }
+  .slot input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .note { font-size: 13px; color: var(--sea); min-height: 1em; }
+  .note.err { color: var(--alert); }
+
+  #toast { position: fixed; top: calc(18px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); background: var(--panel-solid); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; font-size: 14px; transition: opacity .4s; pointer-events: none; }
+  #toast.off { opacity: 0; }
+
+  @media (max-width: 640px) {
+    #gate { align-items: flex-start; background: rgba(3,6,9,.88); }
+    .acts span { font-size: 10px; letter-spacing: .06em; }
+    .clock { font-size: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) { #hud, #toast { transition: none; } }
+</style>
+
+<canvas id="stage" aria-label="Ireland 2036 immersive projection"></canvas>
+
+<section id="gate" aria-labelledby="gate-title">
+  <div class="gate-card">
+    <div class="eyebrow">Igloo immersive · four walls + floor</div>
+    <h1 id="gate-title">Ireland <em>2036</em></h1>
+    <p>Real footage of Ireland today wraps the whole room: Atlantic cliffs, green fields and Dublin streets flow around the walls and pool across the floor. Then a wave of light sweeps the room, and Ireland 2036 takes shape around you.</p>
+    <div class="spec"><span><b>3:00</b> runtime</span><span><b>10</b> scenes, no cuts</span><span><b>360°</b> walls + floor</span><span id="clip-note">Checking footage…</span></div>
+    <div class="row" role="group" aria-label="Output format">
+      <div class="seg" id="mode-seg">
+        <button type="button" data-mode="0" aria-pressed="true">360° Igloo</button>
+        <button type="button" data-mode="1" aria-pressed="false">Walls + floor</button>
+        <button type="button" data-mode="2" aria-pressed="false">Desk preview</button>
+      </div>
+    </div>
+    <div class="room" role="group" aria-label="Room size in metres">
+      <label for="r-w">Front wall <input id="r-w" type="number" min="2" max="30" step="0.1" value="6"> m</label>
+      <label for="r-d">Side wall <input id="r-d" type="number" min="2" max="30" step="0.1" value="6"> m</label>
+      <label for="r-h">Height <input id="r-h" type="number" min="1.5" max="10" step="0.1" value="3"> m</label>
+      <label for="r-e">Eye <input id="r-e" type="number" min="1" max="2.2" step="0.05" value="1.6"> m</label>
+    </div>
+    <div class="row">
+      <button type="button" class="go" id="start">▶ Start the show</button>
+      <button type="button" class="ghost" id="open-media">Footage library</button>
+    </div>
+    <p class="credit">Footage: General views of Dublin, © European Union 2026, European Parliament (CC BY 4.0). Cliffs of Moher drone-video, Wiebe de Jager (CC BY-SA 4.0). Connor Pass, Superbass (CC BY-SA 4.0). Adapted: trimmed, cropped, graded and blended. No endorsement implied.</p>
+    <div class="keys" aria-label="Operator keys">
+      <span><kbd>Space</kbd>Pause / play</span>
+      <span><kbd>→</kbd><kbd>←</kbd>Next / previous act</span>
+      <span><kbd>R</kbd>Restart</span>
+      <span><kbd>V</kbd>Output format</span>
+      <span><kbd>F</kbd>Full screen</span>
+      <span><kbd>A</kbd>Sound on / off</span>
+      <span><kbd>H</kbd>Hide controls</span>
+      <span><kbd>B</kbd>Blackout</span>
+      <span><kbd>O</kbd>Rotate floor panel</span>
+    </div>
+  </div>
+</section>
+
+<div id="hud" hidden>
+  <div class="acts" id="acts"></div>
+  <div class="ctl">
+    <span class="clock" id="clock">0:00 <small>/ 3:00</small></span>
+    <button type="button" class="primary" id="b-play">Pause</button>
+    <button type="button" id="b-restart">Restart</button>
+    <button type="button" id="b-mode">360° Igloo</button>
+    <button type="button" id="b-audio">Sound on</button>
+    <button type="button" id="b-media">Footage</button>
+    <button type="button" id="b-full">Full screen</button>
+    <span class="spacer"></span>
+    <span class="stat" id="stat"></span>
+  </div>
+</div>
+
+<aside id="media" hidden aria-labelledby="media-title">
+  <div class="row" style="justify-content:space-between">
+    <h2 id="media-title">Footage library</h2>
+    <button type="button" class="ghost" id="close-media" style="padding:8px 14px">Close</button>
+  </div>
+  <p>Each scene plays a segment of real footage, wrapped around all four walls and reflected across the floor. You can swap any scene for your own licensed clip (MP4 or WebM, 20 MB).</p>
+  <div id="slots"></div>
+  <div class="note" id="media-note" role="status"></div>
+</aside>
+
+<div id="toast" class="off" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+
+// ---------------------------------------------------------------- show data
+const DURATION = 180;
+// Each scene is one real clip wrapped around the room. `want` describes the shot.
+// `grade`: [saturation, warmth, contrast, exposure]
+// Real footage, credited below. Each scene plays one clip: the front half of the room from `in`
+// seconds at `rate`, the back half from `in2` at `rate2`. Segments (plus the 3.4 s dissolve out)
+// stay inside a single kind of shot, so aerial never faces street level.
+const CLIPS = {
+  dublinDocks:   { file: '01-dublin-today',     credit: 'General views of Dublin · © European Union, 2026, European Parliament · CC BY 4.0' },
+  dublinStreets: { file: '02-connected-dublin', credit: 'General views of Dublin · © European Union, 2026, European Parliament · CC BY 4.0' },
+  moher:         { file: '03-atlantic-energy',  credit: 'Cliffs of Moher drone-video · Wiebe de Jager, 2014 · CC BY-SA 4.0 (adapted)' },
+  conorPass:     { file: '04-closer-to-home',   credit: 'Connor Pass Flug Richtung Dingle · Superbass, 2019 · CC BY-SA 4.0 (adapted)' },
+  moherFaces:    { file: '05-across-ireland',   credit: 'Cliffs of Moher drone-video · Wiebe de Jager, 2014 · CC BY-SA 4.0 (adapted)' },
+  liffey:        { file: '06-our-next-decade',  credit: 'General views of Dublin · © European Union, 2026, European Parliament · CC BY 4.0' },
+};
+// `grade`: [saturation, warmth, contrast, exposure]
+const SCENES = [
+  { id: 's01', t0: 0,   name: 'Atlantic edge',   clip: 'moher',         in: 0,  rate: 1,   in2: 20, rate2: .55, grade: [1.06, .10, 1.06, 1.03], want: 'Cliffs of Moher, aerial' },
+  { id: 's02', t0: 18,  name: 'The land',        clip: 'conorPass',     in: 0,  rate: 1,   in2: 19, rate2: .6, grade: [1.08, .05, 1.05, 1.02], want: 'Green valleys, aerial' },
+  { id: 's03', t0: 36,  name: 'The capital',     clip: 'dublinStreets', in: 17, rate: .8,  in2: 21, rate2: .6, grade: [1.04, .06, 1.06, 1.00], want: 'Dublin streets and people' },
+  { id: 's04', t0: 54,  name: 'Open economy',    clip: 'dublinDocks',   in: 0,  rate: 1,   in2: 12, rate2: .8, grade: [1.02, .02, 1.08, 1.00], want: 'Dublin Docklands, aerial' },
+  { id: 's05', t0: 72,  name: 'The turn',        clip: 'liffey',        in: 0,  rate: .65, in2: 7,  rate2: .34, grade: [.96, -.04, 1.10, .98],  want: 'The Liffey from above' },
+  { id: 's06', t0: 90,  name: 'Energy',          clip: 'moherFaces',    in: 8,  rate: .85, in2: 16, rate2: .8, grade: [1.02, .00, 1.08, 1.00], want: 'Atlantic coast and sea' },
+  { id: 's07', t0: 108, name: 'Transport',       clip: 'dublinStreets', in: 0,  rate: .7,  in2: 3,  rate2: .6, grade: [1.00, .00, 1.07, 1.00], want: 'City movement' },
+  { id: 's08', t0: 126, name: 'Housing',         clip: 'dublinDocks',   in: 11, rate: .95, in2: 5,  rate2: .8, grade: [1.00, .02, 1.07, 1.00], want: 'New buildings and cranes' },
+  { id: 's09', t0: 144, name: 'One nation',      clip: 'conorPass',     in: 19, rate: .85, in2: 2,  rate2: .75, grade: [.98, -.02, 1.08, .96],  want: 'Wide landscape' },
+  { id: 's10', t0: 162, name: 'Together',        clip: 'moher',         in: 19, rate: .85, in2: 0,  rate2: .8, grade: [1.06, .12, 1.05, 1.04], want: 'Cliffs at golden light' },
+];
+SCENES.forEach((s, i) => { s.t1 = i < SCENES.length - 1 ? SCENES[i + 1].t0 : DURATION; });
+const XFADE = 3.4;
+const SCAN_T0 = 76;
+const ACTS = [{ name: 'Today', t: 0 }, { name: 'Momentum', t: 36 }, { name: 'Ireland 2036', t: 72 }, { name: 'Together', t: 144 }];
+const CAPTIONS = [
+  { t0: 3,   t1: 15,  eb: 'Ireland · 2026',       ti: 'Where we stand today',         sub: 'The Cliffs of Moher, on the Wild Atlantic Way' },
+  { t0: 21,  t1: 33,  eb: 'Our people',           ti: '5.4 million people',           sub: 'One of the youngest populations in Europe' },
+  { t0: 39,  t1: 51,  eb: 'Dublin · the capital', ti: 'A capital on the move',        sub: 'Talent, technology and trade along the Liffey' },
+  { t0: 57,  t1: 69,  eb: 'Open economy',         ti: 'Connected to the world',       sub: 'European home to many of the world’s leading companies' },
+  { t0: 80,  t1: 88,  eb: '2026 → 2036',          ti: 'The next ten years start now', sub: '' },
+  { t0: 93,  t1: 105, eb: 'Energy',               ti: 'Powered by the Atlantic',      sub: 'National offshore wind targets: 5 GW by 2030, 20 GW by 2040' },
+  { t0: 111, t1: 123, eb: 'Transport',            ti: 'Connected by MetroLink',       sub: 'Airport to city centre by metro, regions linked by rail' },
+  { t0: 129, t1: 141, eb: 'Housing',              ti: 'Homes for a growing nation',   sub: 'New communities, built at pace and powered cleanly' },
+  { t0: 147, t1: 159, eb: 'One nation',           ti: 'Every region, connected',      sub: 'Dublin · Cork · Galway · Limerick · Waterford' },
+  { t0: 164, t1: 177.5, eb: 'Ireland 2036',       ti: 'Ambition, delivered together', sub: '' },
+];
+const IRL = [[-7.37,55.38],[-6.95,55.2],[-6.5,55.25],[-6.12,55.22],[-5.97,55.05],[-5.8,54.85],[-5.7,54.67],[-5.55,54.65],[-5.45,54.45],[-5.55,54.3],[-5.85,54.22],[-6.05,54.02],[-6.2,53.99],[-6.35,53.85],[-6.25,53.7],[-6.2,53.55],[-6.1,53.45],[-6.05,53.38],[-6.2,53.34],[-6.1,53.25],[-6.02,53.1],[-6.0,52.95],[-6.15,52.75],[-6.25,52.55],[-6.33,52.3],[-6.36,52.17],[-6.6,52.18],[-6.95,52.2],[-7.1,52.15],[-7.55,52.03],[-7.85,51.95],[-8.2,51.82],[-8.3,51.8],[-8.55,51.65],[-8.95,51.57],[-9.35,51.48],[-9.82,51.45],[-9.55,51.62],[-10.05,51.6],[-10.25,51.78],[-9.9,51.9],[-10.35,52.0],[-10.45,52.12],[-10.0,52.15],[-9.85,52.3],[-9.6,52.55],[-9.45,52.6],[-9.85,52.62],[-9.55,52.9],[-9.43,52.97],[-9.3,53.12],[-9.05,53.15],[-9.1,53.25],[-9.6,53.25],[-10.0,53.4],[-10.2,53.55],[-9.9,53.75],[-9.95,53.9],[-10.2,54.0],[-10.0,54.25],[-9.3,54.3],[-8.6,54.25],[-8.55,54.45],[-8.3,54.5],[-8.6,54.62],[-8.8,54.7],[-8.45,54.85],[-8.5,55.0],[-8.3,55.15],[-7.9,55.25],[-7.65,55.25],[-7.55,55.1],[-7.37,55.38]];
+const CITIES = [['Dublin', -6.26, 53.35], ['Cork', -8.47, 51.9], ['Galway', -9.05, 53.27], ['Limerick', -8.63, 52.66], ['Waterford', -7.11, 52.26]];
+
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+// ---------------------------------------------------------------- WebGL2
+const canvas = $('stage');
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: false });
+if (!gl) { $('clip-note').textContent = 'This machine has no WebGL2. Use Chrome or Edge.'; return; }
+
+const VS = `#version 300 es
+in vec2 p; void main(){ gl_Position=vec4(p,0.,1.); }`;
+const FS = `#version 300 es
+precision highp float;
+out vec4 o;
+uniform vec4 uRect; uniform int uMode; uniform vec3 uRoom; uniform float uEye; uniform vec3 uPrev; uniform int uFloorRot;
+uniform float uTime; uniform float uFade;
+uniform sampler2D uA; uniform sampler2D uB; uniform sampler2D uA2; uniform sampler2D uB2; uniform float uHasA; uniform float uHasB; uniform float uAspA; uniform float uAspB;
+uniform float uLodA; uniform float uLodB; uniform vec4 uGrA; uniform vec4 uGrB;
+uniform float uMix; uniform float uDrift; uniform float uZoomA; uniform float uZoomB; uniform float uSwirl;
+uniform float uFuture; uniform float uScan;
+uniform sampler2D uCap; uniform float uCapA; uniform float uCapRev;
+uniform sampler2D uRing; uniform float uRingA; uniform float uFlash;
+uniform sampler2D uMap; uniform float uMapT; uniform vec2 uCities[5];
+const vec3 GOLD=vec3(1.,.76,.40); const vec3 TEAL=vec3(.42,1.,.9);
+float hash12(vec2 p){ vec3 p3=fract(vec3(p.xyx)*.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
+float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
+  return mix(mix(hash12(i),hash12(i+vec2(1,0)),u.x), mix(hash12(i+vec2(0,1)),hash12(i+vec2(1,1)),u.x), u.y); }
+float fbm(vec2 p){ float a=.5,s=0.; for(int i=0;i<4;i++){ s+=a*vnoise(p); p=p*2.03+vec2(17.1,9.2); a*=.5; } return s; }
+vec3 rotY(vec3 d,float a){ float c=cos(a),s=sin(a); return vec3(d.x*c+d.z*s,d.y,-d.x*s+d.z*c); }
+float W,D,H,PER;
+float perim(vec2 xz){
+  vec2 n=vec2(xz.x/(W*.5),xz.y/(D*.5));
+  if(abs(n.y)>=abs(n.x)) return n.y<0.? xz.x+W*.5 : W+D+(W*.5-xz.x);
+  return n.x>0.? W+(xz.y+D*.5) : 2.*W+D+(D*.5-xz.y);
+}
+// sRGB <-> linear, so grading and blending happen in light, not in gamma
+vec3 toLin(vec3 c){ return pow(max(c,0.),vec3(2.2)); }
+vec3 toSrgb(vec3 c){ return pow(max(c,0.),vec3(1./2.2)); }
+// filmic grade: exposure, warmth, saturation, contrast around mid-grey
+vec3 grade(vec3 c, vec4 g){
+  c*=g.w;
+  c*=vec3(1.+g.y*.18,1.+g.y*.04,1.-g.y*.16);
+  float l=dot(c,vec3(.2126,.7152,.0722));
+  c=mix(vec3(l),c,g.x);
+  c=toSrgb(c); c=clamp((c-.5)*g.z+.5,0.,1.); c=toLin(c);
+  return c;
+}
+// footage: the clip plays as a true panorama across the front half of the room; the back half
+// shows the same place at another moment of the flight (a second, time-offset copy). The two
+// halves meet in soft, uneven seams on the side walls. Nothing is mirrored or stretched.
+vec3 foot(sampler2D fr, sampler2D bk, float asp, float P, float v, float zoom, float lod){
+  float hp=PER*.5, fe=1.3;                        // feather, metres either side of a seam
+  float x=mod(P-W*.5-uDrift+hp,PER)-hp;        // metres from the front-wall centre, -hp..hp
+  float span=hp+2.*fe;                            // each view overlaps the other inside the seams
+  float want=span/H;
+  vec2 crop=vec2(min(1.,want/asp),min(1.,asp/want));
+  float xb=mod(x,PER)-hp;                         // metres from the back-wall centre
+  vec2 uf=(vec2(x/span+.5,v)-.5)*crop/zoom+.5;
+  vec2 ub=(vec2(xb/span+.5,v)-.5)*crop/zoom+.5;
+  uf.y=clamp(uf.y,.002,.998); ub.y=uf.y;
+  float jag=(vnoise(vec2(v*3.,uTime*.05))-.5)*.6;  // an organic seam, not a straight line
+  float w=smoothstep(-fe,fe,abs(x)-hp*.5+jag);   // 0 = front view, 1 = back view
+  vec3 cf=w<.999?textureLod(fr,uf,lod).rgb:vec3(0.);
+  vec3 cbk=w>.001?textureLod(bk,ub,lod).rgb:vec3(0.);
+  return toLin(mix(cf,cbk,w));
+}
+// a quiet stand-in while a scene has no clip: deep water light, never a flat colour
+vec3 standby(float P, float v, bool fl, vec2 q){
+  vec2 c=fl?q*.45:vec2(P*.18,v*1.2);
+  float n=fbm(c+vec2(uTime*.03,-uTime*.02));
+  vec3 a=vec3(.004,.016,.03), b=vec3(.02,.09,.12);
+  return mix(a,b,smoothstep(.25,.85,n))+GOLD*.02*smoothstep(.6,1.,n);
+}
+void main(){
+  W=uRoom.x; D=uRoom.y; H=uRoom.z; PER=2.*W+2.*D;
+  vec2 uv=(gl_FragCoord.xy-uRect.xy)/uRect.zw;
+  if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.){ o=vec4(0,0,0,1); return; }
+  vec3 eye=vec3(0.,uEye,0.);
+  vec3 d; bool onFloor=false; float P=0.,t=0.,wallL=W,ws=0.; vec2 q=vec2(0.);
+  if(uMode==1){
+    // canvas: Front | Right | Back | Left walls across the top, floor panel on the right
+    float LW=PER, TW=LW+W, TH=max(H,D); float x=uv.x*TW, y=uv.y*TH;
+    if(x<LW){
+      if(y<TH-H){ o=vec4(0,0,0,1); return; }
+      t=(y-(TH-H))/H; P=x;
+      if(x<W){ ws=x/W; wallL=W; } else if(x<W+D){ ws=(x-W)/D; wallL=D; } else if(x<2.*W+D){ ws=(x-W-D)/W; wallL=W; } else { ws=(x-2.*W-D)/D; wallL=D; }
+    } else {
+      if(y>D){ o=vec4(0,0,0,1); return; }
+      vec2 f=vec2((x-LW)/W,y/D)-.5;
+      for(int i=0;i<4;i++){ if(i<uFloorRot) f=vec2(-f.y,f.x); }
+      q=vec2(f.x*W,-f.y*D); onFloor=true;
+    }
+  } else {
+    if(uMode==0){ float lon=(uv.x-.5)*6.2831853; float lat=(uv.y-.5)*3.1415927; d=vec3(cos(lat)*sin(lon),sin(lat),-cos(lat)*cos(lon)); }
+    else { vec2 n=uv*2.-1.; float asp=uRect.z/uRect.w; d=normalize(vec3(n.x*uPrev.z*asp,n.y*uPrev.z,-1.));
+      float cp=cos(uPrev.y),sp=sin(uPrev.y); d=vec3(d.x,d.y*cp+d.z*sp,-d.y*sp+d.z*cp); d=rotY(d,uPrev.x); }
+    if(d.y<0.){ float k=-uEye/d.y; q=d.xz*k; onFloor=abs(q.x)<=W*.5&&abs(q.y)<=D*.5; }
+    if(!onFloor){
+      float kx=abs(d.x)>1e-5?(W*.5)/abs(d.x):1e9, kz=abs(d.z)>1e-5?(D*.5)/abs(d.z):1e9, k=min(kx,kz);
+      vec3 p=eye+d*k; t=p.y/H; P=perim(p.xz);
+      if(kz<kx){ wallL=W; ws=d.z<0.?(p.x+W*.5)/W:(W*.5-p.x)/W; } else { wallL=D; ws=d.x>0.?(p.z+D*.5)/D:(D*.5-p.z)/D; }
+    }
+  }
+  // floor: square-polar reflection pool with a slow vortex toward the centre
+  float r=0.,fv=0.,lodF=0.;
+  if(onFloor){
+    r=max(abs(q.x)/(W*.5),abs(q.y)/(D*.5));
+    float sw=pow(1.-r,2.)*uSwirl;
+    float ca=cos(sw*6.2831),sa=sin(sw*6.2831); vec2 qs=vec2(q.x*ca-q.y*sa,q.x*sa+q.y*ca);
+    vec2 wob=vec2(vnoise(q*1.7+uTime*.23),vnoise(q*1.7-uTime*.19+7.))-.5;
+    float rip=sin(r*30.-uTime*1.1)*.003*(1.-r)+wob.x*.012;
+    P=perim(qs/max(r,1e-4))+wob.y*.12;
+    fv=clamp((1.-r)*.55+rip,0.,1.);                 // the lower part of the walls, reflected
+    lodF=2.2+2.8*(1.-r);
+  }
+  float v=onFloor?fv:clamp(t,0.,1.);
+  // liquid dissolve from B (outgoing) to A (incoming)
+  vec2 nc=onFloor?q*.8:vec2(P,t*H)*.5;
+  float n=fbm(nc+vec2(uTime*.05,0.));
+  float edgeP=uMix*1.25-.12;
+  float warp=(1.-abs(uMix*2.-1.))*.035*(n-.5);
+  vec3 ca=uHasA>.5?grade(foot(uA,uA2,uAspA,P+warp*PER*.25,v+warp,uZoomA,onFloor?min(lodF,uLodA):0.),uGrA):standby(P,v,onFloor,q);
+  vec3 cb=uHasB>.5?grade(foot(uB,uB2,uAspB,P-warp*PER*.25,v-warp,uZoomB,onFloor?min(lodF,uLodB):0.),uGrB):standby(P,v,onFloor,q);
+  float m=smoothstep(n-.05,n+.05,edgeP);
+  vec3 col=mix(cb,ca,m);
+  float inT=step(.001,uMix)*step(uMix,.999);
+  float edge=exp(-abs(edgeP-n)*40.)*inT;
+  col+=toLin(mix(GOLD,TEAL,uFuture))*edge*.9;
+  // light leak travelling round the room during each transition
+  float leakX=fract(P/PER-uMix*1.3+.15);
+  col+=toLin(vec3(1.,.62,.3))*exp(-pow((leakX-.5)*7.,2.))*(1.-abs(uMix*2.-1.))*inT*.22*(onFloor?.5:1.);
+  if(!onFloor&&t>1.) col*=1.-smoothstep(1.,1.04,t);
+  if(onFloor){
+    // water: darker toward the centre, caustic glints, a thin light line where floor meets wall
+    col*=mix(vec3(.16,.21,.26),vec3(.62,.7,.78),smoothstep(.0,1.,r));   // deep water toward the centre
+    float caust=pow(vnoise(q*3.1+vec2(uTime*.3,-uTime*.24))*vnoise(q*4.3-vec2(uTime*.22,uTime*.18)),2.4);
+    col+=vec3(.6,.75,.9)*caust*.05;
+    col+=toLin(GOLD)*exp(-abs(r-1.)*70.)*.25;
+  } else {
+    // soft floor bounce on the lower walls
+    col*=.86+.14*smoothstep(0.,.25,t);
+  }
+  // floating motes: slow, soft, always in the room
+  {
+    vec2 mc=onFloor?q*2.2:vec2(P,t*H)*1.6;
+    vec2 cell=floor(mc); float rn=hash12(cell+floor(uTime*.0)); vec2 lc=fract(mc);
+    vec2 pos=vec2(.5+.35*sin(rn*50.+uTime*(.1+rn*.1)),fract(rn*9.+uTime*(onFloor?.0:.025)*(.5+rn)));
+    float dm=length(lc-pos);
+    col+=toLin(mix(vec3(1.,.93,.82),GOLD,uFuture))*smoothstep(.07,.0,dm)*step(.86,rn)*.18;
+  }
+  // Ireland 2036: colour grade, sweep across the floor then up the walls, holographic grid, rising light
+  if(uFuture>0.){
+    float l=dot(col,vec3(.2126,.7152,.0722));
+    vec3 g=mix(vec3(.0,.035,.06),vec3(1.,.72,.38),smoothstep(.0,.6,sqrt(l)))*(l*1.2+.01);
+    col=mix(col,mix(col,g,.38),uFuture);
+  }
+  if(uScan>0.){
+    float sf=min(uScan,1.05), sh=uScan-1.;
+    if(onFloor){
+      col+=toLin(GOLD)*exp(-abs(r-sf)*20.)*step(uScan,1.4)*1.6;
+      vec2 g=abs(fract(q/.5)-.5); col+=toLin(TEAL)*smoothstep(.48,.5,max(g.x,g.y))*step(r,sf)*.05*smoothstep(.15,.8,r)*uFuture;
+    } else {
+      col+=toLin(GOLD)*exp(-abs(t-sh)*26.)*step(0.,sh)*step(sh,1.15)*1.5;
+      float inside=step(t,sh);
+      vec2 cell=floor(vec2(P,t*H)/.32); float rn=hash12(cell); vec2 lc=fract(vec2(P,t*H)/.32);
+      float py=fract(uTime*.16*(.5+rn)+rn*7.);
+      float dd=length(lc-vec2(.5+.3*sin(rn*40.+uTime*.7),py));
+      col+=toLin(GOLD)*smoothstep(.08,.0,dd)*step(.62,rn)*inside*uFuture*.9;
+      vec2 g=abs(fract(vec2(P,t*H)/.75)-.5); col+=toLin(TEAL)*smoothstep(.488,.5,max(g.x,g.y))*inside*.05*uFuture;
+    }
+  }
+  vec3 outc=toSrgb(col);
+  // captions, one on every wall
+  if(!onFloor&&uCapA>0.){
+    float cw=min(wallL*.88,H*2.9), ch=cw/3.2;
+    vec2 cu=vec2((ws-.5)*wallL/cw+.5,(t*H-H*.64)/ch+.5);
+    if(cu.x>0.&&cu.x<1.&&cu.y>0.&&cu.y<1.){
+      vec4 c=texture(uCap,cu); float dd=abs(cu.x-.5)*2.; float rr=uCapRev*1.2;
+      float vis=smoothstep(dd-.12,dd,rr);
+      outc=mix(outc,c.rgb,c.a*vis*uCapA);
+      outc+=GOLD*exp(-abs(rr-dd)*30.)*step(rr,1.1)*smoothstep(.25,.45,cu.y)*smoothstep(.8,.6,cu.y)*.35*uCapA;
+    }
+  }
+  // floor: year ring and the island map
+  if(onFloor){
+    float S=min(W,D)*.98; vec2 fu=vec2(.5+q.x/S,.5-q.y/S);
+    if(uRingA>0.&&fu.x>0.&&fu.x<1.&&fu.y>0.&&fu.y<1.){
+      vec4 c=texture(uRing,fu); vec2 pp=fu-.5; float rr=length(pp)*2.; float a=atan(pp.y,pp.x);
+      float sweep=pow(fract(a/6.2831+uTime*.04),8.)*step(.9,rr)*step(rr,1.);
+      outc=mix(outc,outc*.55,smoothstep(.6,.9,rr)*step(rr,1.02)*uRingA*.5);
+      outc+=(c.rgb*c.a*(.85+uFlash*1.2)+GOLD*sweep*.45+GOLD*exp(-abs(rr-.88-uFlash*.1)*80.)*uFlash*1.2)*uRingA;
+    }
+    if(uMapT>0.){
+      float SM=min(W,D)*1.02; vec2 mu=vec2(.5+q.x/SM,.5-q.y/SM);
+      if(mu.x>0.&&mu.x<1.&&mu.y>0.&&mu.y<1.){
+        vec4 tm=texture(uMap,mu); float rr=length(mu-uCities[0]);
+        float rev=1.-smoothstep(uMapT*1.1-.06,uMapT*1.1,rr);
+        float front=exp(-abs(rr-uMapT*1.1)*60.)*step(uMapT,1.);
+        float flow=.5+.5*sin(rr*120.-uTime*4.);
+        vec3 mc=vec3(.55,1.,.92)*pow(tm.r,2.4)*1.1+GOLD*tm.g*(.55+flow*.7)+vec3(.35,.7,.9)*tm.b*(.04+.08*vnoise(mu*40.+uTime*.5));
+        for(int i=0;i<5;i++){ float dc=length(mu-uCities[i]); mc+=GOLD*(smoothstep(.011,.0,dc)*1.6+exp(-abs(fract(uTime*.35+float(i)*.2)*.08-dc)*300.)*.6*smoothstep(.09,.0,dc)); }
+        outc=outc*(1.-.6*uMapT)+(mc*rev+TEAL*front*.8)*uMapT;
+      }
+    }
+  }
+  outc+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)*.012;
+  o=vec4(clamp(outc,0.,1.)*uFade,1.);
+}`;
+function compile(type, src) {
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+try {
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.bindAttribLocation(prog, 0, 'p'); gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+} catch (e) { console.error(e); $('clip-note').textContent = 'The graphics card rejected the renderer. Use Chrome or Edge.'; return; }
+gl.useProgram(prog);
+const vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+const loc = {}; const L = (n) => loc[n] || (loc[n] = gl.getUniformLocation(prog, n));
+const u1f = (n, v) => gl.uniform1f(L(n), v), u1i = (n, v) => gl.uniform1i(L(n), v);
+
+// textures: 0 A, 1 B, 2 caption, 3 ring, 4 map
+function makeTex() {
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  return t;
+}
+function upload(tex, src, mips) {
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  if (mips) { gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); }
+  else gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+}
+const TEX = { cap: makeTex(), ring: makeTex(), map: makeTex() };
+['uA', 'uB', 'uCap', 'uRing', 'uMap', 'uA2', 'uB2'].forEach((n, i) => u1i(n, i));
+
+// ---------------------------------------------------------------- canvases: captions, year ring, island map
+function captionCanvas(c) {
+  const W = 2048, H = 640, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  const bg = x.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * .48);
+  bg.addColorStop(0, 'rgba(2,6,10,.55)'); bg.addColorStop(.6, 'rgba(2,6,10,.3)'); bg.addColorStop(1, 'rgba(2,6,10,0)');
+  x.save(); x.scale(1, H / W * 1.6); x.fillStyle = bg; x.fillRect(0, 0, W, W); x.restore();
+  x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+  x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 30;
+  x.fillStyle = '#f2c14e'; x.font = '600 40px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
+  if ('letterSpacing' in x) x.letterSpacing = '12px';
+  x.fillText(c.eb.toUpperCase(), W / 2, 150);
+  if ('letterSpacing' in x) x.letterSpacing = '0px';
+  x.shadowBlur = 0; x.fillRect(W / 2 - 60, 180, 120, 3); x.shadowBlur = 36;
+  x.fillStyle = '#ffffff'; let size = 196; x.font = `400 ${size}px "Instrument Serif", Georgia, serif`;
+  while (x.measureText(c.ti).width > W - 120 && size > 90) { size -= 6; x.font = `400 ${size}px "Instrument Serif", Georgia, serif`; }
+  x.fillText(c.ti, W / 2, c.sub ? 380 : 420);
+  if (c.sub) { x.fillStyle = '#ebe6da'; x.font = '400 56px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif'; x.fillText(c.sub, W / 2, 490); }
+  return cv;
+}
+let capCanvases = [], capShown = -2;
+function buildCaptions() { capCanvases = CAPTIONS.map(captionCanvas); capShown = -2; ringShown = null; }
+const ringCv = document.createElement('canvas'); ringCv.width = ringCv.height = 2048;
+let ringShown = null;
+function drawRing(year) {
+  if (year === ringShown) return; ringShown = year;
+  const S = 2048, c = ringCv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, S, S);
+  c.translate(S / 2, S / 2); c.strokeStyle = 'rgba(255,255,255,.85)';
+  for (let i = 0; i < 360; i += 2) {
+    const a = i * Math.PI / 180, big = i % 30 === 0, r0 = big ? 930 : 962;
+    c.lineWidth = big ? 4 : 1.5; c.beginPath(); c.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); c.lineTo(Math.cos(a) * 1000, Math.sin(a) * 1000); c.stroke();
+  }
+  c.lineWidth = 2.5; c.beginPath(); c.arc(0, 0, 900, 0, 6.2832); c.stroke();
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  for (let k = 0; k < 4; k++) {
+    c.save(); c.rotate(k * Math.PI / 2);
+    c.fillStyle = '#ffffff'; c.font = '400 170px "Instrument Serif", Georgia, serif'; c.fillText(String(year), 0, -770);
+    c.fillStyle = '#f2c14e'; c.font = '600 34px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
+    if ('letterSpacing' in c) c.letterSpacing = '10px';
+    c.fillText(year >= 2036 ? 'IRELAND 2036' : (year > 2026 ? 'BUILDING THE DECADE' : 'IRELAND TODAY'), 0, -650);
+    if ('letterSpacing' in c) c.letterSpacing = '0px';
+    c.restore();
+  }
+  upload(TEX.ring, ringCv, true);
+}
+const cityUV = (() => {
+  const S = 2048, cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const c = cv.getContext('2d'); const K = S * .8 / 4.9;
+  const proj = ([lon, lat]) => [S / 2 + (lon + 8.05) * Math.cos(53.4 * Math.PI / 180) * K * 1.62, S / 2 - (lat - 53.4) * K];
+  const island = () => { c.beginPath(); IRL.forEach((p, i) => { const q = proj(p); i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); }); c.closePath(); };
+  c.fillStyle = '#000'; c.fillRect(0, 0, S, S);
+  c.save(); island(); c.fillStyle = 'rgb(70,0,0)'; c.fill(); c.globalCompositeOperation = 'lighter';
+  c.shadowColor = 'rgb(255,0,0)'; c.shadowBlur = 40; c.lineJoin = 'round'; c.strokeStyle = 'rgb(255,0,0)'; c.lineWidth = 6; c.stroke();
+  c.shadowBlur = 0; c.lineWidth = 3; c.stroke(); c.restore();
+  const cp = CITIES.map((x) => proj([x[1], x[2]]));
+  c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgb(0,200,0)'; c.lineWidth = 5; c.shadowColor = 'rgb(0,255,0)'; c.shadowBlur = 18;
+  for (let i = 0; i < cp.length; i++) for (let j = i + 1; j < cp.length; j++) {
+    const a = cp[i], b = cp[j], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, dx = b[0] - a[0], dy = b[1] - a[1];
+    c.beginPath(); c.moveTo(a[0], a[1]); c.quadraticCurveTo(mx - dy * .18, my + dx * .18, b[0], b[1]); c.stroke();
+  }
+  c.restore();
+  c.save(); island(); c.clip(); c.globalCompositeOperation = 'lighter'; c.fillStyle = 'rgb(0,0,255)';
+  for (let y = 0; y < S; y += 18) for (let x = 0; x < S; x += 18) { c.beginPath(); c.arc(x, y, 2.6, 0, 6.283); c.fill(); }
+  c.restore();
+  upload(TEX.map, cv, true);
+  return cp.map((p) => [p[0] / S, 1 - p[1] / S]);
+})();
+gl.uniform2fv(L('uCities'), new Float32Array(cityUV.flat()));
+
+// ---------------------------------------------------------------- footage
+// A clip can come from the Igloo package (assets/video/<scene>.mp4 or .webm, listed in
+// assets/manifest.json) or from the published page's own footage library (db + assets).
+let assetsApi = null, dbApi = null;
+const media = {}; // sceneId -> { el, tex, asp, kind, url, name, credit, ready, error, dirty, lod }
+function mediaEntry(id, spec) {
+  const old = media[id];
+  if (old) {
+    [old.tex, old.tex2].forEach((t) => t && gl.deleteTexture(t));
+    [old.el, old.el2].forEach((el) => { if (el && el.pause) { el.pause(); el.removeAttribute('src'); el.textContent = ''; try { el.load(); } catch (e) {} } });
+    delete media[id];
+  }
+  if (!spec) { renderSlots(); updateClipNote(); return; }
+  const e = { kind: spec.kind || 'video', url: spec.urls[0], name: spec.name || '', credit: spec.credit || '', tex: makeTex(), tex2: null, asp: 16 / 9, ready: false, lod: 0 };
+  media[id] = e;
+  if (e.kind === 'image') {
+    const im = new Image();
+    im.onload = () => { upload(e.tex, im, true); e.asp = im.naturalWidth / im.naturalHeight; e.lod = Math.floor(Math.log2(Math.max(im.naturalWidth, im.naturalHeight))) - 1; e.ready = true; renderSlots(); updateClipNote(); };
+    im.onerror = () => { e.error = true; renderSlots(); updateClipNote(); };
+    im.src = e.url; e.el = im;
+  } else {
+    const mk = () => {
+      const el = document.createElement('video');
+      el.muted = true; el.loop = true; el.playsInline = true; el.preload = 'auto'; el.setAttribute('playsinline', '');
+      spec.urls.forEach((u) => { const s = document.createElement('source'); s.src = u; if (/\.webm($|\?)/i.test(u)) s.type = 'video/webm'; else if (/\.mp4($|\?)/i.test(u)) s.type = 'video/mp4'; el.appendChild(s); });
+      return el;
+    };
+    const v = mk();
+    // the second copy shows the same place at another moment, for the back half of the room
+    const v2 = mk(); e.el2 = v2; e.tex2 = makeTex();
+    v2.addEventListener('loadeddata', () => { e.ready2 = true; e.dirty2 = true; });
+    if (v2.requestVideoFrameCallback) { const cb2 = () => { e.dirty2 = true; v2.requestVideoFrameCallback(cb2); }; v2.requestVideoFrameCallback(cb2); }
+    v2.load();
+    const last = v.lastElementChild;
+    if (last) last.addEventListener('error', () => { e.error = true; renderSlots(); updateClipNote(); });
+    else v.src = e.url;
+    v.addEventListener('loadeddata', () => {
+      e.asp = (v.videoWidth / v.videoHeight) || 16 / 9; e.ready = true; e.dirty = true; e.url = v.currentSrc || e.url;
+      e.lod = Math.floor(Math.log2(Math.max(v.videoWidth, v.videoHeight))) - 1;
+      renderSlots(); updateClipNote();
+    });
+    v.addEventListener('error', () => { e.error = true; renderSlots(); updateClipNote(); });
+    if (v.requestVideoFrameCallback) { const cb = () => { e.dirty = true; v.requestVideoFrameCallback(cb); }; v.requestVideoFrameCallback(cb); }
+    v.load();
+    e.el = v;
+  }
+  renderSlots(); updateClipNote();
+}
+// A scene plays its own library clip if one was added, otherwise its shared footage clip.
+const entryFor = (sc) => (media[sc.id] && !media[sc.id].error ? media[sc.id] : media['clip:' + sc.clip]);
+function syncVideos(t, live, run) {
+  const want = new Map();
+  live.forEach((i) => { const sc = SCENES[i]; const e = entryFor(sc); if (e && !want.has(e)) want.set(e, [sc, Math.max(0, t - sc.t0)]); });
+  Object.values(media).forEach((e) => {
+    if (!e.el || e.kind !== 'video' || !e.ready) return;
+    [[e.el, 'pending', 0], [e.el2, 'pending2', 1]].forEach(([el, flag, back]) => {
+      if (!el) return;
+      if (!want.has(e)) { if (!el.paused) el.pause(); return; }
+      const [sc, dt] = want.get(e);
+      const own = !!e.fromDb; // a library clip plays from its start, back view half a clip later
+      const rate = own ? 1 : (back ? sc.rate2 : sc.rate);
+      if (el.duration && isFinite(el.duration)) {
+        const target = own ? (dt + (back ? el.duration / 2 : 0)) % el.duration : Math.min(el.duration - .05, (back ? sc.in2 : sc.in) + dt * rate);
+        if (Math.abs(el.currentTime - target) > 1.2) { try { el.currentTime = target; } catch (err) {} }
+      }
+      if (Math.abs(el.playbackRate - rate) > .01) el.playbackRate = rate;
+      if (run && el.paused && !e[flag]) { e[flag] = true; el.play().then(() => { e[flag] = false; }, (err) => { e[flag] = false; e.playError = String(err && err.name); }); }
+      if (!run && !el.paused) el.pause();
+    });
+  });
+}
+function bindScene(unit, unit2, e) {
+  gl.activeTexture(gl.TEXTURE0 + unit);
+  if (!e || !e.ready || e.error) { gl.bindTexture(gl.TEXTURE_2D, null); gl.activeTexture(gl.TEXTURE0 + unit2); gl.bindTexture(gl.TEXTURE_2D, null); return 0; }
+  if (e.kind === 'video' && (e.dirty || !e.el.requestVideoFrameCallback) && e.el.readyState >= 2) { upload(e.tex, e.el, true); e.dirty = false; }
+  gl.bindTexture(gl.TEXTURE_2D, e.tex);
+  gl.activeTexture(gl.TEXTURE0 + unit2);
+  if (e.el2 && e.ready2) {
+    if ((e.dirty2 || !e.el2.requestVideoFrameCallback) && e.el2.readyState >= 2) { upload(e.tex2, e.el2, true); e.dirty2 = false; }
+    gl.bindTexture(gl.TEXTURE_2D, e.tex2);
+  } else gl.bindTexture(gl.TEXTURE_2D, e.tex); // images, or until the second copy is ready
+  return 1;
+}
+function updateClipNote() {
+  const have = SCENES.filter((s) => { const e = entryFor(s); return e && e.ready && !e.error; }).length;
+  const n = $('clip-note');
+  n.innerHTML = have === SCENES.length ? `<b>${have}/10</b> clips loaded` : `<span class="warn">${have}/10 clips loaded · open Footage library</span>`;
+}
+
+// Shared footage lives next to the page in assets/video (both in the Igloo package and on
+// the published page). MP4 (H.264) is tried first, then WebM (VP9) for players without H.264.
+Object.keys(CLIPS).forEach((k) => {
+  const c = CLIPS[k];
+  mediaEntry('clip:' + k, { urls: ['assets/video/' + c.file + '.mp4', 'assets/video/' + c.file + '.webm'], kind: 'video', name: c.file, credit: c.credit });
+});
+// Optional package manifest: a music track, or replacement files for any clip.
+fetch('assets/manifest.json', { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((m) => {
+  if (!m) return;
+  if (m.clips) Object.keys(m.clips).forEach((k) => {
+    if (!CLIPS[k]) return;
+    const c = m.clips[k]; const urls = Array.isArray(c.src) ? c.src : [c.src];
+    mediaEntry('clip:' + k, { urls, kind: /\.(jpe?g|png|webp)$/i.test(urls[0]) ? 'image' : 'video', name: urls[0].split('/').pop(), credit: c.credit || CLIPS[k].credit });
+  });
+  if (m.music) audio.setTrack(m.music);
+}).catch(() => {});
+
+// published page: footage library through the platform's asset store
+function renderSlots() {
+  const box = $('slots'); box.textContent = '';
+  SCENES.forEach((s) => {
+    const m = entryFor(s);
+    const row = document.createElement('div'); row.className = 'slot';
+    const th = document.createElement('div'); th.className = 'thumb';
+    if (m && m.ready && !m.error && m.kind === 'video') { const v = document.createElement('video'); v.src = m.url; v.muted = true; v.preload = 'metadata'; th.appendChild(v); }
+    else if (m && m.ready && !m.error) th.style.backgroundImage = `url("${m.url}")`;
+    else { th.classList.add('miss'); th.textContent = m && m.error ? 'Not found' : (m ? 'Loading' : 'Needed'); }
+    const info = document.createElement('div');
+    const b = document.createElement('b'); b.textContent = `${fmt(s.t0)} · ${s.name}`;
+    const sm = document.createElement('small'); sm.textContent = m && m.ready ? (m.fromDb ? m.name : m.credit + ' · from ' + (s.in | 0) + ' s') : s.want;
+    const acts = document.createElement('div'); acts.className = 'acts-row';
+    if (assetsApi) {
+      const lab = document.createElement('label'); lab.textContent = media[s.id] ? 'Replace clip' : 'Use my own clip';
+      const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'video/mp4,video/webm,image/jpeg,image/png,image/webp'; inp.id = 'file-' + s.id;
+      inp.addEventListener('change', () => inp.files[0] && addClip(s.id, inp.files[0]));
+      lab.appendChild(inp); acts.appendChild(lab);
+      if (media[s.id] && media[s.id].fromDb) { const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.addEventListener('click', () => removeClip(s.id)); acts.appendChild(rm); }
+    }
+    info.append(b, sm, acts); row.append(th, info); box.appendChild(row);
+  });
+}
+function note(msg, err) { const n = $('media-note'); n.textContent = msg; n.classList.toggle('err', !!err); }
+async function addClip(id, file) {
+  if (file.size > 20 * 1024 * 1024) { note('That file is over 20 MB. Export a 1920 px H.264 MP4 of about 18 seconds and try again.', true); return; }
+  note('Uploading ' + file.name + '…');
+  try {
+    const r = await assetsApi.upload(file);
+    const old = media[id] && media[id].fromDb ? media[id].asset : null;
+    await dbApi.doc('media/' + id).set({ asset: r.id, kind: r.contentType.startsWith('video') ? 'video' : 'image', name: file.name, at: Date.now() });
+    note('Saved. It now plays in this scene.');
+    if (old && old !== r.id) assetsApi.delete(old).catch(() => {});
+  } catch (e) {
+    const code = e && e.code;
+    note(code === 'unsupported_type' ? 'Use an MP4, WebM, JPG, PNG or WebP file.' : code === 'quota_or_state' ? 'Storage is full. Remove a clip first.' : code === 'not_granted' ? 'You need edit access to add clips.' : 'Upload failed. Try again in a moment.', true);
+  }
+}
+async function removeClip(id) {
+  const m = media[id]; if (!m || !m.fromDb) return;
+  try { await dbApi.doc('media/' + id).delete(); await assetsApi.delete(m.asset); note('Removed.'); }
+  catch (e) { note('Could not remove that clip. Try again.', true); }
+}
+(async () => {
+  renderSlots(); updateClipNote();
+  if (!window.claude || !window.claude.use) return;
+  try { dbApi = await window.claude.use('db'); assetsApi = await window.claude.use('assets'); } catch (e) { /* stays null */ }
+  if (!dbApi) return;
+  if (!assetsApi) note('Only editors can change clips. Saved clips still play here.');
+  renderSlots();
+  dbApi.collection('media').onSnapshot((snap) => {
+    snap.docChanges().forEach((ch) => {
+      const row = ch.type === 'removed' ? null : ch.doc.data();
+      mediaEntry(ch.doc.id, row && row.asset ? { urls: ['/_blob/' + row.asset], kind: row.kind, name: row.name, credit: row.credit } : null);
+      if (row && media[ch.doc.id]) { media[ch.doc.id].fromDb = true; media[ch.doc.id].asset = row.asset; }
+    });
+    renderSlots();
+  }, () => note('Footage library is offline right now.', true));
+})();
+
+// ---------------------------------------------------------------- sound: a slow, warm ambient bed (or the package's music track)
+const audio = (() => {
+  let ctx = null, master, bed, voices = [], track = null, trackUrl = null, trackGain, on = false, lastChord = -1, air;
+  // Four gentle voicings, each held for a whole act and crossfaded over several seconds.
+  const CH = [
+    [146.83, 220.00, 277.18, 329.63],  // D  A  C# E   (Dmaj9 colour)
+    [123.47, 185.00, 246.94, 293.66],  // B  F# B  D   (Bm)
+    [98.00, 146.83, 246.94, 293.66],   // G  D  B  D   (Gmaj)
+    [110.00, 164.81, 220.00, 277.18],  // A  E  A  C#  (A, resolving home)
+  ];
+  function reverb(sec) {
+    const n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3.2) * (i < ctx.sampleRate * .02 ? i / (ctx.sampleRate * .02) : 1); }
+    const cv = ctx.createConvolver(); cv.buffer = b; return cv;
+  }
+  function init() {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = 0;
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -24; comp.ratio.value = 2.5; comp.attack.value = .05; comp.release.value = .8;
+    master.connect(comp); comp.connect(ctx.destination);
+    if (trackUrl) startTrack();
+    const rv = reverb(7); const wet = ctx.createGain(); wet.gain.value = .7; rv.connect(wet); wet.connect(master);
+    bed = ctx.createGain(); bed.gain.value = trackUrl ? 0 : 1; bed.connect(master);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100; lp.Q.value = .3;
+    const dry = ctx.createGain(); dry.gain.value = .35; lp.connect(dry); dry.connect(bed); lp.connect(rv); rv.connect(bed);
+    // each voice: a sine plus a soft triangle an octave up, with its own very slow swell
+    CH[0].forEach((f, i) => {
+      const g = ctx.createGain(); g.gain.value = .0;
+      const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = f;
+      const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = f * 2; o2.detune.value = 3 + i;
+      const g2 = ctx.createGain(); g2.gain.value = .18;
+      o1.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp);
+      const lfo = ctx.createOscillator(); lfo.frequency.value = .03 + i * .011; const lg = ctx.createGain(); lg.gain.value = .012;
+      lfo.connect(lg); lg.connect(g.gain);
+      o1.start(); o2.start(); lfo.start();
+      g.gain.setTargetAtTime(.028, ctx.currentTime, 3);
+      voices.push({ o1, o2 });
+    });
+    // a faint breath of air on top
+    const nb = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate); const nd = nb.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    const ns = ctx.createBufferSource(); ns.buffer = nb; ns.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 5200; bp.Q.value = .7;
+    air = ctx.createGain(); air.gain.value = .0;
+    ns.connect(bp); bp.connect(air); air.connect(rv); ns.start();
+  }
+  function startTrack() {
+    if (!ctx || track) return;
+    track = new Audio(); track.src = trackUrl; track.loop = true; track.preload = 'auto';
+    const srcNode = ctx.createMediaElementSource(track);
+    trackGain = ctx.createGain(); trackGain.gain.value = .9; srcNode.connect(trackGain); trackGain.connect(master);
+    track.addEventListener('error', () => { if (bed) bed.gain.setTargetAtTime(1, ctx.currentTime, .5); track = null; });
+  }
+  return {
+    get on() { return on; },
+    setTrack(url) { trackUrl = url; if (ctx) { startTrack(); bed.gain.setTargetAtTime(0, ctx.currentTime, 1); } },
+    toggle(v) {
+      on = v === undefined ? !on : v;
+      if (on && !ctx) { try { init(); } catch (e) { on = false; return false; } }
+      if (ctx) { if (on) ctx.resume(); master.gain.setTargetAtTime(on ? .8 : 0, ctx.currentTime, .6); }
+      return on;
+    },
+    update(t, playing) {
+      if (!ctx || !on) return;
+      const now = ctx.currentTime;
+      master.gain.setTargetAtTime(playing ? .8 * Math.min(1, (DURATION - t) / 3) * Math.min(1, t / 2 + .15) : .2, now, .8);
+      if (track) {
+        const want = t % (track.duration || 1e9);
+        if (playing && track.paused) track.play().catch(() => {});
+        if (!playing && !track.paused) track.pause();
+        if (track.duration && Math.abs(track.currentTime - want) > 2) { try { track.currentTime = want; } catch (e) {} }
+        return;
+      }
+      const act = t < 36 ? 0 : t < 72 ? 1 : t < 144 ? 2 : 3;
+      if (act !== lastChord) {
+        lastChord = act;
+        CH[act].forEach((f, i) => { voices[i].o1.frequency.setTargetAtTime(f, now, 2.5); voices[i].o2.frequency.setTargetAtTime(f * 2, now, 2.5); });
+      }
+      air.gain.setTargetAtTime(.004 + .006 * smooth(SCAN_T0, SCAN_T0 + 10, t), now, 2);
+    },
+  };
+})();
+
+// ---------------------------------------------------------------- operator state + controls
+let showT = 0, playing = false, started = false, blackout = false, mode = 0, last = performance.now();
+const MODES = ['360° Igloo', 'Walls + floor', 'Desk preview'];
+const look = { yaw: 0, pitch: 0, drag: null };
+const room = { w: 6, d: 6, h: 3, eye: 1.6, rot: 0 };
+ACTS.forEach((a, i) => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'act'; b.id = 'act-' + i;
+  b.innerHTML = '<div class="bar"><i></i></div><span></span>'; b.querySelector('span').textContent = a.name;
+  b.addEventListener('click', () => seek(a.t + .01)); $('acts').appendChild(b);
+});
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('off'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('off'), 1600); }
+function seek(t) { showT = clamp(t, 0, DURATION - .01); }
+function currentAct() { let i = 0; ACTS.forEach((a, k) => { if (showT >= a.t) i = k; }); return i; }
+function setMode(m) {
+  mode = m; resize();
+  document.querySelectorAll('#mode-seg button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.mode === m)));
+  $('b-mode').textContent = MODES[m];
+  try { localStorage.setItem('ire2036-mode', String(m)); } catch (e) {}
+}
+function setPlaying(p) { playing = p; $('b-play').textContent = p ? 'Pause' : 'Play'; }
+function fullscreen() {
+  const el = document.documentElement;
+  if (!document.fullscreenElement) { (el.requestFullscreen ? el.requestFullscreen() : Promise.reject()).catch(() => toast('Full screen is not available here')); }
+  else document.exitFullscreen().catch(() => {});
+}
+function start() {
+  started = true; $('gate').hidden = true; $('hud').hidden = false; $('media').hidden = true;
+  seek(0); setPlaying(true);
+  if (!document.fullscreenElement && mode !== 2) fullscreen();
+  audio.toggle(true); $('b-audio').textContent = 'Sound off';
+  poke();
+}
+$('start').addEventListener('click', start);
+document.querySelectorAll('#mode-seg button').forEach((b) => b.addEventListener('click', () => setMode(+b.dataset.mode)));
+$('b-play').addEventListener('click', () => setPlaying(!playing));
+$('b-restart').addEventListener('click', () => { seek(0); setPlaying(true); });
+$('b-mode').addEventListener('click', () => setMode((mode + 1) % 3));
+$('b-audio').addEventListener('click', () => { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; });
+$('b-full').addEventListener('click', fullscreen);
+$('b-media').addEventListener('click', () => { $('media').hidden = !$('media').hidden; });
+$('open-media').addEventListener('click', () => { $('media').hidden = false; });
+$('close-media').addEventListener('click', () => { $('media').hidden = true; });
+
+let idle;
+function poke() { document.body.classList.remove('show-hidden'); clearTimeout(idle); idle = setTimeout(() => { if (started && $('media').hidden) document.body.classList.add('show-hidden'); }, 2800); }
+addEventListener('pointermove', poke);
+addEventListener('keydown', (e) => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
+  const k = e.key;
+  if (!started && (k === 'Enter' || k === ' ')) { e.preventDefault(); start(); return; }
+  if (k === ' ' || k === 'k') { e.preventDefault(); setPlaying(!playing); toast(playing ? 'Playing' : 'Paused'); }
+  else if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); const i = currentAct(); if (i < ACTS.length - 1) seek(ACTS[i + 1].t + .01); toast(ACTS[currentAct()].name); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); const i = currentAct(); seek(showT - ACTS[i].t > 3 ? ACTS[i].t + .01 : ACTS[Math.max(0, i - 1)].t + .01); toast(ACTS[currentAct()].name); }
+  else if (k === 'r' || k === 'R' || k === 'Home') { seek(0); setPlaying(true); toast('Restarted'); }
+  else if (k === 'v' || k === 'V') { setMode((mode + 1) % 3); toast(MODES[mode]); }
+  else if (k === 'f' || k === 'F') fullscreen();
+  else if (k === 'a' || k === 'A') { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; toast(on ? 'Sound on' : 'Sound off'); }
+  else if (k === 'h' || k === 'H') { if (document.body.classList.contains('show-hidden')) poke(); else document.body.classList.add('show-hidden'); return; }
+  else if (k === 'b' || k === 'B' || k === '.') { blackout = !blackout; toast(blackout ? 'Blackout' : 'Picture on'); }
+  else if (k === 'o' || k === 'O') { room.rot = (room.rot + 1) % 4; saveRoom(); toast('Floor panel rotated ' + room.rot * 90 + '°'); }
+  else if (k >= '1' && k <= '4') { seek(ACTS[+k - 1].t + .01); toast(ACTS[+k - 1].name); }
+  else return;
+  poke();
+});
+canvas.addEventListener('pointerdown', (e) => { if (mode === 2) { look.drag = [e.clientX, e.clientY, look.yaw, look.pitch]; canvas.setPointerCapture(e.pointerId); } });
+canvas.addEventListener('pointermove', (e) => { if (look.drag) { look.yaw = look.drag[2] + (e.clientX - look.drag[0]) * .005; look.pitch = clamp(look.drag[3] + (e.clientY - look.drag[1]) * .005, -1.4, 1.4); } });
+canvas.addEventListener('pointerup', () => { look.drag = null; });
+
+function saveRoom() { try { localStorage.setItem('ire2036-room', JSON.stringify(room)); } catch (e) {} }
+function applyRoom() {
+  const g = (id, lo, hi, dv) => { const v = parseFloat($(id).value); return isFinite(v) ? clamp(v, lo, hi) : dv; };
+  room.w = g('r-w', 2, 30, 6); room.d = g('r-d', 2, 30, 6); room.h = g('r-h', 1.5, 10, 3); room.eye = g('r-e', 1, 2.2, 1.6);
+  saveRoom(); resize();
+}
+['r-w', 'r-d', 'r-h', 'r-e'].forEach((id) => $(id).addEventListener('change', applyRoom));
+try {
+  const r = JSON.parse(localStorage.getItem('ire2036-room') || 'null');
+  if (r && r.w) { $('r-w').value = r.w; $('r-d').value = r.d; $('r-h').value = r.h; $('r-e').value = r.eye; room.rot = (r.rot | 0) % 4; }
+} catch (e) {}
+const rect = [0, 0, 1, 1];
+function resize() {
+  const w = Math.max(1, Math.floor(innerWidth * Math.min(devicePixelRatio || 1, 1.5))), h = Math.max(1, Math.floor(innerHeight * Math.min(devicePixelRatio || 1, 1.5)));
+  canvas.width = w; canvas.height = h;
+  let rx = 0, ry = 0, rw = w, rh = h;
+  if (mode === 1) {
+    const asp = (3 * room.w + 2 * room.d) / Math.max(room.h, room.d);
+    if (w / h > asp) { rw = h * asp; rx = (w - rw) / 2; } else { rh = w / asp; ry = (h - rh) / 2; }
+  }
+  rect[0] = rx; rect[1] = ry; rect[2] = rw; rect[3] = rh;
+}
+addEventListener('resize', resize);
+
+// ---------------------------------------------------------------- frame
+let fpsAcc = 0, fpsN = 0, wake = null;
+async function keepAwake() { try { if (navigator.wakeLock && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && started) keepAwake(); });
+function frame(now) {
+  const dt = Math.min(.5, (now - last) / 1000); last = now; // real time, so picture, clips and music stay in sync
+  if (playing) { showT += dt; if (showT >= DURATION) showT = 0; }
+  const t = started ? showT : 20 + (now / 1000) % 40; // attract loop behind the start screen
+  const time = now / 1000;
+
+  let si = 0; SCENES.forEach((s, i) => { if (t >= s.t0) si = i; });
+  const A = SCENES[si], B = SCENES[Math.max(0, si - 1)];
+  const mix = si === 0 ? 1 : smooth(A.t0, A.t0 + XFADE, t);
+  syncVideos(t, mix < 1 ? [si, si - 1] : [si], playing || !started);
+
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  const ea = entryFor(A), eb = entryFor(B);
+  const hasA = bindScene(0, 5, ea), hasB = bindScene(1, 6, eb);
+  u1f('uHasA', hasA); u1f('uHasB', hasB);
+  u1f('uAspA', ea && ea.asp || 16 / 9); u1f('uAspB', eb && eb.asp || 16 / 9);
+  u1f('uLodA', ea && ea.lod || 0); u1f('uLodB', eb && eb.lod || 0);
+  gl.uniform4fv(L('uGrA'), A.grade); gl.uniform4fv(L('uGrB'), B.grade);
+  u1f('uMix', mix);
+  u1f('uZoomA', 1 + .08 * (t - A.t0) / (A.t1 - A.t0 + XFADE));
+  u1f('uZoomB', 1 + .08 * clamp((t - B.t0) / (B.t1 - B.t0 + XFADE), 0, 1));
+  u1f('uDrift', t * .045); // the panorama turns slowly round the room, about 8 m over the show
+  u1f('uSwirl', .05 * smooth(144, 176, t));
+  u1f('uFuture', smooth(SCAN_T0, SCAN_T0 + 8, t));
+  u1f('uScan', t < SCAN_T0 ? 0 : Math.min(2.2, (t - SCAN_T0) / 3));
+  const yr = t < SCAN_T0 ? 2026 : Math.min(2036, 2026 + Math.floor((t - SCAN_T0) / 1.2));
+  gl.activeTexture(gl.TEXTURE3); drawRing(yr); gl.bindTexture(gl.TEXTURE_2D, TEX.ring);
+  u1f('uFlash', t >= SCAN_T0 && t < SCAN_T0 + 13.2 ? Math.exp(-((t - SCAN_T0) % 1.2) * 3) : 0);
+  u1f('uRingA', smooth(2, 6, t) * (1 - smooth(142, 148, t)) * .8);
+  gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, TEX.map);
+  u1f('uMapT', smooth(146, 158, t));
+  const cap = CAPTIONS.findIndex((c) => t >= c.t0 - .1 && t <= c.t1 + 1.2);
+  gl.activeTexture(gl.TEXTURE2);
+  if (cap >= 0 && capShown !== cap && capCanvases[cap]) { upload(TEX.cap, capCanvases[cap], true); capShown = cap; }
+  gl.bindTexture(gl.TEXTURE_2D, TEX.cap);
+  if (cap < 0) u1f('uCapA', 0);
+  else { const c = CAPTIONS[cap]; u1f('uCapRev', smooth(c.t0, c.t0 + 1.6, t)); u1f('uCapA', 1 - smooth(c.t1, c.t1 + 1.1, t)); }
+  u1f('uFade', (started ? smooth(0, 3, t) * (1 - smooth(DURATION - 2.2, DURATION, t)) : 1) * (blackout ? 0 : 1));
+  u1f('uTime', time);
+  gl.uniform4f(L('uRect'), rect[0], rect[1], rect[2], rect[3]);
+  u1i('uMode', mode);
+  gl.uniform3f(L('uRoom'), room.w, room.d, room.h); u1f('uEye', room.eye); u1i('uFloorRot', room.rot);
+  gl.uniform3f(L('uPrev'), look.yaw, look.pitch, Math.tan(40 * Math.PI / 180));
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  audio.update(t, playing);
+  if (started) {
+    $('clock').firstChild.nodeValue = fmt(showT) + ' ';
+    const ai = currentAct();
+    ACTS.forEach((a, i) => {
+      const end = i < ACTS.length - 1 ? ACTS[i + 1].t : DURATION;
+      const el = $('act-' + i); el.classList.toggle('on', i === ai);
+      el.querySelector('i').style.width = (clamp((showT - a.t) / (end - a.t), 0, 1) * 100).toFixed(1) + '%';
+    });
+  }
+  fpsAcc += dt; fpsN++;
+  if (fpsAcc > 1) {
+    const have = SCENES.filter((s) => { const e = entryFor(s); return e && e.ready && !e.error; }).length;
+    $('stat').innerHTML = `${Math.round(fpsN / fpsAcc)} fps · ${canvas.width}×${canvas.height} · ` + (have < 10 ? `<b>${have}/10 clips</b>` : '10/10 clips');
+    fpsAcc = 0; fpsN = 0;
+  }
+  requestAnimationFrame(frame);
+}
+window.__ireland = { state: () => ({ showT, playing, started, clips: Object.fromEntries(Object.entries(media).map(([k, e]) => [k, e.el && e.el.tagName === 'VIDEO' ? [e.ready, e.el.paused, +e.el.currentTime.toFixed(1), e.playError || ''] : [e.ready, e.error || false]])) }), seek: (t) => { started = true; seek(t); }, pause: () => setPlaying(false), mode: setMode, clip: (id, url, kind) => mediaEntry(id, { urls: [url], kind: kind || 'video', name: url.split('/').pop() }) };
+
+let savedMode = 0; try { savedMode = +(localStorage.getItem('ire2036-mode') || 0) || 0; } catch (e) {}
+applyRoom();
+setMode(clamp(savedMode, 0, 2));
+buildCaptions();
+const fontsReady = document.fonts && document.fonts.load
+  ? Promise.all(['400 100px "Instrument Serif"', '600 40px "IBM Plex Sans Condensed"', '400 56px "IBM Plex Sans Condensed"'].map((f) => document.fonts.load(f))).catch(() => {})
+  : Promise.resolve();
+Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]).then(buildCaptions);
+keepAwake();
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
