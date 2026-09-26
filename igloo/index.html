@@ -52,6 +52,8 @@
   .go:hover { filter: brightness(1.08); }
   .ghost { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 14px 20px; font-size: 15px; cursor: pointer; }
   .ghost:hover { border-color: var(--stone); }
+  .room { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--mute); }
+  .room input { width: 4.2em; background: rgba(8,19,26,.7); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--stone); font: inherit; font-variant-numeric: tabular-nums; }
   .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 16px; font-size: 13px; color: var(--mute); }
   kbd { font-family: var(--sans); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; color: var(--stone); margin-right: 6px; }
 
@@ -62,7 +64,7 @@
     backdrop-filter: blur(10px); padding: 12px 14px; display: grid; gap: 10px; transition: opacity .5s, transform .5s;
   }
   body.show-hidden #hud { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
-  .acts { display: grid; grid-template-columns: 42fr 40fr 58fr 40fr; gap: 4px; }
+  .acts { display: grid; grid-template-columns: 36fr 36fr 72fr 36fr; gap: 4px; }
   .act { border: 0; background: transparent; text-align: left; padding: 0; cursor: pointer; display: grid; gap: 6px; }
   .act .bar { height: 4px; border-radius: 2px; background: rgba(217,212,199,.14); overflow: hidden; }
   .act .bar i { display: block; height: 100%; width: 0; background: var(--stone); }
@@ -114,7 +116,7 @@
   <div class="gate-card">
     <div class="eyebrow">Igloo immersive · four walls + floor</div>
     <h1 id="gate-title">Ireland <em>2036</em></h1>
-    <p>A single continuous flight from the Atlantic cliffs at dawn to the capital at dusk. Then the next ten years spread across the room, and the whole island lights up beneath your feet.</p>
+    <p>Ireland today wraps the whole room: Atlantic cliffs, green fields and Dublin streets, flowing around the walls and pooling across the floor. Then a wave of light sweeps the room, and Ireland 2036 takes shape around you.</p>
     <div class="spec"><span><b>3:00</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> live render</span><span id="gpu-note">Checking graphics…</span></div>
     <div class="row" role="group" aria-label="Output format">
       <div class="seg" id="mode-seg">
@@ -123,9 +125,15 @@
         <button type="button" data-mode="2" aria-pressed="false">Desk preview</button>
       </div>
     </div>
+    <div class="room" role="group" aria-label="Room size in metres">
+      <label for="r-w">Front wall <input id="r-w" type="number" min="2" max="30" step="0.1" value="6"> m</label>
+      <label for="r-d">Side wall <input id="r-d" type="number" min="2" max="30" step="0.1" value="6"> m</label>
+      <label for="r-h">Height <input id="r-h" type="number" min="1.5" max="10" step="0.1" value="3"> m</label>
+      <label for="r-e">Eye <input id="r-e" type="number" min="1" max="2.2" step="0.05" value="1.6"> m</label>
+    </div>
     <div class="row">
       <button type="button" class="go" id="start">▶ Start the show</button>
-      <button type="button" class="ghost" id="open-media">Photography &amp; film</button>
+      <button type="button" class="ghost" id="open-media">Footage library</button>
     </div>
     <div class="keys" aria-label="Operator keys">
       <span><kbd>Space</kbd>Pause / play</span>
@@ -136,6 +144,7 @@
       <span><kbd>A</kbd>Sound on / off</span>
       <span><kbd>H</kbd>Hide controls</span>
       <span><kbd>B</kbd>Blackout</span>
+      <span><kbd>O</kbd>Rotate floor panel</span>
     </div>
   </div>
 </section>
@@ -148,7 +157,7 @@
     <button type="button" id="b-restart">Restart</button>
     <button type="button" id="b-mode">360° Igloo</button>
     <button type="button" id="b-audio">Sound on</button>
-    <button type="button" id="b-media">Media</button>
+    <button type="button" id="b-media">Footage</button>
     <button type="button" id="b-full">Full screen</button>
     <span class="spacer"></span>
     <span class="stat" id="stat"></span>
@@ -157,10 +166,10 @@
 
 <aside id="media" hidden aria-labelledby="media-title">
   <div class="row" style="justify-content:space-between">
-    <h2 id="media-title">Photography &amp; film</h2>
+    <h2 id="media-title">Footage library</h2>
     <button type="button" class="ghost" id="close-media" style="padding:8px 14px">Close</button>
   </div>
-  <p>Add licensed photos or muted video clips of real people and places. Each one appears on the side walls during its act, with slow camera motion. Everything saves with the show, so the Igloo PC picks it up automatically.</p>
+  <p>One clip per scene. Each clip wraps around all four walls as a seamless panorama and pools across the floor as a moving reflection. Clips save with the show, so the Igloo PC picks them up live. Scenes without a clip show the live 3D world.</p>
   <div id="slots"></div>
   <div class="note" id="media-note" role="status"></div>
 </aside>
@@ -180,31 +189,38 @@ if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the netwo
 
 // ---------------------------------------------------------------- show data
 const DURATION = 180;
+// Each scene is a stock clip wrapped around the room. `want` is what the clip should show.
+const SCENES = [
+  { id: 's01', t0: 0,   name: 'Atlantic dawn',     want: 'Cliffs of Moher or Wild Atlantic Way, aerial at sunrise' },
+  { id: 's02', t0: 18,  name: 'The land',          want: 'Green fields and stone walls, aerial (Connemara, Kerry, Wicklow)' },
+  { id: 's03', t0: 36,  name: 'The capital',       want: 'Dublin streets and people: Grafton Street, Temple Bar, Ha’penny Bridge' },
+  { id: 's04', t0: 54,  name: 'Open economy',      want: 'Dublin Docklands and the Liffey at dusk, Samuel Beckett Bridge' },
+  { id: 's05', t0: 72,  name: 'The turn',          want: 'Night time-lapse of Dublin, or light trails over the city' },
+  { id: 's06', t0: 90,  name: 'Energy',            want: 'Offshore wind farm, aerial, ideally at sunset' },
+  { id: 's07', t0: 108, name: 'Transport',         want: 'Modern train, tram or metro in motion (Luas, DART, rail)' },
+  { id: 's08', t0: 126, name: 'Housing',           want: 'New homes and construction, aerial; modern sustainable architecture' },
+  { id: 's09', t0: 144, name: 'One nation',        want: 'Ireland at night from above, or starry sky / aurora over the coast' },
+  { id: 's10', t0: 162, name: 'Together',          want: 'Sunrise over the sea or a hilltop, people looking out' },
+];
+SCENES.forEach((s, i) => { s.t1 = i < SCENES.length - 1 ? SCENES[i + 1].t0 : DURATION; });
+const XFADE = 3.2; // seconds of liquid dissolve into each scene
 const ACTS = [
   { name: 'Today', t: 0 },
-  { name: 'Momentum', t: 42 },
-  { name: 'Ireland 2036', t: 82 },
-  { name: 'Together', t: 140 },
+  { name: 'Momentum', t: 36 },
+  { name: 'Ireland 2036', t: 72 },
+  { name: 'Together', t: 144 },
 ];
 const CAPTIONS = [
-  { t0: 3,   t1: 13,  eb: 'Ireland · 2026',      ti: 'Where we stand today',          sub: 'First light on the Atlantic coast' },
-  { t0: 15,  t1: 26,  eb: 'Our people',          ti: '5.4 million people',            sub: 'One of the youngest populations in Europe' },
-  { t0: 29,  t1: 40,  eb: 'Open economy',        ti: 'Connected to the world',        sub: 'European home to many of the world’s leading companies' },
-  { t0: 45,  t1: 57,  eb: 'Dublin · the capital', ti: 'A capital on the move',        sub: 'Talent, technology and trade along the Liffey' },
-  { t0: 60,  t1: 71,  eb: 'Momentum',            ti: 'Built by people',               sub: 'Every light is a home, a business, a future' },
-  { t0: 73,  t1: 81,  eb: '2026 → 2036',         ti: 'The next ten years start now',  sub: '' },
-  { t0: 86,  t1: 97,  eb: 'Ireland · 2036',      ti: 'A decade of delivery',          sub: 'Watch the next ten years take shape' },
-  { t0: 99,  t1: 111, eb: 'Energy',              ti: 'Powered by the Atlantic',       sub: 'National offshore wind targets: 5 GW by 2030, 20 GW by 2040' },
-  { t0: 113, t1: 125, eb: 'Transport',           ti: 'Connected by MetroLink',        sub: 'Airport to city centre by metro, regions linked by rail' },
-  { t0: 127, t1: 139, eb: 'Housing',             ti: 'Homes for a growing nation',    sub: 'New communities, built at pace and powered cleanly' },
-  { t0: 143, t1: 156, eb: 'One nation',          ti: 'Every region, connected',       sub: 'Dublin · Cork · Galway · Limerick · Waterford' },
-  { t0: 160, t1: 177.5, eb: 'Ireland 2036',      ti: 'Ambition, delivered together',  sub: '' },
-];
-const SLOTS = [
-  { id: 'slot1', label: 'Today: coast and people',   t0: 8,   t1: 40 },
-  { id: 'slot2', label: 'Momentum: city life',       t0: 46,  t1: 80 },
-  { id: 'slot3', label: '2036: the future at work',  t0: 100, t1: 138 },
-  { id: 'slot4', label: 'Together: closing image',   t0: 144, t1: 176 },
+  { t0: 3,   t1: 15,  eb: 'Ireland · 2026',       ti: 'Where we stand today',          sub: 'The Wild Atlantic Way at first light' },
+  { t0: 21,  t1: 33,  eb: 'Our people',           ti: '5.4 million people',            sub: 'One of the youngest populations in Europe' },
+  { t0: 39,  t1: 51,  eb: 'Dublin · the capital', ti: 'A capital on the move',         sub: 'Talent, technology and trade along the Liffey' },
+  { t0: 57,  t1: 69,  eb: 'Open economy',         ti: 'Connected to the world',        sub: 'European home to many of the world’s leading companies' },
+  { t0: 80,  t1: 88,  eb: '2026 → 2036',          ti: 'The next ten years start now',  sub: '' },
+  { t0: 93,  t1: 105, eb: 'Energy',               ti: 'Powered by the Atlantic',       sub: 'National offshore wind targets: 5 GW by 2030, 20 GW by 2040' },
+  { t0: 111, t1: 123, eb: 'Transport',            ti: 'Connected by MetroLink',        sub: 'Airport to city centre by metro, regions linked by rail' },
+  { t0: 129, t1: 141, eb: 'Housing',              ti: 'Homes for a growing nation',    sub: 'New communities, built at pace and powered cleanly' },
+  { t0: 147, t1: 159, eb: 'One nation',           ti: 'Every region, connected',       sub: 'Dublin · Cork · Galway · Limerick · Waterford' },
+  { t0: 164, t1: 177.5, eb: 'Ireland 2036',       ti: 'Ambition, delivered together',  sub: '' },
 ];
 // camera path [t, x, y, z, yawDeg]; yaw -90 faces east (+x)
 const CAM = [
@@ -226,7 +242,7 @@ const ATM = [
   [158, -16, 290, [.004,.009,.028], [.03,.045,.09], [0,0,0], 1, .15, 1, .00012, 1.35],
   [180, -16, 292, [.004,.009,.028], [.03,.045,.09], [0,0,0], 1, .15, 1, .00010, 1.35],
 ];
-const SCAN_T0 = 84;
+const SCAN_T0 = 76;
 const CITY = { x0: 1540, x1: 2800, z0: -760, z1: 760, cx: 2150, cz: 0 };
 
 // ---------------------------------------------------------------- math
@@ -928,7 +944,7 @@ const mapMat = (() => {
   mapGroup.position.set(1500, 1050, 0);
   mapGroup.visible = false;
   scene.add(mapGroup);
-  return { m, bm };
+  return { m, bm, tex, cu };
 })();
 
 // ---------------------------------------------------------------- HUD in the world: captions on four walls, year ring on the floor
@@ -952,42 +968,6 @@ function captionTexture(c) {
   if (c.sub) { x.fillStyle = '#e4dfd3'; x.font = '400 56px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif'; x.fillText(c.sub, W / 2, 490); }
   const t = new T.CanvasTexture(cv); t.anisotropy = 8; t.generateMipmaps = true; return t;
 }
-const capMat = new T.ShaderMaterial({
-  uniforms: { uTex: { value: null }, uRev: { value: 0 }, uA: { value: 0 }, uSide: { value: 1 } },
-  vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-  fragmentShader: `uniform sampler2D uTex; uniform float uRev; uniform float uA; varying vec2 vUv;
-  void main(){ vec4 t=texture2D(uTex,vUv); float d=abs(vUv.x-.5)*2.;
-    float r=uRev*1.2; float vis=smoothstep(d-.12,d,r);
-    float edge=exp(-abs(r-d)*30.)*step(r,1.1)*smoothstep(.0,.3,t.a+.2)*.6;
-    vec3 c=t.rgb*1.25*vis+vec3(1.,.75,.35)*edge*smoothstep(.2,.8,vUv.y)*smoothstep(.95,.6,vUv.y);
-    gl_FragColor=vec4(c*uA,t.a*vis*uA+edge*uA*.3); }`,
-  transparent: true, depthTest: false, depthWrite: false,
-});
-const capPlanes = [];
-for (let k = 0; k < 4; k++) {
-  const m = capMat.clone(); m.uniforms = { uTex: { value: null }, uRev: { value: 0 }, uA: { value: 0 }, uSide: { value: 1 } };
-  const g = new T.PlaneGeometry(60, 60 * 640 / 2048);
-  const p = new T.Mesh(g, m); p.renderOrder = 20; p.frustumCulled = false;
-  const a = k * Math.PI / 2; p.position.set(-Math.sin(a) * 40, 40 * Math.tan(5 * Math.PI / 180), -Math.cos(a) * 40); p.rotation.y = a;
-  hudRig.add(p); capPlanes.push(p);
-}
-// media panels on the side walls
-const mediaPlanes = [1, 3].map((k) => {
-  const m = new T.ShaderMaterial({
-    uniforms: { uTex: { value: null }, uA: { value: 0 }, uZoom: { value: 1 }, uAsp: { value: 1.7778 }, uTime: U.uTime },
-    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-    fragmentShader: `uniform sampler2D uTex; uniform float uA; uniform float uZoom; uniform float uAsp; uniform float uTime; varying vec2 vUv;
-    void main(){ vec2 uv=vUv-.5; float pa=16./9.; if(uAsp>pa) uv.x*=pa/uAsp; else uv.y*=uAsp/pa; uv=uv/uZoom+.5+vec2(sin(uTime*.05),cos(uTime*.04))*.01*(uZoom-1.)*10.;
-      vec3 c=texture2D(uTex,uv).rgb; c=pow(c,vec3(2.2));
-      vec2 q=abs(vUv-.5)*2.; float m=smoothstep(1.,.93,q.x)*smoothstep(1.,.9,q.y);
-      float frame=(smoothstep(.985,1.,max(q.x,q.y))-smoothstep(1.,1.01,max(q.x,q.y)));
-      gl_FragColor=vec4(c*m*uA*1.05+vec3(1.,.75,.35)*frame*uA,m*uA); }`,
-    transparent: true, depthTest: false, depthWrite: false,
-  });
-  const p = new T.Mesh(new T.PlaneGeometry(50, 50 * 9 / 16), m);
-  const a = k * Math.PI / 2; p.position.set(-Math.sin(a) * 40, 40 * Math.tan(6 * Math.PI / 180), -Math.cos(a) * 40); p.rotation.y = a;
-  p.renderOrder = 19; p.frustumCulled = false; hudRig.add(p); return p;
-});
 // floor ring
 const ring = (() => {
   const S = 2048, cv = document.createElement('canvas'); cv.width = cv.height = S;
@@ -1030,54 +1010,193 @@ const ring = (() => {
   });
   const g = new T.PlaneGeometry(34, 34); g.rotateX(-Math.PI / 2);
   const mesh = new T.Mesh(g, m); mesh.position.y = -14; mesh.renderOrder = 18; mesh.frustumCulled = false; hudRig.add(mesh);
-  return { draw, m };
+  return { draw, m, tex };
 })();
 
 let capTextures = [];
 function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures = CAPTIONS.map(captionTexture); ring.draw(-1); }
 
 // ---------------------------------------------------------------- final projection pass
+// Every output pixel is resolved to a point in the physical room (wall s/t or floor x/z).
+// Footage wraps the four walls as one seamless mirrored panorama; the floor becomes a rippling
+// vortex reflection of it. Scenes without footage fall back to the live 3D world (cube map).
+const BLANK = new T.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); BLANK.needsUpdate = true;
 const post = (() => {
   const m = new T.ShaderMaterial({
     uniforms: {
       uCube: { value: null }, uYaw: { value: 0 }, uMode: { value: 0 }, uRect: { value: new T.Vector4(0, 0, 1, 1) },
       uRoom: { value: new T.Vector3(6, 6, 3) }, uEye: { value: 1.6 }, uPrev: { value: new T.Vector3(0, 0, Math.tan(40 * Math.PI / 180)) },
-      uFade: { value: 1 }, uExp: { value: 1 }, uBloom: { value: halfOK ? 1 : .0 }, uTime: U.uTime,
+      uFade: { value: 1 }, uExp: { value: 1 }, uBloom: { value: halfOK ? 1 : 0 }, uTime: U.uTime, uFloorRot: { value: 0 },
+      uA: { value: BLANK }, uB: { value: BLANK }, uHasA: { value: 0 }, uHasB: { value: 0 }, uAspA: { value: 1.7778 }, uAspB: { value: 1.7778 },
+      uMix: { value: 0 }, uDrift: { value: 0 }, uZoomA: { value: 1 }, uZoomB: { value: 1 }, uSwirl: { value: 0 },
+      uFuture: { value: 0 }, uScan: { value: 0 },
+      uCap: { value: BLANK }, uCapA: { value: 0 }, uCapRev: { value: 0 },
+      uRing: { value: BLANK }, uRingA: { value: 0 }, uFlash: { value: 0 },
+      uMap: { value: BLANK }, uMapT: { value: 0 }, uCities: { value: [0, 1, 2, 3, 4].map(() => new T.Vector2()) },
     },
     vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
-    fragmentShader: `uniform samplerCube uCube; uniform float uYaw; uniform int uMode; uniform vec4 uRect; uniform vec3 uRoom; uniform float uEye; uniform vec3 uPrev;
-    uniform float uFade; uniform float uExp; uniform float uBloom; uniform float uTime;
+    fragmentShader: `
+    uniform samplerCube uCube; uniform float uYaw; uniform int uMode; uniform vec4 uRect; uniform vec3 uRoom; uniform float uEye; uniform vec3 uPrev;
+    uniform float uFade; uniform float uExp; uniform float uBloom; uniform float uTime; uniform int uFloorRot;
+    uniform sampler2D uA; uniform sampler2D uB; uniform float uHasA; uniform float uHasB; uniform float uAspA; uniform float uAspB;
+    uniform float uMix; uniform float uDrift; uniform float uZoomA; uniform float uZoomB; uniform float uSwirl;
+    uniform float uFuture; uniform float uScan;
+    uniform sampler2D uCap; uniform float uCapA; uniform float uCapRev;
+    uniform sampler2D uRing; uniform float uRingA; uniform float uFlash;
+    uniform sampler2D uMap; uniform float uMapT; uniform vec2 uCities[5];
+    const vec3 GOLD=vec3(1.,.74,.36); const vec3 TEAL=vec3(.4,1.,.88);
+    float hash12(vec2 p){ vec3 p3=fract(vec3(p.xyx)*.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
+    float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
+      return mix(mix(hash12(i),hash12(i+vec2(1,0)),u.x), mix(hash12(i+vec2(0,1)),hash12(i+vec2(1,1)),u.x), u.y); }
+    float fbm(vec2 p){ float a=.5,s=0.; for(int i=0;i<4;i++){ s+=a*vnoise(p); p=p*2.03+vec2(17.1,9.2); a*=.5; } return s; }
     vec3 rotY(vec3 d,float a){ float c=cos(a),s=sin(a); return vec3(d.x*c+d.z*s,d.y,-d.x*s+d.z*c); }
     vec3 aces(vec3 x){ return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.); }
-    float h(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
+    float W,D,H,PER;
+    // perimeter coordinate (metres, clockwise from the front-left corner, seen from inside) of a point on the walls' footprint
+    float perim(vec2 xz){
+      vec2 n=vec2(xz.x/(W*.5),xz.y/(D*.5));
+      if(abs(n.y)>=abs(n.x)){ return n.y<0.? xz.x+W*.5 : W+D+(W*.5-xz.x); }
+      return n.x>0.? W+(xz.y+D*.5) : 2.*W+D+(D*.5-xz.y);
+    }
+    // footage sample: mirrored tiles around the perimeter so every seam matches; v is height (0 floor edge, 1 wall top)
+    vec3 foot(sampler2D tex, float asp, float P, float v, float zoom){
+      float n=max(2.,floor(PER/(H*asp)*.5+.5)*2.);
+      float x=P/PER*n+uDrift;
+      float u=1.-abs(fract(x*.5)*2.-1.);
+      vec2 uv=(vec2(u,v)-.5)/zoom+.5;
+      uv.y=clamp(uv.y,.002,.998);
+      return textureLod(tex,uv,0.).rgb;
+    }
+    vec3 cubeDisp(vec3 d){
+      vec3 c=textureLod(uCube,d,0.).rgb;
+      if(uBloom>0.){ c+=(max(textureLod(uCube,d,2.5).rgb-1.,0.)*.35+max(textureLod(uCube,d,4.).rgb-.85,0.)*.45+max(textureLod(uCube,d,5.5).rgb-.7,0.)*.6+max(textureLod(uCube,d,7.).rgb-.6,0.)*.5)*uBloom; }
+      return pow(aces(c*uExp),vec3(1./2.2));
+    }
     void main(){
+      W=uRoom.x; D=uRoom.y; H=uRoom.z; PER=2.*W+2.*D;
       vec2 uv=(gl_FragCoord.xy-uRect.xy)/uRect.zw;
       if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.){ gl_FragColor=vec4(0,0,0,1); return; }
-      vec3 d; float yaw=uYaw;
-      if(uMode==0){ float lon=(uv.x-.5)*6.2831853; float lat=(uv.y-.5)*3.1415927; d=vec3(cos(lat)*sin(lon),sin(lat),-cos(lat)*cos(lon)); }
-      else if(uMode==1){
-        float W=uRoom.x,D=uRoom.y,H=uRoom.z; float tot=2.*W+2.*D; float fb=D/(H+D); float x=uv.x*tot; vec3 p;
-        if(uv.y>=fb){ float v=(uv.y-fb)/(1.-fb)*H;
-          if(x<W) p=vec3(-W*.5+x,v,-D*.5);
-          else if(x<W+D) p=vec3(W*.5,v,-D*.5+(x-W));
-          else if(x<2.*W+D) p=vec3(W*.5-(x-W-D),v,D*.5);
-          else p=vec3(-W*.5,v,D*.5-(x-2.*W-D));
-        } else { if(x>W){ gl_FragColor=vec4(0,0,0,1); return; } float t=uv.y/fb; p=vec3(-W*.5+x,0.,D*.5-t*D); }
-        d=normalize(p-vec3(0.,uEye,0.));
+      vec3 eye=vec3(0.,uEye,0.);
+      vec3 d; bool onFloor=false; float P=0.,t=0.,wallL=W; float ws=0.; vec2 q=vec2(0.);
+      if(uMode==1){
+        // canvas: Front | Right | Back | Left walls across the top, floor panel on the right
+        float LW=PER, TW=LW+W, TH=max(H,D); float x=uv.x*TW, y=uv.y*TH;
+        if(x<LW){
+          if(y<TH-H){ gl_FragColor=vec4(0,0,0,1); return; }
+          t=(y-(TH-H))/H; P=x; vec3 p;
+          if(x<W){ p=vec3(-W*.5+x,t*H,-D*.5); ws=x/W; wallL=W; }
+          else if(x<W+D){ p=vec3(W*.5,t*H,-D*.5+(x-W)); ws=(x-W)/D; wallL=D; }
+          else if(x<2.*W+D){ p=vec3(W*.5-(x-W-D),t*H,D*.5); ws=(x-W-D)/W; wallL=W; }
+          else { p=vec3(-W*.5,t*H,D*.5-(x-2.*W-D)); ws=(x-2.*W-D)/D; wallL=D; }
+          d=normalize(p-eye);
+        } else {
+          if(y>D){ gl_FragColor=vec4(0,0,0,1); return; }
+          vec2 f=vec2((x-LW)/W,y/D)-.5;
+          for(int i=0;i<4;i++){ if(i<uFloorRot) f=vec2(-f.y,f.x); }
+          q=vec2(f.x*W,-f.y*D); onFloor=true; d=normalize(vec3(q.x,0.,q.y)-eye);
+        }
       } else {
-        vec2 n=uv*2.-1.; float asp=uRect.z/uRect.w; d=normalize(vec3(n.x*uPrev.z*asp,n.y*uPrev.z,-1.));
-        float cp=cos(uPrev.y),sp=sin(uPrev.y); d=vec3(d.x,d.y*cp+d.z*sp,-d.y*sp+d.z*cp); yaw+=uPrev.x;
+        if(uMode==0){ float lon=(uv.x-.5)*6.2831853; float lat=(uv.y-.5)*3.1415927; d=vec3(cos(lat)*sin(lon),sin(lat),-cos(lat)*cos(lon)); }
+        else { vec2 n=uv*2.-1.; float asp=uRect.z/uRect.w; d=normalize(vec3(n.x*uPrev.z*asp,n.y*uPrev.z,-1.));
+          float cp=cos(uPrev.y),sp=sin(uPrev.y); d=vec3(d.x,d.y*cp+d.z*sp,-d.y*sp+d.z*cp); d=rotY(d,uPrev.x); }
+        // resolve the view ray against the physical room
+        if(d.y<0.){ float k=-uEye/d.y; q=d.xz*k; onFloor=abs(q.x)<=W*.5&&abs(q.y)<=D*.5; }
+        if(!onFloor){
+          float kx=abs(d.x)>1e-5?(W*.5)/abs(d.x):1e9, kz=abs(d.z)>1e-5?(D*.5)/abs(d.z):1e9, k=min(kx,kz);
+          vec3 p=eye+d*k; t=p.y/H; P=perim(p.xz);
+          if(kz<kx){ wallL=W; ws=d.z<0.?(p.x+W*.5)/W:(W*.5-p.x)/W; } else { wallL=D; ws=d.x>0.?(p.z+D*.5)/D:(D*.5-p.z)/D; }
+        }
       }
-      d=rotY(d,yaw);
-      vec3 c=textureLod(uCube,d,0.).rgb;
-      if(uBloom>0.){
-        vec3 b=max(textureLod(uCube,d,2.5).rgb-1.,0.)*.35+max(textureLod(uCube,d,4.).rgb-.85,0.)*.45+max(textureLod(uCube,d,5.5).rgb-.7,0.)*.6+max(textureLod(uCube,d,7.).rgb-.6,0.)*.5;
-        c+=b*uBloom;
+      // floor: square-polar reflection with a slow vortex toward the centre
+      float r=0.,fv=0.;
+      if(onFloor){
+        r=max(abs(q.x)/(W*.5),abs(q.y)/(D*.5));
+        float sw=pow(1.-r,2.)*(uSwirl+.06*sin(uTime*.2));
+        float ca=cos(sw*6.2831),sa=sin(sw*6.2831); vec2 qs=vec2(q.x*ca-q.y*sa,q.x*sa+q.y*ca);
+        P=perim(qs/max(r,1e-4));
+        float rip=sin(r*46.-uTime*2.2)*.006+(vnoise(q*2.6+uTime*.35)-.5)*.018;
+        fv=clamp((1.-r)+rip,0.,1.);
       }
-      c=aces(c*uExp);
-      c=pow(c,vec3(1./2.2));
-      c+=(h(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)*.018;
-      gl_FragColor=vec4(c*uFade,1.);
+      float v=onFloor?fv:(t<=1.?max(t,0.):2.-min(t,2.));
+      bool needCube=uHasA<.5||(uMix<.999&&uHasB<.5);
+      vec3 cub=needCube?cubeDisp(rotY(d,uYaw)):vec3(0.);
+      // liquid dissolve from B (outgoing) to A (incoming)
+      vec2 nc=onFloor?q*.9:vec2(P,t*H)*.55;
+      float n=fbm(nc+vec2(uTime*.05,0.));
+      float edgeP=uMix*1.25-.12;
+      float warp=(1.-abs(uMix*2.-1.))*.05*(n-.5);
+      vec3 ca=uHasA>.5?foot(uA,uAspA,P+warp*PER*.3,v+warp,uZoomA):cub;
+      vec3 cb=uHasB>.5?foot(uB,uAspB,P-warp*PER*.3,v-warp,uZoomB):cub;
+      float m=smoothstep(n-.06,n+.06,edgeP);
+      vec3 col=mix(cb,ca,m);
+      float edge=exp(-abs(edgeP-n)*42.)*step(.001,uMix)*step(uMix,.999);
+      if(!onFloor&&t>1.) col*=1.-.55*smoothstep(1.,1.8,t);
+      col+=mix(GOLD,TEAL,uFuture)*edge*.9;
+      if(onFloor){
+        col*=vec3(.82,.9,1.)*(.8+.2*r);
+        float caust=pow(vnoise(q*3.2+vec2(uTime*.4,-uTime*.3))*vnoise(q*4.1-vec2(uTime*.3,uTime*.2)),2.);
+        col+=vec3(.9,.95,1.)*caust*.25;
+        col+=GOLD*exp(-abs(r-1.)*60.)*.25;
+      }
+      // Ireland 2036: colour grade, scan sweep (floor, then up the walls), holographic grid, rising light
+      if(uFuture>0.){
+        float l=dot(col,vec3(.299,.587,.114));
+        vec3 g=mix(vec3(.02,.1,.16),vec3(1.,.84,.6),smoothstep(.05,.9,l))*(l*1.25+.05);
+        col=mix(col,mix(col,g,.45),uFuture);
+      }
+      if(uScan>0.){
+        float sf=min(uScan,1.05), sh=uScan-1.;
+        if(onFloor){
+          col+=GOLD*exp(-abs(r-sf)*22.)*step(uScan,1.4)*2.;
+          float inside=step(r,sf);
+          vec2 g=abs(fract(q/.5)-.5); float gl=smoothstep(.47,.5,max(g.x,g.y));
+          col+=TEAL*gl*inside*.35*uFuture;
+        } else {
+          col+=GOLD*exp(-abs(t-sh)*28.)*step(0.,sh)*step(sh,1.15)*1.8;
+          float inside=step(t,sh);
+          vec2 cell=floor(vec2(P,t*H)/.32); float rn=hash12(cell);
+          vec2 lc=fract(vec2(P,t*H)/.32);
+          float py=fract(uTime*.18*(.5+rn)+rn*7.);
+          float dd=length(lc-vec2(.5+.3*sin(rn*40.+uTime*.7),py));
+          col+=GOLD*smoothstep(.09,.0,dd)*step(.55,rn)*inside*uFuture*1.3;
+          vec2 g=abs(fract(vec2(P,t*H)/.75)-.5); col+=TEAL*smoothstep(.485,.5,max(g.x,g.y))*inside*.12*uFuture;
+        }
+      }
+      // captions, one per wall
+      if(!onFloor&&uCapA>0.){
+        float cw=min(wallL*.88,H*2.9), ch=cw/3.2;
+        vec2 cu=vec2((ws-.5)*wallL/cw+.5,(t*H-H*.64)/ch+.5);
+        if(cu.x>0.&&cu.x<1.&&cu.y>0.&&cu.y<1.){
+          vec4 c=texture2D(uCap,cu); float dd=abs(cu.x-.5)*2.; float rr=uCapRev*1.2;
+          float vis=smoothstep(dd-.12,dd,rr);
+          col=mix(col,c.rgb*1.08,c.a*vis*uCapA);
+          col+=GOLD*exp(-abs(rr-dd)*30.)*step(rr,1.1)*smoothstep(.25,.45,cu.y)*smoothstep(.8,.6,cu.y)*.6*uCapA;
+        }
+      }
+      // floor: year ring and the island map
+      if(onFloor){
+        float S=min(W,D)*.98; vec2 fu=vec2(.5+q.x/S,.5-q.y/S);
+        if(uRingA>0.&&fu.x>0.&&fu.x<1.&&fu.y>0.&&fu.y<1.){
+          vec4 c=texture2D(uRing,fu); vec2 pp=fu-.5; float rr=length(pp)*2.; float a=atan(pp.y,pp.x);
+          float sweep=pow(fract(a/6.2831+uTime*.05),6.)*step(.9,rr)*step(rr,1.);
+          col=mix(col,col*.45,smoothstep(.6,.9,rr)*step(rr,1.02)*uRingA*.6);
+          col+=(c.rgb*c.a*(1.+uFlash*1.5)+GOLD*sweep*.8+GOLD*exp(-abs(rr-.88-uFlash*.1)*80.)*uFlash*2.)*uRingA;
+        }
+        if(uMapT>0.){
+          float SM=min(W,D)*1.02; vec2 mu=vec2(.5+q.x/SM,.5-q.y/SM);
+          if(mu.x>0.&&mu.x<1.&&mu.y>0.&&mu.y<1.){
+            vec4 tm=texture2D(uMap,mu); float rr=length(mu-uCities[0]);
+            float rev=1.-smoothstep(uMapT*1.1-.06,uMapT*1.1,rr);
+            float front=exp(-abs(rr-uMapT*1.1)*60.)*step(uMapT,1.);
+            float flow=.5+.5*sin(rr*120.-uTime*4.);
+            vec3 mc=vec3(.5,1.,.92)*pow(tm.r,2.6)*1.6+GOLD*tm.g*(.8+flow*1.2)+vec3(.35,.7,.9)*tm.b*(.05+.12*vnoise(mu*40.+uTime*.5));
+            for(int i=0;i<5;i++){ float dc=length(mu-uCities[i]); mc+=GOLD*(smoothstep(.012,.0,dc)*2.5+exp(-abs(fract(uTime*.35+float(i)*.2)*.08-dc)*300.)*.8*smoothstep(.09,.0,dc)); }
+            col=col*(1.-.65*uMapT)+(mc*rev+TEAL*front)*uMapT;
+          }
+        }
+      }
+      col+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)*.016;
+      gl_FragColor=vec4(clamp(col,0.,1.)*uFade,1.);
     }`,
     depthTest: false, depthWrite: false,
   });
@@ -1087,6 +1206,10 @@ const post = (() => {
   return { scene: s, cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), material: m };
 })();
 makeCube();
+hudRig.visible = false; // captions, ring and map are composited in room space by the projection pass
+post.material.uniforms.uRing.value = ring.tex;
+post.material.uniforms.uMap.value = mapMat.tex;
+mapMat.cu.forEach((c, i) => post.material.uniforms.uCities.value[i].copy(c));
 
 // ---------------------------------------------------------------- timeline evaluation
 function camAt(t) {
@@ -1139,71 +1262,79 @@ function applyTime(t) {
   U.uScanR.value = s > 0 ? 170 * s + 11 * s * s : 0;
 
   cloudDeck.uniforms.uOp.value = smooth(126, 140, t);
-  const mt = smooth(151, 163, t);
-  mapGroup.visible = t > 150;
-  mapMat.m.uniforms.uMapT.value = mt;
-  mapMat.bm.uniforms.uB.value = smooth(158, 168, t);
-  mapGroup.rotation.y = yaw;
-  mapGroup.children.forEach((c) => { if (c.userData.beam) c.scale.y = 20 + 1800 * smooth(158, 170, t); });
+  mapGroup.visible = false;
+  const P = post.material.uniforms;
+
+  // scenes: A is the scene playing now, B the one dissolving out
+  let si = 0; SCENES.forEach((s, i) => { if (t >= s.t0) si = i; });
+  const A = SCENES[si], B = SCENES[Math.max(0, si - 1)];
+  const mix = si === 0 ? 1 : smooth(A.t0, A.t0 + XFADE, t);
+  const ma = media[A.id], mb = media[B.id];
+  P.uHasA.value = ma && ma.tex ? 1 : 0; P.uA.value = ma && ma.tex ? ma.tex : BLANK; P.uAspA.value = ma && ma.asp || 1.7778;
+  P.uHasB.value = mb && mb.tex ? 1 : 0; P.uB.value = mb && mb.tex ? mb.tex : BLANK; P.uAspB.value = mb && mb.asp || 1.7778;
+  P.uMix.value = mix;
+  P.uZoomA.value = 1 + .09 * (t - A.t0) / (A.t1 - A.t0 + XFADE);
+  P.uZoomB.value = 1 + .09 * (t - B.t0) / (B.t1 - B.t0 + XFADE);
+  P.uDrift.value = t * .016;
+  P.uSwirl.value = .08 + .25 * smooth(140, 176, t);
+  syncVideos(t, [si, mix < 1 ? si - 1 : -1]);
+
+  // 2036 transformation: floor sweep, then up the walls; year ring counts 2026 → 2036
+  P.uFuture.value = smooth(SCAN_T0, SCAN_T0 + 8, t);
+  P.uScan.value = t < SCAN_T0 ? 0 : Math.min(2.2, (t - SCAN_T0) / 3);
+  const yr = t < SCAN_T0 ? 2026 : Math.min(2036, 2026 + Math.floor((t - SCAN_T0) / 1.2));
+  ring.draw(yr);
+  const flashT = t < SCAN_T0 ? 99 : ((t - SCAN_T0) % 1.2);
+  P.uFlash.value = t >= SCAN_T0 && t < SCAN_T0 + 13.2 ? Math.exp(-flashT * 3) : 0;
+  P.uRingA.value = smooth(2, 6, t) * (1 - smooth(142, 148, t)) * .85;
+  P.uMapT.value = smooth(146, 158, t);
 
   // captions
   const cap = CAPTIONS.findIndex((c) => t >= c.t0 - .1 && t <= c.t1 + 1.2);
-  const mediaOn = activeMedia(t);
-  capPlanes.forEach((p, k) => {
-    const u = p.material.uniforms;
-    if (cap < 0) { u.uA.value = 0; return; }
+  if (cap < 0) P.uCapA.value = 0;
+  else {
     const c = CAPTIONS[cap];
-    u.uTex.value = capTextures[cap];
-    u.uRev.value = smooth(c.t0, c.t0 + 1.6, t);
-    let al = 1 - smooth(c.t1, c.t1 + 1.1, t);
-    if ((k === 1 || k === 3) && mediaOn) al *= 1 - mediaOn.a;
-    u.uA.value = al;
-  });
-  mediaPlanes.forEach((p) => {
-    const u = p.material.uniforms;
-    if (!mediaOn) { u.uA.value = 0; return; }
-    u.uTex.value = mediaOn.tex; u.uA.value = mediaOn.a; u.uAsp.value = mediaOn.asp;
-    u.uZoom.value = 1.02 + .1 * mediaOn.p;
-  });
-
-  // year ring
-  const yr = t < SCAN_T0 ? 2026 : Math.min(2036, 2026 + Math.floor((t - SCAN_T0) / 1.6));
-  ring.draw(yr);
-  const flashT = t < SCAN_T0 ? 99 : ((t - SCAN_T0) % 1.6);
-  ring.m.uniforms.uFlash.value = t >= SCAN_T0 && t < SCAN_T0 + 17.6 ? Math.exp(-flashT * 3) : 0;
-  ring.m.uniforms.uA.value = smooth(2, 6, t) * (1 - .55 * smooth(24, 30, t) * (1 - smooth(36, 42, t))) * (1 - .6 * smooth(150, 160, t)) * .8;
-
-  post.material.uniforms.uFade.value = smooth(0, 3.5, t) * (1 - smooth(DURATION - 2.2, DURATION, t)) * (blackout ? 0 : 1);
-}
-
-// ---------------------------------------------------------------- media library (assets + db)
-const media = {}; // slotId -> {tex, asp, kind, video}
-function activeMedia(t) {
-  for (const s of SLOTS) {
-    const m = media[s.id];
-    if (!m || !m.tex || t < s.t0 || t > s.t1) continue;
-    const a = smooth(s.t0, s.t0 + 2, t) * (1 - smooth(s.t1 - 2, s.t1, t));
-    if (m.video && m.video.paused) m.video.play().catch(() => {});
-    return { tex: m.tex, asp: m.asp, a, p: (t - s.t0) / (s.t1 - s.t0) };
+    P.uCap.value = capTextures[cap]; P.uCapRev.value = smooth(c.t0, c.t0 + 1.6, t);
+    P.uCapA.value = 1 - smooth(c.t1, c.t1 + 1.1, t);
   }
-  for (const id in media) { const v = media[id].video; if (v && !v.paused) v.pause(); }
-  return null;
+  P.uFade.value = smooth(0, 3.5, t) * (1 - smooth(DURATION - 2.2, DURATION, t)) * (blackout ? 0 : 1);
 }
-function loadMedia(slot, row) {
-  const old = media[slot];
-  if (old) { if (old.tex) old.tex.dispose(); if (old.video) { old.video.pause(); old.video.removeAttribute('src'); } delete media[slot]; }
-  if (!row || !row.asset) { renderSlots(); return; }
-  const url = '/_blob/' + row.asset;
-  const entry = { kind: row.kind, url, name: row.name || '' };
-  media[slot] = entry;
+// cube render is only needed when a playing scene has no footage
+function needsWorld() { const u = post.material.uniforms; return u.uHasA.value < .5 || (u.uMix.value < .999 && u.uHasB.value < .5); }
+
+// ---------------------------------------------------------------- footage library (assets + db)
+const media = {}; // sceneId -> {tex, asp, kind, video, url, name}
+function syncVideos(t, live) {
+  SCENES.forEach((s, i) => {
+    const m = media[s.id]; if (!m || !m.video) return;
+    const v = m.video;
+    if (live.includes(i)) {
+      const want = Math.max(0, t - s.t0 + .01);
+      if (v.duration && isFinite(v.duration)) {
+        const target = want % v.duration;
+        if (Math.abs(v.currentTime - target) > 1.2) { try { v.currentTime = target; } catch (e) {} }
+      }
+      v.playbackRate = playing ? 1 : 0.0001;
+      if (v.paused && playing) v.play().catch(() => {});
+      if (!playing && !v.paused) v.pause();
+    } else if (!v.paused) v.pause();
+  });
+}
+function loadMedia(id, row) {
+  const old = media[id];
+  if (old) { if (old.tex) old.tex.dispose(); if (old.video) { old.video.pause(); old.video.removeAttribute('src'); old.video.load(); } delete media[id]; }
+  if (!row || !(row.asset || row.url)) { renderSlots(); return; }
+  const url = row.url || '/_blob/' + row.asset;
+  const entry = { kind: row.kind, url, name: row.name || '', credit: row.credit || '' };
+  media[id] = entry;
   if (row.kind === 'video') {
     const v = document.createElement('video');
-    v.src = url; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto';
-    v.addEventListener('loadedmetadata', () => { entry.asp = v.videoWidth / v.videoHeight || 1.7778; entry.tex = new T.VideoTexture(v); renderSlots(); });
+    v.src = url; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
+    v.addEventListener('loadeddata', () => { entry.asp = v.videoWidth / v.videoHeight || 1.7778; entry.tex = new T.VideoTexture(v); entry.tex.minFilter = T.LinearFilter; entry.tex.generateMipmaps = false; renderSlots(); });
     v.addEventListener('error', () => { entry.error = true; renderSlots(); });
     entry.video = v;
   } else {
-    new T.TextureLoader().load(url, (tex) => { entry.tex = tex; entry.asp = tex.image.width / tex.image.height; tex.anisotropy = 8; renderSlots(); },
+    new T.TextureLoader().load(url, (tex) => { entry.tex = tex; entry.asp = tex.image.width / tex.image.height; renderSlots(); },
       undefined, () => { entry.error = true; renderSlots(); });
   }
   renderSlots();
@@ -1211,20 +1342,20 @@ function loadMedia(slot, row) {
 let assetsApi = null, dbApi = null;
 function renderSlots() {
   const box = $('slots'); box.textContent = '';
-  SLOTS.forEach((s) => {
+  SCENES.forEach((s) => {
     const m = media[s.id];
     const row = document.createElement('div'); row.className = 'slot';
     const th = document.createElement('div'); th.className = 'thumb';
-    if (m && m.kind === 'video' && m.video) { const v = document.createElement('video'); v.src = m.url; v.muted = true; th.appendChild(v); }
+    if (m && m.kind === 'video' && !m.error) { const v = document.createElement('video'); v.src = m.url; v.muted = true; th.appendChild(v); }
     else if (m && !m.error) th.style.backgroundImage = `url("${m.url}")`;
-    else th.textContent = m && m.error ? 'Missing' : 'Empty';
+    else th.textContent = m && m.error ? 'Missing' : 'Live 3D';
     const info = document.createElement('div');
-    const b = document.createElement('b'); b.textContent = s.label;
-    const sm = document.createElement('small'); sm.textContent = `${fmt(s.t0)}–${fmt(s.t1)} · side walls` + (m && m.name ? ` · ${m.name}` : '');
+    const b = document.createElement('b'); b.textContent = `${fmt(s.t0)} · ${s.name}`;
+    const sm = document.createElement('small'); sm.textContent = m ? (m.name + (m.credit ? ' · ' + m.credit : '')) : s.want;
     const acts = document.createElement('div'); acts.className = 'acts-row';
     if (assetsApi) {
-      const lab = document.createElement('label'); lab.textContent = m ? 'Replace' : 'Add photo or video';
-      const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/jpeg,image/png,image/webp,video/mp4,video/webm'; inp.id = 'file-' + s.id;
+      const lab = document.createElement('label'); lab.textContent = m ? 'Replace clip' : 'Add clip';
+      const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'video/mp4,video/webm,image/jpeg,image/png,image/webp'; inp.id = 'file-' + s.id;
       inp.addEventListener('change', () => inp.files[0] && upload(s.id, inp.files[0]));
       lab.appendChild(inp); acts.appendChild(lab);
       if (m) { const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.addEventListener('click', () => removeSlot(s.id)); acts.appendChild(rm); }
@@ -1233,39 +1364,35 @@ function renderSlots() {
   });
 }
 function note(msg, err) { const n = $('media-note'); n.textContent = msg; n.classList.toggle('err', !!err); }
-async function upload(slot, file) {
-  if (file.size > 20 * 1024 * 1024) { note('That file is over 20 MB. Export a smaller version (1920 px wide, or an H.264 MP4) and try again.', true); return; }
+async function upload(id, file) {
+  if (file.size > 20 * 1024 * 1024) { note('That file is over 20 MB. Export 1920 px wide H.264 MP4 (about 15–20 s) and try again.', true); return; }
   note('Uploading ' + file.name + '…');
   try {
-    const old = media[slot] && media[slot].url;
+    const old = media[id] && media[id].url;
     const r = await assetsApi.upload(file);
-    await dbApi.doc('media/' + slot).set({ asset: r.id, kind: r.contentType.startsWith('video') ? 'video' : 'image', name: file.name, at: Date.now() });
-    note('Saved. It will appear on the side walls during this act.');
-    if (old) assetsApi.delete(old.split('/').pop()).catch(() => {});
+    await dbApi.doc('media/' + id).set({ asset: r.id, kind: r.contentType.startsWith('video') ? 'video' : 'image', name: file.name, at: Date.now() });
+    note('Saved. It now plays in this scene.');
+    if (old && old.startsWith('/_blob/')) assetsApi.delete(old.split('/').pop()).catch(() => {});
   } catch (e) {
     const code = e && e.code;
-    note(code === 'unsupported_type' ? 'Use a JPG, PNG, WebP, MP4 or WebM file.' : code === 'quota_or_state' ? 'Storage is full. Remove a file first.' : code === 'not_granted' ? 'You need edit access to add media.' : 'Upload failed. Try again in a moment.', true);
+    note(code === 'unsupported_type' ? 'Use an MP4, WebM, JPG, PNG or WebP file.' : code === 'quota_or_state' ? 'Storage is full. Remove a clip first.' : code === 'not_granted' ? 'You need edit access to add clips.' : 'Upload failed. Try again in a moment.', true);
   }
 }
-async function removeSlot(slot) {
-  const m = media[slot]; if (!m) return;
-  try { await dbApi.doc('media/' + slot).delete(); await assetsApi.delete(m.url.split('/').pop()); note('Removed.'); }
-  catch (e) { note('Could not remove that file. Try again.', true); }
+async function removeSlot(id) {
+  const m = media[id]; if (!m) return;
+  try { await dbApi.doc('media/' + id).delete(); if (m.url.startsWith('/_blob/')) await assetsApi.delete(m.url.split('/').pop()); note('Removed. This scene now shows the live 3D world.'); }
+  catch (e) { note('Could not remove that clip. Try again.', true); }
 }
 (async () => {
   renderSlots();
-  if (!window.claude || !window.claude.use) { note('Media storage is available once this page is opened from its published link.'); return; }
-  try {
-    dbApi = await window.claude.use('db');
-    assetsApi = await window.claude.use('assets');
-  } catch (e) { /* stays null */ }
-  if (!dbApi) { note('Media storage is not available in this view. The show runs without it.'); return; }
-  if (!assetsApi) note('Only editors can change media. Uploaded media still plays here.');
-  else note('');
+  if (!window.claude || !window.claude.use) { note('The footage library loads from the published link.'); return; }
+  try { dbApi = await window.claude.use('db'); assetsApi = await window.claude.use('assets'); } catch (e) { /* stays null */ }
+  if (!dbApi) { note('Footage library is not available in this view. Scenes without footage show the live 3D world.'); return; }
+  note(assetsApi ? '' : 'Only editors can change clips. Saved clips still play here.');
   renderSlots();
   dbApi.collection('media').onSnapshot((snap) => {
     snap.docChanges().forEach((ch) => loadMedia(ch.doc.id, ch.type === 'removed' ? null : ch.doc.data()));
-  }, () => note('Media library is offline. The show runs without it.', true));
+  }, () => note('Footage library is offline. Scenes without footage show the live 3D world.', true));
 })();
 
 // ---------------------------------------------------------------- generative sound
@@ -1321,13 +1448,13 @@ const audio = (() => {
       if (!ctx || !on) return;
       const now = ctx.currentTime;
       master.gain.setTargetAtTime(playing ? .9 * Math.min(1, (DURATION - t) / 2.5) : .25, now, .5);
-      const act = t < 42 ? 0 : t < 82 ? 1 : t < 140 ? 2 : 3;
+      const act = t < 36 ? 0 : t < 72 ? 1 : t < 144 ? 2 : 3;
       if (act !== lastChord) {
         lastChord = act;
         CH[act].forEach((f, i) => { voices[i * 2].frequency.setTargetAtTime(f, now, 1.8); voices[i * 2 + 1].frequency.setTargetAtTime(f, now, 1.8); });
       }
-      padF.frequency.setTargetAtTime(500 + 1600 * smooth(80, 110, t) + 600 * smooth(150, 170, t), now, 1.5);
-      oceanG.gain.setTargetAtTime(.5 * (1 - smooth(40, 70, t)) + .18 * smooth(90, 100, t) * (1 - smooth(130, 145, t)), now, 1.2);
+      padF.frequency.setTargetAtTime(500 + 1600 * smooth(74, 100, t) + 600 * smooth(150, 170, t), now, 1.5);
+      oceanG.gain.setTargetAtTime(.5 * (1 - smooth(30, 50, t)) + .18 * smooth(90, 100, t) * (1 - smooth(106, 115, t)) + .3 * smooth(160, 168, t), now, 1.2);
       if (cap !== lastCap && cap >= 0 && playing) { const pent = [587.33, 659.25, 739.99, 880, 987.77]; chime(pent[cap % 5], 0, .06); }
       lastCap = cap;
       const sc = t > SCAN_T0 && t < SCAN_T0 + 1;
@@ -1398,6 +1525,7 @@ addEventListener('keydown', (e) => {
   else if (k === 'h' || k === 'H') { if (document.body.classList.contains('show-hidden')) poke(); else document.body.classList.add('show-hidden'); return; }
   else if (k === 'b' || k === 'B' || k === '.') { blackout = !blackout; toast(blackout ? 'Blackout' : 'Picture on'); }
   else if (k === 'q' || k === 'Q') { qIndex = (qIndex + 1) % QUALITY.length; makeCube(); toast('Detail ' + QUALITY[qIndex] + ' px per face'); }
+  else if (k === 'o' || k === 'O') { const u = post.material.uniforms.uFloorRot; u.value = (u.value + 1) % 4; toast('Floor rotated ' + u.value * 90 + '°'); saveRoom(); }
   else if (k >= '1' && k <= '4') { seek(ACTS[+k - 1].t + .01); toast(ACTS[+k - 1].name); }
   else return;
   poke();
@@ -1406,12 +1534,27 @@ canvas.addEventListener('pointerdown', (e) => { if (mode === 2) { look.drag = [e
 canvas.addEventListener('pointermove', (e) => { if (look.drag) { look.yaw = look.drag[2] + (e.clientX - look.drag[0]) * .005; look.pitch = clamp(look.drag[3] + (e.clientY - look.drag[1]) * .005, -1.4, 1.4); } });
 canvas.addEventListener('pointerup', () => { look.drag = null; });
 
+function saveRoom() {
+  const R = post.material.uniforms.uRoom.value;
+  try { localStorage.setItem('ire2036-room', JSON.stringify([R.x, R.y, R.z, post.material.uniforms.uEye.value, post.material.uniforms.uFloorRot.value])); } catch (e) {}
+}
+function applyRoom() {
+  const g = (id, lo, hi, dv) => { const v = parseFloat($(id).value); return isFinite(v) ? clamp(v, lo, hi) : dv; };
+  post.material.uniforms.uRoom.value.set(g('r-w', 2, 30, 6), g('r-d', 2, 30, 6), g('r-h', 1.5, 10, 3));
+  post.material.uniforms.uEye.value = g('r-e', 1, 2.2, 1.6);
+  saveRoom(); resize();
+}
+['r-w', 'r-d', 'r-h', 'r-e'].forEach((id) => $(id).addEventListener('change', applyRoom));
+try {
+  const r = JSON.parse(localStorage.getItem('ire2036-room') || 'null');
+  if (Array.isArray(r) && r.length >= 4) { $('r-w').value = r[0]; $('r-d').value = r[1]; $('r-h').value = r[2]; $('r-e').value = r[3]; post.material.uniforms.uFloorRot.value = (r[4] | 0) % 4; }
+} catch (e) {}
 function resize() {
   const w = innerWidth, h = innerHeight;
   renderer.setSize(w, h, false);
   let rx = 0, ry = 0, rw = w, rh = h;
   if (mode === 1) {
-    const R = post.material.uniforms.uRoom.value, asp = (2 * R.x + 2 * R.y) / (R.z + R.y);
+    const R = post.material.uniforms.uRoom.value, asp = (3 * R.x + 2 * R.y) / Math.max(R.z, R.y);
     if (w / h > asp) { rw = h * asp; rx = (w - rw) / 2; } else { rh = w / asp; ry = (h - rh) / 2; }
   }
   post.material.uniforms.uRect.value.set(rx, ry, rw, rh);
@@ -1429,7 +1572,7 @@ function frame(now) {
   U.uTime.value = now / 1000; U.uShow.value = idleT;
   applyTime(idleT);
   post.material.uniforms.uPrev.value.set(look.yaw, look.pitch, Math.tan(40 * Math.PI / 180));
-  cubeCam.update(renderer, scene);
+  if (needsWorld()) cubeCam.update(renderer, scene);
   renderer.setRenderTarget(null);
   renderer.render(post.scene, post.cam);
   const cap = CAPTIONS.findIndex((c) => idleT >= c.t0 && idleT <= c.t1);
@@ -1448,10 +1591,11 @@ function frame(now) {
   if (fpsAcc > 1) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; $('stat').textContent = `${fpsShown} fps · ${QUALITY[qIndex]} px/face · Q to change`; }
   requestAnimationFrame(frame);
 }
-window.__ireland = { seek: (t) => { started = true; seek(t); }, pause: () => setPlaying(false), mode: setMode };
+window.__ireland = { seek: (t) => { started = true; seek(t); }, pause: () => setPlaying(false), mode: setMode, media: loadMedia };
 
 let savedMode = 0; try { savedMode = +(localStorage.getItem('ire2036-mode') || 0) || 0; } catch (e) {}
 setMode(clamp(savedMode, 0, 2));
+applyRoom();
 const fontsReady = document.fonts && document.fonts.load
   ? Promise.all(['400 100px "Instrument Serif"', '600 40px "IBM Plex Sans Condensed"', '400 56px "IBM Plex Sans Condensed"'].map((f) => document.fonts.load(f))).catch(() => {})
   : Promise.resolve();
