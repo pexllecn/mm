@@ -883,16 +883,16 @@ const skyLUT = (() => {
       for(int i=0;i<22;i++){
         float fi=float(i)/22.;
         float H=95.+fi*165.;
-        vec2 q=d.xz/max(d.y,.035)*H*.012+vec2(0.,-4.);
+        vec2 q=d.xz/max(d.y,.035)*H*.012+vec2(0.,4.5);
         float fold=(texture2D(uNoise,vec2(q.x*.035+uTime*.0012,.37)).r-.5)*7.;
         float s2=q.y+fold+sin(q.x*.21+uTime*.05)*1.4;
-        float curtain=exp(-pow(s2*1.1,2.))+.55*exp(-pow((s2-3.4)*1.6,2.));
+        float curtain=exp(-pow(s2*.9,2.))+.6*exp(-pow((s2+3.2)*1.3,2.))+.35*exp(-pow((s2-2.6)*1.8,2.));
         float rays=.25+.75*pow(texture2D(uNoise,vec2(q.x*.42+fold*.02,uTime*.004)).b,2.2);
         vec3 col=mix(vec3(.12,1.,.42),vec3(.75,.16,.42),smoothstep(.25,.85,fi));
         aur+=col*curtain*rays*exp(-fi*2.6)*(fi<.05?.6:1.);
       }
       float north=smoothstep(.5,-.9,d.z);
-      c+=aur*uAurora*north*.22*smoothstep(0.,.12,d.y);
+      c+=aur*uAurora*north*.55*smoothstep(0.,.1,d.y);
     }
     // Clouds, raymarched through a real cumulus layer (1.4 to 3.6 km) with light
     // marched toward the sun: dark bases, bright tops, silver edges against the light.
