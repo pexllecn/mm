@@ -1,6 +1,6 @@
 # Ireland 2036: Igloo showcase
 
-A three-minute real-time immersive piece for an Igloo room with four walls and a floor. It is a single HTML page (`index.html`) that renders a live 3D world into a 360° cube map every frame, then re-projects it for the room. It plays as one continuous camera move, with no slides and no cuts.
+A three-minute real-time immersive piece for an Igloo room with four walls and a floor. It is a single HTML page (`index.html`) that maps stock footage of Ireland onto the physical room in real time. It plays as one continuous flow, with no slides and no cuts.
 
 ## How it works
 
