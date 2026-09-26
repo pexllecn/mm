@@ -892,7 +892,7 @@ const skyLUT = (() => {
         aur+=col*curtain*rays*exp(-fi*2.6)*(fi<.05?.6:1.);
       }
       float north=smoothstep(.5,-.9,d.z);
-      c+=aur*uAurora*north*.55*smoothstep(0.,.1,d.y);
+      c+=aur*uAurora*north*.36*smoothstep(0.,.1,d.y);
     }
     gl_FragColor=vec4(c,1.);
   }`, {}, { side: T.BackSide, depthWrite: false });
@@ -932,9 +932,13 @@ const cloudLayer = (() => {
   float dens(vec3 p){
     vec2 w=p.xz*.000030+uTime*vec2(.0030,.0010);
     float hf=clamp((p.y-CB)/(CT-CB),0.,1.);
-    float base=texture2D(uNoise,w).r*.62+texture2D(uNoise,w*2.7+.31).g*.38;
+    // Weather at the 100 km scale: clouds gather in banks and streets with clear gaps
+    // between them, rather than an even scatter of identical puffs.
+    float bank=smoothstep(.30,.72,texture2D(uNoise,w*.18+.61).a);
+    float base=texture2D(uNoise,w).r*.55+texture2D(uNoise,w*2.7+.31).g*.30+bank*.15;
     float prof=smoothstep(0.,.18,hf)*smoothstep(1.,.4,hf);
-    return (base-(1.-uCloud*1.05))*prof*3.4-texture2D(uNoise,w*9.+hf*.4).b*.30*(1.-hf*.6);
+    float cov=uCloud*1.05*(.55+.75*bank);
+    return (base-(1.-cov))*prof*3.4-texture2D(uNoise,w*9.+hf*.4).b*.34*(1.-hf*.6)-texture2D(uNoise,w*23.).a*.12;
   }
   void main(){
     vec3 d=normalize(vW-uCam); float tp=length(vW-uCam);
