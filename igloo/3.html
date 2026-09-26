@@ -1,0 +1,2148 @@
+<title>Ireland 2036</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  /* Single-look design: this page drives a projection room, so it stays dark in every theme. */
+  :root {
+    color-scheme: dark;
+    --void: #030609;
+    --panel: rgba(6, 14, 19, 0.82);
+    --panel-solid: #08131a;
+    --line: rgba(217, 212, 199, 0.16);
+    --stone: #d9d4c7;
+    --mute: #8a9ea1;
+    --gold: #f2c14e;
+    --sea: #7fd1c7;
+    --alert: #ef8a6b;
+    --sans: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --serif: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  }
+  html, body { height: 100%; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--void); color: var(--stone); font-family: var(--sans); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #000; }
+  body.show-hidden, body.show-hidden * { cursor: none !important; }
+
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold); }
+  button, select { font: inherit; color: inherit; }
+  button:focus-visible, select:focus-visible, label:focus-within { outline: 2px solid var(--sea); outline-offset: 2px; }
+
+  /* Start gate */
+  #gate {
+    position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: flex-start;
+    padding-inline: clamp(16px, 5vw, 72px); padding-block: clamp(24px, 6vh, 72px);
+    background: linear-gradient(90deg, rgba(3,6,9,.92) 0%, rgba(3,6,9,.72) 38%, rgba(3,6,9,.1) 75%);
+    overflow-y: auto;
+  }
+  .gate-card { max-width: 560px; display: grid; gap: 22px; }
+  .gate-card h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(56px, 9vw, 120px); line-height: .9; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+  .gate-card h1 em { color: var(--gold); font-style: italic; }
+  .gate-card p { margin: 0; font-size: 17px; line-height: 1.5; color: var(--stone); max-width: 52ch; }
+  .spec { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--mute); font-variant-numeric: tabular-nums; }
+  .spec b { color: var(--stone); font-weight: 500; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: rgba(8,19,26,.6); flex-wrap: wrap; }
+  .seg button { border: 0; background: transparent; padding: 8px 14px; border-radius: 999px; font-size: 14px; cursor: pointer; color: var(--mute); }
+  .seg button[aria-pressed="true"] { background: var(--stone); color: var(--void); }
+  .go {
+    border: 0; border-radius: 999px; padding: 16px 30px; font-size: 17px; font-weight: 600; letter-spacing: .04em;
+    background: var(--gold); color: #1a1405; cursor: pointer; display: inline-flex; gap: 12px; align-items: center;
+  }
+  .go:hover { filter: brightness(1.08); }
+  .go[disabled] { opacity: .45; cursor: progress; filter: none; }
+  .credit { margin: 0; font-size: 12px; line-height: 1.45; color: var(--mute); max-width: 58ch; }
+  .ghost { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 14px 20px; font-size: 15px; cursor: pointer; }
+  .ghost:hover { border-color: var(--stone); }
+  .room { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--mute); }
+  .room input { width: 4.2em; background: rgba(8,19,26,.7); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--stone); font: inherit; font-variant-numeric: tabular-nums; }
+  .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 16px; font-size: 13px; color: var(--mute); }
+  kbd { font-family: var(--sans); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; color: var(--stone); margin-right: 6px; }
+
+  /* Operator bar */
+  #hud {
+    position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    width: min(980px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    backdrop-filter: blur(10px); padding: 12px 14px; display: grid; gap: 10px; transition: opacity .5s, transform .5s;
+  }
+  body.show-hidden #hud { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
+  .acts { display: grid; grid-template-columns: 36fr 36fr 72fr 36fr; gap: 4px; }
+  .act { border: 0; background: transparent; text-align: left; padding: 0; cursor: pointer; display: grid; gap: 6px; }
+  .act .bar { height: 4px; border-radius: 2px; background: rgba(217,212,199,.14); overflow: hidden; }
+  .act .bar i { display: block; height: 100%; width: 0; background: var(--stone); }
+  .act.on .bar i { background: var(--gold); }
+  .act span { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+  .act.on span { color: var(--stone); }
+  .ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ctl button { border: 1px solid var(--line); background: rgba(217,212,199,.04); border-radius: 8px; padding: 7px 12px; font-size: 14px; cursor: pointer; }
+  .ctl button:hover { border-color: var(--stone); }
+  .ctl button.primary { background: var(--stone); color: var(--void); border-color: var(--stone); min-width: 84px; }
+  .clock { font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 500; letter-spacing: .02em; margin-right: 6px; }
+  .clock small { font-size: 14px; color: var(--mute); }
+  .spacer { flex: 1; }
+  .stat { font-size: 12px; color: var(--mute); font-variant-numeric: tabular-nums; }
+
+  /* Media panel */
+  #media {
+    position: fixed; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); width: min(420px, calc(100% - 32px));
+    max-height: calc(100% - 140px); overflow-y: auto; background: var(--panel-solid); border: 1px solid var(--line);
+    border-radius: 14px; padding: 18px; display: grid; gap: 14px;
+  }
+  #media h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0; }
+  #media p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--mute); }
+  .slot { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; }
+  .thumb { width: 96px; aspect-ratio: 16/9; border-radius: 6px; background: #0e1c24 center/cover no-repeat; display: grid; place-items: center; font-size: 11px; color: var(--mute); overflow: hidden; }
+  .thumb video { width: 100%; height: 100%; object-fit: cover; }
+  .slot b { font-weight: 500; display: block; }
+  .slot small { color: var(--mute); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .slot .acts-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .slot label, .slot button { font-size: 13px; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; background: transparent; }
+  .slot input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .note { font-size: 13px; color: var(--sea); min-height: 1em; }
+  .note.err { color: var(--alert); }
+
+  #toast { position: fixed; top: calc(18px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); background: var(--panel-solid); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; font-size: 14px; transition: opacity .4s; pointer-events: none; }
+  #toast.off { opacity: 0; }
+
+  @media (max-width: 640px) {
+    #gate { align-items: flex-start; background: rgba(3,6,9,.86); }
+    .acts span { font-size: 10px; letter-spacing: .06em; }
+    .clock { font-size: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) { #hud, #toast { transition: none; } }
+</style>
+
+<canvas id="stage" aria-label="Ireland 2036 immersive scene"></canvas>
+
+<section id="gate" aria-labelledby="gate-title">
+  <div class="gate-card">
+    <div class="eyebrow">Igloo immersive · four walls + floor</div>
+    <h1 id="gate-title">Ireland <em>2036</em></h1>
+    <p>The real island. Terrain and sea-floor depth from satellite survey data, satellite imagery draped over it, and every place — the Cliffs of Moher, the Liffey, Arklow Bank — at its true longitude and latitude. The flight is slow, level and always forward, so the room stays comfortable. Then a wave of light sweeps out from Dublin, and Ireland 2036 takes shape around you.</p>
+    <div class="spec"><span><b>3:00</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> live render</span><span id="gpu-note">Checking graphics…</span></div>
+    <div class="note" id="load-note" role="status">Starting up…</div>
+    <div class="row" role="group" aria-label="Output format">
+      <div class="seg" id="mode-seg">
+        <button type="button" data-mode="0" aria-pressed="true">360° Igloo</button>
+        <button type="button" data-mode="1" aria-pressed="false">Walls + floor</button>
+        <button type="button" data-mode="2" aria-pressed="false">Desk preview</button>
+      </div>
+    </div>
+    <div class="room" role="group" aria-label="Room size in metres">
+      <label for="r-w">Front wall <input id="r-w" type="number" min="2" max="30" step="0.1" value="6"> m</label>
+      <label for="r-d">Side wall <input id="r-d" type="number" min="2" max="30" step="0.1" value="6"> m</label>
+      <label for="r-h">Height <input id="r-h" type="number" min="1.5" max="10" step="0.1" value="3"> m</label>
+      <label for="r-e">Eye <input id="r-e" type="number" min="1" max="2.2" step="0.05" value="1.6"> m</label>
+    </div>
+    <div class="row">
+      <button type="button" class="go" id="start" disabled>▶ Start the show</button>
+      <button type="button" class="ghost" id="retry" hidden>Try loading again</button>
+      <button type="button" class="ghost" id="open-media">Footage library</button>
+    </div>
+    <div class="keys" aria-label="Operator keys">
+      <span><kbd>Space</kbd>Pause / play</span>
+      <span><kbd>→</kbd><kbd>←</kbd>Next / previous act</span>
+      <span><kbd>R</kbd>Restart</span>
+      <span><kbd>V</kbd>Output format</span>
+      <span><kbd>F</kbd>Full screen</span>
+      <span><kbd>A</kbd>Sound on / off</span>
+      <span><kbd>H</kbd>Hide controls</span>
+      <span><kbd>B</kbd>Blackout</span>
+      <span><kbd>O</kbd>Rotate floor panel</span>
+    </div>
+    <p class="credit">Elevation and bathymetry: Terrain Tiles on AWS (SRTM, NED, GEBCO). Imagery: Esri World Imagery. Place, route and offshore-site coordinates: public geographic data. Swap either service at the top of the script if the venue holds a licensed source.</p>
+  </div>
+</section>
+
+<div id="hud" hidden>
+  <div class="acts" id="acts"></div>
+  <div class="ctl">
+    <span class="clock" id="clock">0:00 <small>/ 3:00</small></span>
+    <button type="button" class="primary" id="b-play">Pause</button>
+    <button type="button" id="b-restart">Restart</button>
+    <button type="button" id="b-mode">360° Igloo</button>
+    <button type="button" id="b-audio">Sound on</button>
+    <button type="button" id="b-media">Footage</button>
+    <button type="button" id="b-full">Full screen</button>
+    <span class="spacer"></span>
+    <span class="stat" id="stat"></span>
+  </div>
+</div>
+
+<aside id="media" hidden aria-labelledby="media-title">
+  <div class="row" style="justify-content:space-between">
+    <h2 id="media-title">Footage library</h2>
+    <button type="button" class="ghost" id="close-media" style="padding:8px 14px">Close</button>
+  </div>
+  <p>One clip per scene. Each clip wraps around all four walls as a seamless panorama and pools across the floor as a moving reflection. Clips save with the show, so the Igloo PC picks them up live. Scenes without a clip show the live 3D world.</p>
+  <div id="slots"></div>
+  <div class="note" id="media-note" role="status"></div>
+</aside>
+
+<div id="toast" class="off" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script>
+if (!window.THREE) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+</script>
+<script>
+(() => {
+'use strict';
+const T = window.THREE;
+const $ = (id) => document.getElementById(id);
+if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the network and reload.'; return; }
+
+
+// ---------------------------------------------------------------- show data
+const DURATION = 180;
+// Each scene is a stock clip wrapped around the room. `want` is what the clip should show.
+const SCENES = [
+  { id: 's01', t0: 0,   name: 'Atlantic dawn',   want: 'Wild Atlantic Way, aerial at sunrise, open sea' },
+  { id: 's02', t0: 22,  name: 'The coast',       want: 'Cliffs of Moher, aerial along the cliff face' },
+  { id: 's03', t0: 40,  name: 'The land',        want: 'Green fields and stone walls, aerial (Burren, Connemara, Clare)' },
+  { id: 's04', t0: 60,  name: 'Open economy',    want: 'Ireland from high altitude, or Dublin Docklands and the Liffey' },
+  { id: 's05', t0: 78,  name: 'The turn',        want: 'Night time-lapse, or light trails over the city' },
+  { id: 's06', t0: 94,  name: 'Energy',          want: 'Offshore wind farm, aerial, ideally at dusk' },
+  { id: 's07', t0: 112, name: 'Transport',       want: 'Modern train, tram or metro in motion (Luas, DART, rail)' },
+  { id: 's08', t0: 128, name: 'The capital',     want: 'Dublin at night: the Liffey, Samuel Beckett Bridge, the quays' },
+  { id: 's09', t0: 144, name: 'Housing',         want: 'New homes and construction, aerial; modern sustainable architecture' },
+  { id: 's10', t0: 162, name: 'Together',        want: 'Ireland at night from above, or starry sky over the coast' },
+];
+SCENES.forEach((s, i) => { s.t1 = i < SCENES.length - 1 ? SCENES[i + 1].t0 : DURATION; });
+const XFADE = 3.2; // seconds of liquid dissolve into each scene
+
+const ACTS = [
+  { name: 'Today', t: 0 },
+  { name: 'Momentum', t: 40 },
+  { name: 'Ireland 2036', t: 78 },
+  { name: 'Together', t: 144 },
+];
+
+const CAPTIONS = [
+  { t0: 4,   t1: 16,  eb: 'Ireland \u00b7 2026',     ti: 'Where we stand today',         sub: 'The Wild Atlantic Way at first light' },
+  { t0: 22,  t1: 34,  eb: 'Our coast',            ti: 'Where the Atlantic meets us',  sub: 'The Cliffs of Moher, County Clare' },
+  { t0: 40,  t1: 54,  eb: 'Our people',           ti: '5.4 million people',           sub: 'One of the youngest populations in Europe' },
+  { t0: 60,  t1: 74,  eb: 'Open economy',         ti: 'Connected to the world',       sub: 'European home to many of the world\u2019s leading companies' },
+  { t0: 78,  t1: 90,  eb: '2026 \u2192 2036',        ti: 'The next ten years start now', sub: '' },
+  { t0: 94,  t1: 108, eb: 'Energy',               ti: 'Powered by the Atlantic',      sub: 'National offshore wind targets: 5 GW by 2030, 20 GW by 2040' },
+  { t0: 112, t1: 124, eb: 'Transport',            ti: 'Connected by MetroLink',       sub: 'Airport to city centre by metro, regions linked by rail' },
+  { t0: 128, t1: 140, eb: 'Dublin \u00b7 the capital', ti: 'A capital on the move',     sub: 'Talent, technology and trade along the Liffey' },
+  { t0: 144, t1: 156, eb: 'Housing',              ti: 'Homes for a growing nation',   sub: 'New communities, built at pace and powered cleanly' },
+  { t0: 162, t1: 177.5, eb: 'Ireland 2036',       ti: 'Ambition, delivered together', sub: '' },
+];
+
+// ---------------------------------------------------------------- real-world geography
+// The scene is built in real metres on a local tangent plane centred on Ireland.
+// +x is east, -z is north, y is metres above sea level. Every coordinate below is a
+// real longitude and latitude; no landform in this file is invented.
+const LON0 = -8.0, LAT0 = 53.4;
+const M_LON = 111320 * Math.cos(LAT0 * Math.PI / 180);
+const M_LAT = 110574;
+const gx = (lon) => (lon - LON0) * M_LON;
+const gz = (lat) => -(lat - LAT0) * M_LAT;
+
+// Data window: the island plus a margin of real open sea on every side.
+const LON_W = -11.20, LON_E = -4.80, LAT_N = 55.75, LAT_S = 51.05;
+const FX0 = gx(LON_W), FX1 = gx(LON_E), FZ0 = gz(LAT_N), FZ1 = gz(LAT_S);
+
+// Elevation is read at zoom 10, roughly 90 m per source pixel at this latitude, and
+// resampled onto a regular grid of about 150 m. That is the resolution at which
+// Irish terrain starts to read as itself rather than as smooth noise.
+const ELEV_Z = 10;
+const FW = 2560, FH = Math.round(FW * (FZ1 - FZ0) / (FX1 - FX0));
+
+const PLACES = {
+  dublin:  [-6.2603, 53.3498], docklands: [-6.2350, 53.3470], spire: [-6.2603, 53.3498],
+  poolbeg: [-6.1859, 53.3356], beckett:   [-6.2410, 53.3479], airport: [-6.2499, 53.4264],
+  cliffs:  [-9.4269, 52.9737], obrien:    [-9.4290, 52.9746],
+};
+
+const CITIES = [
+  ['Dublin',    -6.2603, 53.3498, 9200, 1.00],
+  ['Belfast',   -5.9301, 54.5973, 5200, 0.72],
+  ['Cork',      -8.4706, 51.8985, 4200, 0.66],
+  ['Galway',    -9.0568, 53.2707, 3000, 0.52],
+  ['Limerick',  -8.6238, 52.6638, 3000, 0.52],
+  ['Waterford', -7.1101, 52.2593, 2100, 0.44],
+  ['Derry',     -7.3086, 54.9966, 2400, 0.44],
+  ['Drogheda',  -6.3478, 53.7189, 1900, 0.40],
+  ['Dundalk',   -6.4058, 54.0019, 1700, 0.38],
+  ['Sligo',     -8.4761, 54.2697, 1500, 0.35],
+  ['Athlone',   -7.9407, 53.4239, 1400, 0.33],
+  ['Kilkenny',  -7.2528, 52.6541, 1300, 0.33],
+  ['Tralee',    -9.7026, 52.2713, 1300, 0.32],
+  ['Ennis',     -8.9811, 52.8436, 1200, 0.30],
+  ['Portlaoise',-7.2999, 53.0344, 1100, 0.30],
+  ['Mullingar', -7.3400, 53.5236, 1100, 0.30],
+  ['Navan',     -6.6817, 53.6528, 1200, 0.31],
+  ['Carlow',    -6.9261, 52.8365, 1100, 0.29],
+  ['Wexford',   -6.4633, 52.3369, 1200, 0.30],
+];
+
+// Consented and planned Irish offshore wind sites.
+const WIND_SITES = [
+  ['Dublin Array',      -6.030, 53.255, 6, 5, 3200],
+  ['Codling Wind Park', -5.990, 53.060, 7, 6, 3600],
+  ['Arklow Bank',       -5.960, 52.800, 5, 8, 3400],
+  ['Oriel',             -6.190, 53.960, 4, 5, 2800],
+  ['Sceirde Rocks',     -9.960, 53.300, 4, 4, 2600],
+  ['Tonn Nua',          -7.300, 51.900, 5, 5, 3000],
+];
+
+const ROUTES = {
+  metro:    [[-6.2180, 53.4597], [-6.2499, 53.4264], [-6.2620, 53.3930], [-6.2740, 53.3700], [-6.2603, 53.3498], [-6.2590, 53.3380], [-6.2600, 53.3290]],
+  cork:     [[-6.2920, 53.3465], [-6.5400, 53.2600], [-7.0100, 53.1100], [-7.2999, 53.0344], [-7.8100, 52.6800], [-8.2100, 52.5000], [-8.6500, 52.1300], [-8.4706, 51.8985]],
+  belfast:  [[-6.2490, 53.3530], [-6.3478, 53.7189], [-6.4058, 54.0019], [-6.3360, 54.1770], [-6.0300, 54.4200], [-5.9301, 54.5973]],
+  galway:   [[-6.2490, 53.3530], [-6.6817, 53.6528], [-7.3400, 53.5236], [-7.9407, 53.4239], [-8.5900, 53.3200], [-9.0568, 53.2707]],
+  ewic:     [[-6.0900, 53.5200], [-5.6000, 53.5000], [-5.0500, 53.4200]],
+  celtic:   [[-7.8500, 51.9500], [-7.2000, 51.6000], [-6.6000, 51.3000]],
+  greenlink:[[-6.9500, 52.2200], [-6.3000, 52.0500], [-5.7000, 51.9000]],
+};
+
+// ---------------------------------------------------------------- real-world data services
+// Elevation and bathymetry: Terrain Tiles on AWS (SRTM and NED on land, GEBCO at sea),
+// terrarium encoding. Imagery: Esri World Imagery. Both are swappable here if the
+// venue holds a licensed source.
+const ELEV_URL  = (z, x, y) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`;
+const IMAGE_URL = (z, x, y) => `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
+const IMAGE_Z = 10;  // island-wide imagery
+const DETAIL_Z = 13; // a sharp inset over Dublin, where most of the show happens
+const DETAIL = { lon0: -6.50, lon1: -6.02, lat0: 53.47, lat1: 53.23 };
+
+const tileX = (lon, z) => (lon + 180) / 360 * Math.pow(2, z);
+const tileY = (lat, z) => { const s = Math.sin(lat * Math.PI / 180); return (.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * Math.pow(2, z); };
+const lonOfX = (x, z) => x / Math.pow(2, z) * 360 - 180;
+const latOfY = (y, z) => { const n = Math.PI - 2 * Math.PI * y / Math.pow(2, z); return 180 / Math.PI * Math.atan(.5 * (Math.exp(n) - Math.exp(-n))); };
+
+// ---------------------------------------------------------------- math
+const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function hash(i, j) {
+  let n = (Math.imul(i, 374761393) + Math.imul(j, 668265263)) | 0;
+  n = Math.imul(n ^ (n >>> 13), 1274126177); n ^= n >>> 16;
+  return (n >>> 0) / 4294967296;
+}
+let seedN = 1; const rnd = () => { seedN = (Math.imul(seedN, 1664525) + 1013904223) | 0; return (seedN >>> 0) / 4294967296; };
+
+// ---------------------------------------------------------------- elevation field
+// One regular grid of real heights in metres, positive on land and negative at sea.
+// Everything in the show reads from it: the terrain surface, the depth of the water,
+// where a building may stand, and how low the camera is allowed to fly.
+let FIELD = null;
+let FIELD_SOURCE = 'pending';
+const elevTex = new T.DataTexture(new Float32Array(1), 1, 1, T.RedFormat, T.FloatType);
+
+function heightAt(x, z) {
+  if (!FIELD) return 0;
+  const u = (x - FX0) / (FX1 - FX0) * (FW - 1), v = (z - FZ0) / (FZ1 - FZ0) * (FH - 1);
+  if (u < 0 || v < 0 || u > FW - 1 || v > FH - 1) return -200;
+  const i = Math.floor(u), j = Math.floor(v), fx = u - i, fy = v - j;
+  const i1 = Math.min(FW - 1, i + 1), j1 = Math.min(FH - 1, j + 1);
+  const a = FIELD[j * FW + i], b = FIELD[j * FW + i1], c = FIELD[j1 * FW + i], d = FIELD[j1 * FW + i1];
+  return lerp(lerp(a, b, fx), lerp(c, d, fx), fy);
+}
+
+// ---------------------------------------------------------------- tile loading
+function loadImage(url) {
+  return new Promise((res, rej) => {
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    im.onload = () => res(im);
+    im.onerror = () => rej(new Error('tile failed: ' + url));
+    im.src = url;
+  });
+}
+async function pool(items, width, fn) {
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(width, items.length) }, async () => {
+    while (next < items.length) { const k = next++; await fn(items[k]); }
+  }));
+}
+
+// Elevation is scattered tile by tile straight into the field. No oversized canvas is
+// ever allocated, so this stays inside every browser's canvas limits.
+async function realField(onProgress) {
+  const x0 = Math.floor(tileX(LON_W, ELEV_Z)), x1 = Math.floor(tileX(LON_E, ELEV_Z));
+  const y0 = Math.floor(tileY(LAT_N, ELEV_Z)), y1 = Math.floor(tileY(LAT_S, ELEV_Z));
+  const out = new Float32Array(FW * FH);
+  const seen = new Uint8Array(FW * FH);
+  const scratch = document.createElement('canvas'); scratch.width = scratch.height = 256;
+  const sctx = scratch.getContext('2d', { willReadFrequently: true });
+
+  const jobs = []; for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) jobs.push([i, j]);
+  let done = 0, failed = 0;
+  await pool(jobs, 10, async ([ti, tj]) => {
+    try {
+      const im = await loadImage(ELEV_URL(ELEV_Z, ti, tj));
+      sctx.clearRect(0, 0, 256, 256);
+      sctx.drawImage(im, 0, 0);
+      const px = sctx.getImageData(0, 0, 256, 256).data;
+      // field cells covered by this tile
+      const latTop = latOfY(tj, ELEV_Z), latBot = latOfY(tj + 1, ELEV_Z);
+      const lonL = lonOfX(ti, ELEV_Z), lonR = lonOfX(ti + 1, ELEV_Z);
+      const jA = Math.max(0, Math.floor((latTop - LAT_N) / (LAT_S - LAT_N) * (FH - 1)));
+      const jB = Math.min(FH - 1, Math.ceil((latBot - LAT_N) / (LAT_S - LAT_N) * (FH - 1)));
+      const iA = Math.max(0, Math.floor((lonL - LON_W) / (LON_E - LON_W) * (FW - 1)));
+      const iB = Math.min(FW - 1, Math.ceil((lonR - LON_W) / (LON_E - LON_W) * (FW - 1)));
+      for (let j = jA; j <= jB; j++) {
+        const lat = lerp(LAT_N, LAT_S, j / (FH - 1));
+        const sy = Math.round((tileY(lat, ELEV_Z) - tj) * 256);
+        if (sy < 0 || sy > 255) continue;
+        for (let i = iA; i <= iB; i++) {
+          const lon = lerp(LON_W, LON_E, i / (FW - 1));
+          const sx = Math.round((tileX(lon, ELEV_Z) - ti) * 256);
+          if (sx < 0 || sx > 255) continue;
+          const k = (sy * 256 + sx) * 4;
+          out[j * FW + i] = (px[k] * 256 + px[k + 1] + px[k + 2] / 256) - 32768;
+          seen[j * FW + i] = 1;
+        }
+      }
+    } catch (e) { failed++; }
+    if (onProgress) onProgress(++done / jobs.length);
+  });
+  if (failed > 0) throw new Error(`elevation incomplete (${failed} of ${jobs.length} tiles failed)`);
+  // Any cell the tiles did not cover would punch a hole in the world.
+  let holes = 0; for (let k = 0; k < seen.length; k++) if (!seen[k]) holes++;
+  if (holes > out.length * .001) throw new Error(`elevation has gaps (${holes} cells)`);
+  return out;
+}
+
+// A daylight satellite layer, drawn straight into the final grid one band at a time.
+async function imageryLayer(z, box, IW, onProgress) {
+  const IH = Math.round(IW * Math.abs(gz(box.lat1) - gz(box.lat0)) / Math.abs(gx(box.lon1) - gx(box.lon0)));
+  const x0 = Math.floor(tileX(box.lon0, z)), x1 = Math.floor(tileX(box.lon1, z));
+  const y0 = Math.floor(tileY(box.lat0, z)), y1 = Math.floor(tileY(box.lat1, z));
+  const cv = document.createElement('canvas'); cv.width = IW; cv.height = IH;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#0b1622'; ctx.fillRect(0, 0, IW, IH);
+  const dx = (lon) => (lon - box.lon0) / (box.lon1 - box.lon0) * IW;
+  const dy = (lat) => (lat - box.lat0) / (box.lat1 - box.lat0) * IH;
+  const jobs = []; for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) jobs.push([i, j]);
+  let done = 0, failed = 0;
+  const BANDS = 8;
+  await pool(jobs, 10, async ([i, j]) => {
+    try {
+      const im = await loadImage(IMAGE_URL(z, i, j));
+      const lx0 = dx(lonOfX(i, z)), lx1 = dx(lonOfX(i + 1, z));
+      for (let b = 0; b < BANDS; b++) {
+        const ty0 = dy(latOfY(j + b / BANDS, z)), ty1 = dy(latOfY(j + (b + 1) / BANDS, z));
+        ctx.drawImage(im, 0, b * 256 / BANDS, 256, 256 / BANDS, lx0, ty0, (lx1 - lx0) + 1, (ty1 - ty0) + 1);
+      }
+    } catch (e) { failed++; }
+    if (onProgress) onProgress(++done / jobs.length);
+  });
+  if (failed > jobs.length * .02) throw new Error(`imagery incomplete (${failed} of ${jobs.length} tiles failed)`);
+  const tex = new T.CanvasTexture(cv);
+  if ('SRGBColorSpace' in T) tex.colorSpace = T.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping;
+  tex.anisotropy = 16; tex.minFilter = T.LinearMipmapLinearFilter; tex.generateMipmaps = true;
+  return tex;
+}
+const baseBox = { lon0: LON_W, lon1: LON_E, lat0: LAT_N, lat1: LAT_S };
+const realImagery   = (p) => imageryLayer(IMAGE_Z, baseBox, 4096, p);
+const detailImagery = (p) => imageryLayer(DETAIL_Z, DETAIL, 4096, p);
+
+// ---------------------------------------------------------------- night lights
+// Warm light where people actually live, drawn from the real settlement list and the
+// real inter-city corridors, then masked by the real coastline so no light sits on water.
+function buildLights() {
+  const LW = 1024, LH = Math.round(LW * (FZ1 - FZ0) / (FX1 - FX0));
+  const cv = document.createElement('canvas'); cv.width = LW; cv.height = LH;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#000'; c.fillRect(0, 0, LW, LH);
+  const toPx = (lon, lat) => [(gx(lon) - FX0) / (FX1 - FX0) * LW, (gz(lat) - FZ0) / (FZ1 - FZ0) * LH];
+  const mPx = LW / (FX1 - FX0);
+  c.globalCompositeOperation = 'lighter';
+  for (const [, lon, lat, r, w] of CITIES) {
+    const [x, y] = toPx(lon, lat), rp = Math.max(3, r * mPx * 2.4);
+    const g = c.createRadialGradient(x, y, 0, x, y, rp);
+    g.addColorStop(0, `rgba(255,222,172,${(.90 * w).toFixed(3)})`);
+    g.addColorStop(.3, `rgba(255,192,122,${(.34 * w).toFixed(3)})`);
+    g.addColorStop(1, 'rgba(255,170,90,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, rp, 0, 6.2832); c.fill();
+  }
+  c.strokeStyle = 'rgba(255,185,110,.26)'; c.lineWidth = Math.max(1, 1.1 * mPx * 1000);
+  for (const key of ['cork', 'belfast', 'galway']) {
+    c.beginPath(); ROUTES[key].forEach((p, i) => { const q = toPx(p[0], p[1]); i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); }); c.stroke();
+  }
+  // mask against real land
+  const img = c.getImageData(0, 0, LW, LH), d = img.data;
+  for (let j = 0; j < LH; j++) for (let i = 0; i < LW; i++) {
+    const wx = lerp(FX0, FX1, i / (LW - 1)), wz = lerp(FZ0, FZ1, j / (LH - 1));
+    if (heightAt(wx, wz) < 0.5) { const k = (j * LW + i) * 4; d[k] = d[k + 1] = d[k + 2] = 0; }
+  }
+  c.putImageData(img, 0, 0);
+  const tex = new T.CanvasTexture(cv);
+  tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping; tex.anisotropy = 4;
+  return tex;
+}
+
+// ---------------------------------------------------------------- the island map (finale floor)
+// The floor map is the Igloo build's map, brought over intact: Natural Earth coastline
+// polygons for Ireland and Northern Ireland, cyan fill and stroke, seven named cities,
+// and travelling light pulses running along the routes between them. It is redrawn
+// every frame onto a canvas texture, so the pulses animate on the floor exactly as
+// they did in the Igloo version.
+//
+// Coastline: Natural Earth (public domain).
+const IRELAND_MAP = [{"name":"United Kingdom","ring":[[-6.218,54.0887],[-6.3037,54.0949],[-6.3637,54.0771],[-6.4026,54.0606],[-6.4403,54.0636],[-6.5481,54.0573],[-6.6498,54.0586],[-6.6642,54.0848],[-6.6469,54.1634],[-6.6695,54.1847],[-6.7666,54.1956],[-6.8026,54.2144],[-6.8583,54.2687],[-6.8692,54.294],[-6.8772,54.3291],[-6.9361,54.3743],[-7.0077,54.4067],[-7.0497,54.4083],[-7.1335,54.3554],[-7.2026,54.3018],[-7.1781,54.2749],[-7.1555,54.2395],[-7.1931,54.2141],[-7.3067,54.156],[-7.3245,54.1334],[-7.3552,54.1212],[-7.4094,54.1373],[-7.5444,54.1336],[-7.6065,54.1438],[-7.6788,54.1867],[-7.8549,54.2153],[-7.8845,54.2838],[-7.9185,54.2966],[-8.1183,54.4143],[-8.1448,54.4535],[-8.1189,54.477],[-8.0443,54.5125],[-7.7938,54.5712],[-7.7544,54.5949],[-7.7463,54.6158],[-7.8198,54.6397],[-7.8861,54.6661],[-7.9087,54.6833],[-7.9106,54.6983],[-7.8729,54.7179],[-7.7973,54.7193],[-7.7375,54.7104],[-7.69,54.728],[-7.6064,54.7457],[-7.5504,54.768],[-7.5022,54.8254],[-7.4513,54.8771],[-7.446,54.9051],[-7.4014,55.0033],[-7.3769,55.0277],[-7.2187,55.092],[-7.1786,55.0569],[-7.1006,55.0483],[-7.0308,55.0806],[-6.9472,55.1825],[-6.889,55.1889],[-6.8249,55.1807],[-6.6988,55.1935],[-6.475,55.241],[-6.3753,55.2418],[-6.2342,55.2168],[-6.1292,55.2174],[-6.0358,55.1445],[-5.9857,55.0297],[-5.8692,54.9162],[-5.7168,54.8175],[-5.7107,54.7571],[-5.7652,54.7247],[-5.8791,54.6844],[-5.8786,54.6413],[-5.8035,54.663],[-5.7386,54.673],[-5.5825,54.6634],[-5.5279,54.6196],[-5.4902,54.5541],[-5.4704,54.5002],[-5.4839,54.4417],[-5.5259,54.4602],[-5.5686,54.5126],[-5.616,54.5367],[-5.6711,54.5498],[-5.6461,54.4779],[-5.656,54.3817],[-5.6319,54.3727],[-5.5578,54.371],[-5.6068,54.2726],[-5.7081,54.2458],[-5.8262,54.2358],[-5.8546,54.201],[-5.8761,54.1561],[-5.9377,54.0891],[-6.019,54.0513],[-6.1195,54.0589],[-6.218,54.0887]]},{"name":"Ireland","ring":[[-7.2187,55.092],[-7.3769,55.0277],[-7.4014,55.0033],[-7.446,54.9051],[-7.4513,54.8771],[-7.5022,54.8254],[-7.5504,54.768],[-7.6064,54.7457],[-7.69,54.728],[-7.7375,54.7104],[-7.7973,54.7193],[-7.8729,54.7179],[-7.9106,54.6983],[-7.9087,54.6833],[-7.8861,54.6661],[-7.8198,54.6397],[-7.7463,54.6158],[-7.7544,54.5949],[-7.7938,54.5712],[-8.0443,54.5125],[-8.1189,54.477],[-8.1448,54.4535],[-8.1183,54.4143],[-7.9185,54.2966],[-7.8845,54.2838],[-7.8549,54.2153],[-7.6788,54.1867],[-7.6065,54.1438],[-7.5444,54.1336],[-7.4094,54.1373],[-7.3552,54.1212],[-7.3245,54.1334],[-7.3067,54.156],[-7.1931,54.2141],[-7.1555,54.2395],[-7.1781,54.2749],[-7.2026,54.3018],[-7.1335,54.3554],[-7.0497,54.4083],[-7.0077,54.4067],[-6.9361,54.3743],[-6.8772,54.3291],[-6.8692,54.294],[-6.8583,54.2687],[-6.8026,54.2144],[-6.7666,54.1956],[-6.6695,54.1847],[-6.6469,54.1634],[-6.6642,54.0848],[-6.6498,54.0586],[-6.5481,54.0573],[-6.4403,54.0636],[-6.4026,54.0606],[-6.3637,54.0771],[-6.3037,54.0949],[-6.218,54.0887],[-6.1757,54.0535],[-6.1569,54.0172],[-6.2307,54.0036],[-6.3076,54.011],[-6.3452,53.9872],[-6.3476,53.9413],[-6.3216,53.8822],[-6.2701,53.8402],[-6.229,53.7457],[-6.1949,53.6409],[-6.1418,53.5775],[-6.131,53.4989],[-6.1388,53.4603],[-6.1291,53.3909],[-6.1517,53.3664],[-6.1347,53.3012],[-6.0723,53.1663],[-6.045,53.0912],[-6.0274,52.9271],[-6.0715,52.8656],[-6.1307,52.8073],[-6.1693,52.7381],[-6.1992,52.6635],[-6.2172,52.5431],[-6.3454,52.402],[-6.4,52.3669],[-6.4632,52.3454],[-6.325,52.2467],[-6.4379,52.2027],[-6.5611,52.1888],[-6.6973,52.2135],[-6.7822,52.2105],[-6.8597,52.1786],[-6.8902,52.1592],[-6.9146,52.1686],[-6.9658,52.2495],[-7.0033,52.1659],[-7.0818,52.1393],[-7.2162,52.145],[-7.4409,52.1227],[-7.5273,52.0989],[-7.5632,52.0616],[-7.5898,52.0186],[-7.6249,51.9931],[-7.6646,51.9797],[-7.838,51.948],[-7.8722,51.9353],[-7.9525,51.8658],[-8.0578,51.8256],[-8.145,51.8135],[-8.2225,51.854],[-8.2543,51.8783],[-8.2902,51.8907],[-8.4092,51.8888],[-8.3716,51.8763],[-8.3474,51.8477],[-8.3356,51.793],[-8.3491,51.7393],[-8.4078,51.7121],[-8.4778,51.707],[-8.5883,51.6514],[-8.7345,51.6362],[-8.8134,51.5849],[-9.2965,51.4982],[-9.3239,51.4972],[-9.3906,51.5193],[-9.4629,51.5291],[-9.5349,51.5222],[-9.7373,51.4737],[-9.8354,51.4834],[-9.7104,51.6037],[-9.5424,51.6645],[-9.5249,51.6811],[-9.5798,51.6893],[-9.899,51.6471],[-10.0099,51.6111],[-10.1208,51.6007],[-10.0694,51.6556],[-9.9264,51.7307],[-9.8497,51.7661],[-9.8029,51.7801],[-9.7495,51.8243],[-9.5988,51.8744],[-10.0842,51.771],[-10.2117,51.7836],[-10.2417,51.8125],[-10.3411,51.7989],[-10.3787,51.8687],[-10.2316,51.9745],[-10.1458,52.02],[-10.044,52.0446],[-9.946,52.0798],[-9.9097,52.1229],[-9.9558,52.1367],[-10.2495,52.1257],[-10.3902,52.1349],[-10.3826,52.1691],[-10.3567,52.2069],[-10.2109,52.2717],[-10.1321,52.2821],[-10.0618,52.2759],[-9.9931,52.2593],[-9.9373,52.2376],[-9.7721,52.2501],[-9.8411,52.2915],[-9.8532,52.3755],[-9.9061,52.4037],[-9.8385,52.4427],[-9.7611,52.4664],[-9.6322,52.5469],[-9.5863,52.5592],[-9.3313,52.5788],[-9.0562,52.6211],[-8.7834,52.6796],[-8.9233,52.7123],[-8.9903,52.7554],[-9.0979,52.6683],[-9.1754,52.6349],[-9.3942,52.6171],[-9.4635,52.6269],[-9.561,52.654],[-9.5914,52.6437],[-9.6195,52.6228],[-9.7644,52.58],[-9.9166,52.5697],[-9.7396,52.6482],[-9.515,52.7812],[-9.4649,52.8232],[-9.3937,52.8962],[-9.4157,52.9288],[-9.462,52.9473],[-9.2992,53.0976],[-9.2419,53.1249],[-9.1376,53.1292],[-9.0611,53.1531],[-9.0274,53.1532],[-8.9972,53.1621],[-8.9301,53.2071],[-9.0335,53.2357],[-9.1403,53.2505],[-9.4708,53.2349],[-9.5142,53.2382],[-9.5552,53.2521],[-9.5817,53.272],[-9.6018,53.323],[-9.626,53.3345],[-9.7006,53.3345],[-9.7741,53.3188],[-9.8254,53.3204],[-9.8758,53.3427],[-9.7954,53.395],[-9.899,53.4073],[-10.0039,53.397],[-10.0913,53.4128],[-10.094,53.4456],[-10.0544,53.4783],[-10.1062,53.5093],[-10.117,53.5485],[-10.0617,53.5678],[-10.0014,53.5614],[-9.8783,53.5904],[-9.7207,53.6045],[-9.8559,53.6331],[-9.9097,53.6576],[-9.9123,53.6951],[-9.9016,53.7272],[-9.7451,53.7815],[-9.5782,53.8054],[-9.5905,53.8412],[-9.5789,53.8798],[-9.7475,53.891],[-9.9141,53.8637],[-9.8962,53.9376],[-9.8563,54.0043],[-9.8485,54.0483],[-9.8564,54.0954],[-9.9345,54.0752],[-9.9436,54.1416],[-9.9771,54.1871],[-10.0927,54.1558],[-10.0897,54.2158],[-10.0564,54.2578],[-9.9959,54.276],[-9.9359,54.2681],[-9.8246,54.2689],[-9.7171,54.3004],[-9.5623,54.3085],[-9.3155,54.2986],[-9.1459,54.2096],[-9.1021,54.2255],[-9.0343,54.2818],[-9.0024,54.288],[-8.7468,54.2635],[-8.588,54.2311],[-8.5456,54.2412],[-8.5685,54.3036],[-8.6231,54.3469],[-8.5544,54.4036],[-8.471,54.4419],[-8.4152,54.4611],[-8.2865,54.4849],[-8.2304,54.5073],[-8.193,54.5801],[-8.1334,54.6408],[-8.4565,54.6093],[-8.7639,54.6812],[-8.7152,54.732],[-8.6503,54.7609],[-8.5383,54.783],[-8.5277,54.8095],[-8.471,54.8315],[-8.3773,54.8895],[-8.4117,54.9651],[-8.3933,55.0204],[-8.3258,55.0564],[-8.3047,55.1082],[-8.2746,55.1463],[-8.1377,55.1599],[-8.0061,55.1953],[-7.9586,55.1919],[-7.8032,55.2],[-7.7505,55.1858],[-7.7625,55.2483],[-7.6671,55.2565],[-7.6298,55.244],[-7.6134,55.1997],[-7.57,55.1714],[-7.5566,55.1222],[-7.5857,55.0842],[-7.6343,55.055],[-7.5898,55.025],[-7.6587,54.9709],[-7.5844,54.994],[-7.4784,55.047],[-7.4839,55.0903],[-7.502,55.1447],[-7.5314,55.1938],[-7.5179,55.2479],[-7.4583,55.2818],[-7.3018,55.2988],[-7.366,55.3602],[-7.3088,55.3658],[-7.2467,55.353],[-7.1553,55.3052],[-7.0603,55.2676],[-6.9617,55.2379],[-7.0564,55.1783],[-7.1729,55.137],[-7.2187,55.092]]}];
+
+const MAP_TAU = Math.PI * 2;
+const MAP_GOLD = '255,226,77';
+const MAP_CYAN = '97,210,218';
+const mrgba = (c, a) => `rgba(${c},${clamp(a, 0, 1)})`;
+const mseed = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+const MAP_TOWNS = [
+  { name: 'Dublin',    lon: -6.2603, lat: 53.3498, dx:  11, dy:   3 },
+  { name: 'Cork',      lon: -8.4756, lat: 51.8985, dx:  10, dy:  16 },
+  { name: 'Galway',    lon: -9.0568, lat: 53.2707, dx: -67, dy: -11 },
+  { name: 'Limerick',  lon: -8.6267, lat: 52.6638, dx: -78, dy:  17 },
+  { name: 'Sligo',     lon: -8.4761, lat: 54.2766, dx: -53, dy: -12 },
+  { name: 'Waterford', lon: -7.1101, lat: 52.2593, dx:  11, dy:  14 },
+  { name: 'Belfast',   lon: -5.9301, lat: 54.5973, dx:  12, dy:  -5 },
+];
+const MAP_PAIRS = [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[1,3],[2,4],[2,3],[3,5],[4,6]];
+
+function mglow(ctx, x, y, radius, color, alpha) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
+  g.addColorStop(0, mrgba(color, alpha));
+  g.addColorStop(.23, mrgba(color, alpha * .32));
+  g.addColorStop(1, mrgba(color, 0));
+  ctx.fillStyle = g;
+  ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+}
+function mdot(ctx, x, y, size, color, alpha) {
+  ctx.fillStyle = mrgba(color, alpha);
+  ctx.beginPath(); ctx.arc(x, y, Math.max(.35, size), 0, MAP_TAU); ctx.fill();
+}
+function mcubic(a, b, c, d, t) {
+  const m = 1 - t;
+  return { x: m*m*m*a.x + 3*m*m*t*b.x + 3*m*t*t*c.x + t*t*t*d.x,
+           y: m*m*m*a.y + 3*m*m*t*b.y + 3*m*t*t*c.y + t*t*t*d.y };
+}
+// A route with light travelling along it: the comet head plus a fading tail.
+function mroute(ctx, pts, t, color, width, alpha = .7, speed = .045, offset = 0) {
+  const [a, b, c, d] = pts;
+  ctx.lineWidth = Math.max(.7, width * .65);
+  ctx.strokeStyle = mrgba(color, alpha * .16);
+  ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.bezierCurveTo(b.x, b.y, c.x, c.y, d.x, d.y); ctx.stroke();
+  for (let pass = 0; pass < 2; pass++) {
+    const head = (t * speed + offset + pass * .5) % 1;
+    for (let k = 0; k < 13; k++) {
+      const from = head - k * .007, to = from - .012;
+      if (to < 0 || from > 1) continue;
+      const p = mcubic(a, b, c, d, from), q = mcubic(a, b, c, d, to);
+      ctx.strokeStyle = mrgba(color, alpha * (1 - k / 13) * .12);
+      ctx.lineWidth = width * 4 * (1 - k / 22);
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+      ctx.strokeStyle = mrgba(color, alpha * (1 - k / 13));
+      ctx.lineWidth = width * (1 - k / 22);
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    }
+    const p = mcubic(a, b, c, d, head);
+    mdot(ctx, p.x, p.y, width * 1.45, color, alpha);
+  }
+}
+
+// The map is a painter rather than a texture of its own: it draws the island into
+// whatever circle it is handed. The year ring hands it its own inner disc, so the
+// map lives inside the ring instead of sitting on the floor as a separate layer.
+const islandMap = (() => {
+  // Fit the Natural Earth outline to a circle. The Igloo projection squashed
+  // longitude by .6, which is about right for this latitude; that ratio is kept
+  // so the island reads with the same proportions it had in the Igloo build.
+  const LON_SQUASH = .6;
+  let lo0 = 1e9, lo1 = -1e9, la0 = 1e9, la1 = -1e9;
+  for (const poly of IRELAND_MAP) for (const [lon, lat] of poly.ring) {
+    if (lon < lo0) lo0 = lon; if (lon > lo1) lo1 = lon;
+    if (lat < la0) la0 = lat; if (lat > la1) la1 = lat;
+  }
+  const lonC = (lo0 + lo1) / 2, latC = (la0 + la1) / 2;
+  // Fit to the island's true radial extent, not to its bounding box. A box diagonal
+  // leaves the island far smaller than the circle it is sitting in.
+  let maxR = 0;
+  for (const poly of IRELAND_MAP) for (const [lon, lat] of poly.ring) {
+    maxR = Math.max(maxR, Math.hypot((lon - lonC) * LON_SQUASH, lat - latC));
+  }
+
+  // Draw the island, its routes and its cities centred on (cx, cy) within radius R.
+  function paint(ctx, cx, cy, R, t, alpha) {
+    if (alpha <= .002) return;
+    const k = R / maxR;                           // the island fills the circle it is given
+    const project = (lon, lat) => ({ x: cx + (lon - lonC) * LON_SQUASH * k, y: cy - (lat - latC) * k });
+    const pts = MAP_TOWNS.map((c) => project(c.lon, c.lat));
+    const s = R * 1.95;                           // text and dot sizes scale with the circle
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    mglow(ctx, cx, cy, R * 1.20, MAP_CYAN, .21);
+    for (const poly of IRELAND_MAP) {
+      ctx.beginPath();
+      poly.ring.forEach(([lon, lat], i) => { const p = project(lon, lat); i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); });
+      ctx.closePath();
+      ctx.fillStyle = poly.name === 'Ireland' ? 'rgba(23,71,79,.46)' : 'rgba(23,52,62,.34)';
+      ctx.fill();
+      ctx.lineWidth = Math.max(1.1, s * .0018);
+      ctx.strokeStyle = mrgba(MAP_CYAN, .5);
+      ctx.stroke();
+    }
+    // Light travelling between the cities: the Igloo route animation, unchanged.
+    MAP_PAIRS.forEach(([ai, bi], i) => {
+      const p = pts[ai], q = pts[bi], my = (p.y + q.y) / 2 - s * .06;
+      mroute(ctx, [p, { x: p.x, y: my }, { x: q.x, y: my }, q], t,
+        i % 3 === 0 ? MAP_GOLD : MAP_CYAN, Math.max(1.1, s * .002), .84, .037, mseed(i + 420));
+    });
+    MAP_TOWNS.forEach((town, i) => {
+      const p = pts[i];
+      mglow(ctx, p.x, p.y, s * .026, i === 0 ? MAP_GOLD : MAP_CYAN, .75);
+      mdot(ctx, p.x, p.y, s * .0038, i === 0 ? MAP_GOLD : MAP_CYAN, .95);
+      ctx.font = `500 ${Math.max(11, s * .017)}px "IBM Plex Sans Condensed", Arial, Helvetica, sans-serif`;
+      ctx.fillStyle = 'rgba(222,238,241,.82)';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText(town.name, p.x + town.dx * s / 720, p.y + town.dy * s / 720);
+    });
+    ctx.restore();
+  }
+  return { paint };
+})();
+
+// ---------------------------------------------------------------- renderer
+const canvas = $('stage');
+let renderer;
+try {
+  renderer = new T.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: false });
+} catch (e) { $('gpu-note').textContent = 'WebGL is not available on this machine.'; return; }
+renderer.setPixelRatio(1);
+renderer.autoClear = true;
+if ('outputColorSpace' in renderer) renderer.outputColorSpace = T.LinearSRGBColorSpace || 'srgb-linear';
+const gl = renderer.getContext();
+const isGL2 = renderer.capabilities.isWebGL2;
+if (!isGL2) { $('gpu-note').textContent = 'This build needs WebGL 2. Update the graphics driver or browser.'; return; }
+const halfOK = gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float');
+const floatLinear = !!gl.getExtension('OES_texture_float_linear');
+$('gpu-note').textContent = halfOK ? 'HDR render ready' : 'Standard render';
+
+const QUALITY = [512, 768, 1024, 1536];
+let qIndex = 2;
+let cubeRT, cubeCam;
+function makeCube() {
+  if (cubeRT) cubeRT.dispose();
+  const size = QUALITY[qIndex];
+  cubeRT = new T.WebGLCubeRenderTarget(size, {
+    type: halfOK ? T.HalfFloatType : T.UnsignedByteType,
+    generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter,
+  });
+  if (cubeCam) { cubeCam.renderTarget = cubeRT; } else { cubeCam = new T.CubeCamera(20, 2200000, cubeRT); }
+  U.uPx.value = size / 2;
+  if (post) post.material.uniforms.uCube.value = cubeRT.texture;
+}
+
+const scene = new T.Scene();
+const U = {
+  uTime: { value: 0 }, uShow: { value: 0 }, uCam: { value: new T.Vector3() },
+  uSunDir: { value: new T.Vector3(0, .1, 1) }, uLightDir: { value: new T.Vector3(0, 1, 0) }, uLightCol: { value: new T.Vector3(1, 1, 1) },
+  uAmb: { value: new T.Vector3(.3, .3, .3) }, uZenith: { value: new T.Vector3() }, uHorizon: { value: new T.Vector3() }, uSunCol: { value: new T.Vector3() },
+  uNight: { value: 0 }, uCloud: { value: .5 }, uAurora: { value: 0 }, uFogD: { value: .000006 },
+  uScanR: { value: 0 }, uScanC: { value: new T.Vector2(gx(PLACES.dublin[0]), gz(PLACES.dublin[1])) }, uPx: { value: 512 },
+  uElev: { value: elevTex }, uLights: { value: elevTex },
+  uFB: { value: new T.Vector4(FX0, FZ0, 1 / (FX1 - FX0), 1 / (FZ1 - FZ0)) },
+  uFRes: { value: new T.Vector2(FW, FH) },
+};
+
+const COMMON = /* glsl */`
+uniform float uTime; uniform float uShow; uniform vec3 uCam; uniform vec3 uSunDir; uniform vec3 uLightDir; uniform vec3 uLightCol; uniform vec3 uAmb;
+uniform vec3 uZenith; uniform vec3 uHorizon; uniform vec3 uSunCol; uniform float uNight; uniform float uCloud; uniform float uAurora; uniform float uFogD;
+uniform float uScanR; uniform vec2 uScanC; uniform float uPx;
+uniform sampler2D uElev; uniform sampler2D uLights; uniform vec4 uFB; uniform vec2 uFRes;
+float hash12(vec2 p){ vec3 p3=fract(vec3(p.xyx)*.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
+float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
+  return mix(mix(hash12(i),hash12(i+vec2(1,0)),u.x), mix(hash12(i+vec2(0,1)),hash12(i+vec2(1,1)),u.x), u.y); }
+float fbm(vec2 p){ float a=.5,s=0.; for(int i=0;i<5;i++){ s+=a*vnoise(p); p=p*2.03+vec2(17.1,9.2); a*=.5; } return s; }
+float fbm3(vec2 p){ float a=.5,s=0.; for(int i=0;i<3;i++){ s+=a*vnoise(p); p=p*2.03+vec2(17.1,9.2); a*=.5; } return s; }
+vec2 fieldUV(vec2 xz){ return (xz-uFB.xy)*uFB.zw; }
+// Real elevation, bilinear by hand because the field is stored unfiltered.
+// Outside the data window the world falls away to deep ocean.
+float terrainAt(vec2 xz){
+  vec2 uv=fieldUV(xz);
+  if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.) return -200.;
+  vec2 t=uv*uFRes-.5; vec2 i=floor(t), f=fract(t);
+  vec2 px=1./uFRes;
+  float a=texture2D(uElev,(i+vec2(.5,.5))*px).r;
+  float b=texture2D(uElev,(i+vec2(1.5,.5))*px).r;
+  float c=texture2D(uElev,(i+vec2(.5,1.5))*px).r;
+  float d=texture2D(uElev,(i+vec2(1.5,1.5))*px).r;
+  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
+}
+vec3 terrainNormal(vec2 xz, float step){
+  float l=terrainAt(xz-vec2(step,0.)), r=terrainAt(xz+vec2(step,0.));
+  float d=terrainAt(xz-vec2(0.,step)), u=terrainAt(xz+vec2(0.,step));
+  return normalize(vec3(l-r, 2.*step, d-u));
+}
+vec3 skyCol(vec3 d){
+  float h=max(d.y,0.);
+  vec3 c=mix(uHorizon,uZenith,pow(h,.5));
+  c=mix(c,uHorizon*.45,smoothstep(0.,-.3,d.y));
+  float sd=max(dot(d,uSunDir),0.);
+  c+=uSunCol*(pow(sd,5.)*.22+pow(sd,40.)*.45)*smoothstep(-.35,.05,uSunDir.y);
+  return c;
+}
+vec3 fogColor(vec3 d){ return skyCol(normalize(vec3(d.x,max(d.y,0.)*.25+.015,d.z))); }
+vec3 applyFog(vec3 col, vec3 wp){ vec3 v=wp-uCam; float dist=length(v); float f=1.-exp(-dist*uFogD); return mix(col,fogColor(v/dist),f); }
+float scanInside(vec2 p){ return smoothstep(0.,4000.,uScanR-length(p-uScanC)); }
+float scanRing(vec2 p){ float d=length(p-uScanC); float w=900.+uScanR*.004; return exp(-abs(d-uScanR)/w)*step(1.,uScanR)*smoothstep(520000.,400000.,uScanR); }
+const vec3 GOLD=vec3(1.,.72,.32); const vec3 TEAL=vec3(.35,1.,.86);
+`;
+
+function mat(vs, fs, extra = {}, opts = {}) {
+  return new T.ShaderMaterial(Object.assign({ uniforms: Object.assign({}, U, extra), vertexShader: COMMON + vs, fragmentShader: COMMON + fs }, opts));
+}
+
+// ---------------------------------------------------------------- sky
+{
+  const m = mat(`varying vec3 vW; void main(){ vec4 w=modelMatrix*vec4(position,1.); vW=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`, `
+  varying vec3 vW;
+  void main(){
+    vec3 d=normalize(vW-uCam);
+    vec3 c=skyCol(d);
+    float sd=dot(d,uSunDir);
+    c+=uSunCol*smoothstep(.99955,.9998,sd)*18.;
+    if(d.y>0.){
+      vec2 cp=d.xz/(d.y+.09)*1.3+uTime*vec2(.006,.002);
+      float n=fbm(cp*1.4);
+      float cov=smoothstep(1.-uCloud,1.25-uCloud,n)*smoothstep(0.,.14,d.y);
+      vec3 lit=mix(uHorizon*.85+uAmb*.3, uSunCol*.75+uHorizon*.4, pow(max(sd,0.),3.)*.7+.25*smoothstep(-.1,.3,uSunDir.y));
+      lit=mix(lit, vec3(.012,.018,.03), uNight*.85);
+      float edge=smoothstep(.3,.0,abs(n-(1.1-uCloud)))*pow(max(sd,0.),6.);
+      c=mix(c,lit,cov*.92)+uSunCol*edge*.6*cov;
+    }
+    if(uNight>0.01){
+      vec3 sp=d*240.; vec3 id=floor(sp); vec3 f=fract(sp)-.5;
+      float h=hash12(id.xy+id.z*7.13);
+      float st=step(.9975,h)*smoothstep(.45,.0,length(f))*smoothstep(-.02,.25,d.y);
+      c+=vec3(.9,.95,1.)*st*(.55+.45*sin(uTime*2.3+h*90.))*uNight*3.;
+      float mw=exp(-pow(dot(d,normalize(vec3(.6,.3,-.75))),2.)*14.);
+      c+=vec3(.25,.3,.45)*mw*fbm(d.xz*6.+d.y*3.)*uNight*.12*smoothstep(0.,.2,d.y);
+    }
+    if(uAurora>0.01){
+      float az=atan(d.x,-d.z); float el=d.y;
+      float w=sin(az*2.+uTime*.12+sin(az*5.-uTime*.18)*.8)*.07+sin(az*9.+uTime*.3)*.015;
+      float band=exp(-pow((el-.28-w)/.10,2.));
+      float band2=exp(-pow((el-.46-w*1.4)/.16,2.))*.5;
+      float rays=.35+.65*pow(vnoise(vec2(az*38.,uTime*.35)),1.6);
+      float north=.35+.65*smoothstep(.4,-.9,d.z);
+      vec3 ac=mix(vec3(.08,1.,.45),vec3(.55,.25,1.),smoothstep(.25,.55,el-w));
+      c+=ac*(band+band2)*rays*uAurora*north*1.6*smoothstep(0.,.1,el);
+    }
+    gl_FragColor=vec4(c,1.);
+  }`, {}, { side: T.BackSide, depthWrite: false });
+  const sky = new T.Mesh(new T.SphereGeometry(1600000, 48, 24), m);
+  sky.frustumCulled = false; sky.renderOrder = -10;
+  scene.add(sky);
+  scene.userData.sky = sky;
+}
+
+// ---------------------------------------------------------------- high cirrus
+const cloudDeck = (() => {
+  const m = mat(`varying vec3 vW; void main(){ vec3 p=position; p.xz+=uCam.xz; vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
+  uniform float uOp; varying vec3 vW;
+  void main(){ vec2 p=vW.xz*.000022+uTime*vec2(.004,.0015);
+    float n=fbm(p)*.7+fbm(p*3.1+4.)*.3;
+    float a=smoothstep(.42,.72,n)*uOp;
+    float d=length(vW-uCam); a*=smoothstep(900.,26000.,d)*(1.-smoothstep(300000.,520000.,d));
+    vec3 top=mix(uAmb*1.6,uLightCol*.8+uAmb,.4)+vec3(.05,.07,.12)*uNight;
+    top+=vec3(.08,.5,.3)*uAurora*.18*n;
+    gl_FragColor=vec4(top*(.55+.45*n),a); }`,
+  { uOp: { value: 0 } }, { transparent: true, depthWrite: false, side: T.DoubleSide });
+  const g = new T.PlaneGeometry(1600000, 1600000, 1, 1); g.rotateX(-Math.PI / 2); g.translate(0, 10500, 0);
+  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 6; scene.add(mesh);
+  return m;
+})();
+
+const mapGroup = new T.Group(); mapGroup.visible = false; scene.add(mapGroup);
+
+// ---------------------------------------------------------------- shared lit material
+function litMat(color, opts = {}) {
+  return mat(`varying vec3 vW; varying vec3 vN; varying vec3 vL;
+  void main(){ vec4 w=modelMatrix*vec4(position,1.); vW=w.xyz; vL=position; vN=normalize(mat3(modelMatrix)*normal); gl_Position=projectionMatrix*viewMatrix*w; }`, `
+  uniform vec3 uColor; uniform float uBands; uniform float uMetal; uniform vec3 uGlow;
+  varying vec3 vW; varying vec3 vN; varying vec3 vL;
+  void main(){ vec3 N=normalize(vN); vec3 c=uColor;
+    if(uBands>0.){ float b=step(.5,fract(vL.y/uBands)); c=mix(vec3(.62,.08,.06),vec3(.82,.8,.76),b); }
+    vec3 V=normalize(vW-uCam);
+    vec3 lit=c*(uLightCol*max(dot(N,uLightDir),0.)+uAmb*(.6+.4*N.y));
+    lit=mix(lit,skyCol(reflect(V,N))*c*1.3,uMetal);
+    lit+=uGlow*uNight;
+    gl_FragColor=vec4(applyFog(lit,vW),1.); }`,
+  { uColor: { value: new T.Color(color) }, uBands: { value: opts.bands || 0 }, uMetal: { value: opts.metal || 0 }, uGlow: { value: new T.Color(opts.glow || 0x000000) } });
+}
+
+// ---------------------------------------------------------------- world construction
+let imageryTex = null, detailTex = null, lightsTex = null;
+const BEACONS = [];
+
+function buildWorld() {
+  U.uLights.value = lightsTex;
+
+  // ------------------------------------------------ terrain
+  // A camera-centred radial grid, dense underfoot and coarse at the horizon, displaced
+  // by the real elevation field. This is the measured shape of Ireland.
+  {
+    const A = 320, R = 260, pos = [], idx = [];
+    for (let r = 0; r <= R; r++) {
+      const rad = 50 * (Math.pow(1.045, r) - 1);
+      for (let a = 0; a < A; a++) { const th = a / A * Math.PI * 2; pos.push(Math.cos(th) * rad, 0, Math.sin(th) * rad); }
+    }
+    for (let r = 0; r < R; r++) for (let a = 0; a < A; a++) {
+      const i0 = r * A + a, i1 = r * A + (a + 1) % A, i2 = (r + 1) * A + a, i3 = (r + 1) * A + (a + 1) % A;
+      idx.push(i0, i1, i2, i1, i3, i2);
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    const m = mat(`varying vec3 vW; varying float vR;
+    void main(){ vec3 p=position+vec3(uCam.x,0.,uCam.z); vR=length(position.xz);
+      p.y=terrainAt(p.xz); vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
+    uniform sampler2D uImage; uniform float uHasImage;
+    uniform sampler2D uDetail; uniform float uHasDetail; uniform vec4 uDetailBox;
+    varying vec3 vW; varying float vR;
+    void main(){
+      vec3 P=vW;
+      float st=clamp(vR*.03+45.,45.,2600.);
+      vec3 N=terrainNormal(P.xz,st);
+      float slope=1.-N.y;
+      vec2 uv=fieldUV(P.xz);
+      vec3 col;
+      if(uHasImage>.5){
+        col=texture2D(uImage,uv).rgb;
+        if(uHasDetail>.5){
+          vec2 du=(P.xz-uDetailBox.xy)*uDetailBox.zw;
+          if(du.x>0.&&du.x<1.&&du.y>0.&&du.y<1.){
+            float w=smoothstep(0.,.06,du.x)*smoothstep(1.,.94,du.x)*smoothstep(0.,.06,du.y)*smoothstep(1.,.94,du.y);
+            col=mix(col,texture2D(uDetail,du).rgb,w);
+          }
+        }
+        // Satellite imagery is flat and hazy. Lift contrast, warm the greens slightly,
+        // and let real relief shading do the modelling.
+        col=pow(col,vec3(1.28))*1.62;
+        col=mix(vec3(dot(col,vec3(.299,.587,.114))),col,1.18);
+        col*=.94+.12*fbm3(P.xz*.0011);
+      } else {
+        // No imagery: shade the real elevation as Irish land cover.
+        vec2 q=P.xz/vec2(3800.,2900.); q+=(vnoise(P.xz*.00009)-.5)*1.3;
+        float r=hash12(floor(q));
+        vec3 g1=vec3(.10,.24,.06), g2=vec3(.22,.36,.09), g3=vec3(.34,.37,.16);
+        vec3 grass=r<.5?mix(g1,g2,r*2.):mix(g2,g3,(r-.5)*2.);
+        grass*=.72+.45*fbm3(P.xz*.0006+r*7.);
+        grass=mix(grass,vec3(.26,.21,.12),smoothstep(90.,240.,P.y)*(1.-smoothstep(.22,.42,slope))*.65);
+        grass=mix(grass,vec3(.22,.18,.11),smoothstep(220.,450.,P.y)*.7);
+        vec3 rock=mix(vec3(.13,.125,.12),vec3(.31,.29,.26),.5+.5*sin(P.y*.05+vnoise(P.xz*.001)*4.));
+        col=mix(grass,rock,smoothstep(.30,.55,slope));
+        col=mix(col,vec3(.55,.52,.46),smoothstep(620.,900.,P.y)*.5);
+      }
+      // Wet sand and dark rock right at the waterline, from real height.
+      col=mix(col,vec3(.40,.38,.34),smoothstep(7.,0.,P.y)*.55);
+      // Below sea level the terrain is seabed. Keep it dark; the water sits over it.
+      col=mix(col,vec3(.020,.045,.070),smoothstep(0.,-14.,P.y));
+      float inside=scanInside(P.xz);
+      float dif=max(dot(N,uLightDir),0.);
+      vec3 lit=col*(uLightCol*dif+uAmb*(.55+.45*N.y));
+      float lights=texture2D(uLights,uv).r;
+      lit+=vec3(1.,.66,.32)*lights*uNight*1.5;
+      lit+=vec3(1.,.66,.32)*pow(lights,3.)*uNight*1.2;
+      lit+=inside*TEAL*.05*uNight*(1.-smoothstep(.3,.5,slope));
+      lit+=inside*lights*TEAL*.9*uNight;
+      lit+=scanRing(P.xz)*GOLD*4.;
+      gl_FragColor=vec4(applyFog(lit,P),1.);
+    }`, {
+      uImage: { value: imageryTex || elevTex }, uHasImage: { value: imageryTex ? 1 : 0 },
+      uDetail: { value: detailTex || elevTex }, uHasDetail: { value: detailTex ? 1 : 0 },
+      uDetailBox: { value: new T.Vector4(gx(DETAIL.lon0), gz(DETAIL.lat0),
+        1 / (gx(DETAIL.lon1) - gx(DETAIL.lon0)), 1 / (gz(DETAIL.lat1) - gz(DETAIL.lat0))) },
+    });
+    const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; scene.add(mesh);
+  }
+
+  // ------------------------------------------------ the sea
+  // A single opaque sheet at true sea level, reaching past the horizon. There is no
+  // manual cut against the land: the terrain is solid geometry, so wherever the ground
+  // rises above zero it simply occludes the water and the real coastline appears.
+  // Swell height follows real depth, so the Atlantic runs heavy and the Irish Sea calm.
+  {
+    const A = 256, R = 200, pos = [], idx = [];
+    for (let r = 0; r <= R; r++) {
+      const rad = r === 0 ? 0 : 30 * (Math.pow(1.060, r) - 1);
+      for (let a = 0; a < A; a++) { const th = a / A * Math.PI * 2; pos.push(Math.cos(th) * rad, 0, Math.sin(th) * rad); }
+    }
+    for (let r = 0; r < R; r++) for (let a = 0; a < A; a++) {
+      const i0 = r * A + a, i1 = r * A + (a + 1) % A, i2 = (r + 1) * A + a, i3 = (r + 1) * A + (a + 1) % A;
+      idx.push(i0, i1, i2, i1, i3, i2);
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+
+    const WAVES = `
+    // Five Gerstner components on the prevailing Atlantic south-westerly.
+    const int NW=5;
+    vec4 W[NW];
+    void initW(){
+      W[0]=vec4(normalize(vec2( .85,.53)),165.,1.35);
+      W[1]=vec4(normalize(vec2( .72,.69)), 94.,.80);
+      W[2]=vec4(normalize(vec2( .96,.28)), 51.,.42);
+      W[3]=vec4(normalize(vec2( .45,.89)), 27.,.20);
+      W[4]=vec4(normalize(vec2( .99,-.12)),13.,.09);
+    }
+    // Deep ocean carries the full swell; shallow water shoals and flattens.
+    float swell(float depth){
+      return smoothstep(0.,3.,depth)*mix(.35,1.,smoothstep(6.,90.,depth));
+    }
+    vec3 waveH(vec2 p, float a){
+      float h=0.,dx=0.,dz=0.;
+      for(int i=0;i<NW;i++){
+        float k=6.2831/W[i].z; float w=sqrt(9.8*k);
+        float ph=dot(W[i].xy,p)*k-w*uTime; float A=W[i].w*a;
+        h+=A*sin(ph); float c=A*k*cos(ph); dx+=c*W[i].x; dz+=c*W[i].y;
+      }
+      return vec3(h,dx,dz);
+    }`;
+
+    const m = mat(WAVES + `
+    varying vec3 vW; varying float vDepth; varying float vA; varying float vDist;
+    void main(){ initW();
+      vec3 p=position+vec3(uCam.x,0.,uCam.z);
+      vDist=length(position.xz);
+      float depth=-terrainAt(p.xz); vDepth=depth;
+      // Displace only where the detail can actually be resolved on screen.
+      float a=swell(depth)*(1.-smoothstep(4000.,16000.,vDist));
+      vA=a;
+      p.y=waveH(p.xz,a).x;
+      vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`,
+    WAVES + `
+    varying vec3 vW; varying float vDepth; varying float vA; varying float vDist;
+    void main(){ initW();
+      vec3 P=vW; vec3 V=normalize(P-uCam); float dist=length(P-uCam);
+      vec3 wh=waveH(P.xz,max(vA,.0001));
+
+      // Surface normal: swell close in, statistical roughness further out.
+      float near=1.-smoothstep(300.,5000.,dist);
+      vec2 np=P.xz*.20+uTime*vec2(.30,.11);
+      float ripple=(vnoise(np)-.5)+(vnoise(np*2.7-uTime*.21)-.5)*.55;
+      vec3 N=normalize(vec3(-wh.y+ripple*.30*near, 1., -wh.z+(vnoise(np+9.)-.5)*.30*near));
+      // At grazing angles the statistical slope widens; this is what stops distant
+      // water reading as a mirror-flat plate.
+      N=normalize(mix(vec3(0.,1.,0.),N,near*.85+.15));
+
+      float ndv=max(dot(-V,N),0.);
+      float fres=.02+.98*pow(1.-ndv,5.);
+
+      vec3 R=reflect(V,N); R.y=abs(R.y)+.004;
+      vec3 refl=skyCol(normalize(R));
+      // Sun glitter: a broad rough-surface lobe plus a tight specular core.
+      float rs=max(dot(normalize(R),uSunDir),0.);
+      refl+=uSunCol*(pow(rs,180.)*14.+pow(rs,1400.)*90.)*smoothstep(-.06,.06,uSunDir.y);
+      vec3 moon=normalize(vec3(.5,.35,-.8));
+      refl+=vec3(.6,.7,.9)*pow(max(dot(normalize(R),moon),0.),300.)*7.*uNight;
+
+      // Body colour from real depth: green-grey inshore, deep blue over the shelf edge.
+      float d=max(vDepth,0.);
+      vec3 shallow=vec3(.055,.170,.165);
+      vec3 mid=vec3(.016,.072,.105);
+      vec3 deep=vec3(.004,.021,.048);
+      vec3 water=mix(shallow,mid,smoothstep(2.,28.,d));
+      water=mix(water,deep,smoothstep(30.,140.,d));
+      water*=uAmb*1.45+uLightCol*.20;
+      // Light through the back of a wave crest.
+      float sss=pow(max(wh.x,0.)/1.6,2.)*max(dot(V,uSunDir),0.);
+      water+=vec3(.06,.34,.28)*sss*uLightCol*.75*near;
+
+      vec3 col=mix(water,refl,fres);
+
+      // Surf. Real shoaling depth drives the breaking line along the true coast.
+      float shoal=smoothstep(9.,.4,d);
+      float fn=vnoise(P.xz*.09+uTime*.22)*.55+vnoise(P.xz*.42-uTime*.13)*.45;
+      float surf=shoal*smoothstep(.34,.72,fn+.34*sin(d*2.2-uTime*1.5));
+      // Whitecaps on steep crests out in open water.
+      float caps=smoothstep(.55,1.15,wh.x/max(vA,.2))*smoothstep(.45,.85,fn)*smoothstep(8.,40.,d)*.55;
+      float foam=clamp(surf+caps,0.,1.)*near;
+      col=mix(col,vec3(.88,.92,.93)*(uAmb*1.5+uLightCol*.65),foam);
+
+      // Harbour and estuary light on the water.
+      float lights=texture2D(uLights,fieldUV(P.xz)).r;
+      col+=vec3(1.,.62,.3)*lights*uNight*1.0*(.4+.6*pow(vnoise(P.xz*.02+uTime*.3),4.));
+      col+=scanRing(P.xz)*GOLD*5.;
+
+      gl_FragColor=vec4(applyFog(col,P),1.);
+    }`);
+    const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; scene.add(mesh);
+  }
+
+  // ------------------------------------------------ towns and cities
+  {
+    seedN = 7;
+    const inst = [];
+    const dockCentre = [gx(PLACES.docklands[0]), gz(PLACES.docklands[1])];
+    for (const [name, lon, lat, radius, weight] of CITIES) {
+      const cx = gx(lon), cz = gz(lat);
+      const step = radius > 4000 ? 90 : 110;
+      const isDublin = name === 'Dublin';
+      for (let bx = -radius; bx < radius; bx += step) for (let bz = -radius; bz < radius; bz += step) {
+        const rr = Math.hypot(bx, bz) / radius;
+        if (rr > 1) continue;
+        if (rnd() > (1 - rr * .75) * (.55 + weight * .45)) continue;
+        const x = cx + bx + rnd() * step * .5, z = cz + bz + rnd() * step * .5;
+        if (heightAt(x, z) < 3) continue;              // real ground only, never on water
+        const core = 1 - smooth(0, radius * .45, Math.hypot(bx, bz));
+        const w = 14 + rnd() * 22, d = 14 + rnd() * 22;
+        let h = 10 + rnd() * 10 + core * (6 + rnd() * 14 * weight);
+        let type = rnd() < .6 ? 0 : 1;
+        if (isDublin) {
+          const dock = 1 - smooth(1200, 4200, Math.hypot(x - dockCentre[0], z - dockCentre[1]));
+          if (dock > .4 && rnd() < .7) { type = 2; h = 26 + rnd() * 44 * dock; }
+        }
+        inst.push([x, z, w, d, h, type, 0]);
+      }
+    }
+    for (let i = 0; i < 90; i++) {
+      const a = rnd() * 6.2832, r = 400 + rnd() * 2600;
+      const x = dockCentre[0] + Math.cos(a) * r, z = dockCentre[1] + Math.sin(a) * r * .55;
+      if (heightAt(x, z) < 3) continue;
+      const w = 20 + rnd() * 16;
+      inst.push([x, z, w, w * (.7 + rnd() * .5), 55 + rnd() * 95, 2, 1]);
+    }
+    for (let c = 0; c < 5; c++) {
+      const a = 2.4 + c * .42, r = 11000 + rnd() * 5000;
+      const nx = gx(PLACES.dublin[0]) + Math.cos(a) * r, nz = gz(PLACES.dublin[1]) + Math.sin(a) * r;
+      for (let row = 0; row < 8; row++) for (let k = 0; k < 7; k++) {
+        const x = nx + k * 32 + (row % 2) * 10, z = nz + row * 26;
+        if (heightAt(x, z) < 4) continue;
+        inst.push([x, z, 22, 12, 9 + rnd() * 7, 3, 1]);
+      }
+    }
+
+    const geo = new T.BoxGeometry(1, 1, 1); geo.translate(0, .5, 0);
+    const seeds = new Float32Array(Math.max(1, inst.length) * 4);
+    const m = mat(`attribute vec4 aSeed; varying vec3 vW; varying vec3 vN; varying vec4 vS; varying float vBase; varying float vTop; varying float vRise;
+    void main(){
+      vec4 o=modelMatrix*instanceMatrix*vec4(0.,0.,0.,1.);
+      float rise=1.;
+      if(aSeed.w>.5){ float d=length(o.xz-uScanC); rise=smoothstep(0.,1.,clamp((uScanR-d-1200.)/9000.,0.,1.)); }
+      vec3 p=position; p.y*=max(rise,.0001);
+      vec4 w=modelMatrix*instanceMatrix*vec4(p,1.);
+      vW=w.xyz; vN=normalize(mat3(modelMatrix*instanceMatrix)*normal); vS=aSeed; vBase=o.y;
+      vTop=(modelMatrix*instanceMatrix*vec4(0.,1.,0.,1.)).y; vRise=rise;
+      gl_Position=projectionMatrix*viewMatrix*w; }`, `
+    varying vec3 vW; varying vec3 vN; varying vec4 vS; varying float vBase; varying float vTop; varying float vRise;
+    void main(){
+      if(vRise<.002) discard;
+      vec3 N=normalize(vN); vec3 P=vW; vec3 V=normalize(P-uCam);
+      float type=vS.y; bool fut=vS.w>.5;
+      vec3 fac = type<.5? vec3(.42,.22,.15) : (type<1.5? vec3(.62,.6,.55) : (type<2.5? vec3(.16,.22,.26) : vec3(.7,.68,.63)));
+      fac*=.85+.3*vS.x;
+      bool roof=N.y>.5;
+      float along=abs(N.x)>.5?P.z:P.x;
+      vec2 wc=vec2(along/(type>1.5&&type<2.5?2.4:3.2),(P.y-vBase)/3.3);
+      vec2 wf=fract(wc); vec2 wid=floor(wc);
+      float win=roof?0.:step(.16,wf.x)*step(wf.x,.84)*step(.22,wf.y)*step(wf.y,.82)*step(1.,wid.y);
+      vec3 col=fac;
+      if(type>1.5&&type<2.5){ col=mix(fac,skyCol(reflect(V,N))*.7,.55*(1.-float(roof))); win=roof?0.:step(.08,wf.x)*step(.3,wf.y); }
+      col=mix(col,vec3(.05,.06,.07),win*.7);
+      float inside=scanInside(P.xz);
+      if(roof){ col=vec3(.1,.1,.11); if(inside>.5){ col=vS.z<.5?vec3(.16,.34,.13):vec3(.04,.06,.13); } }
+      vec3 lit=col*(uLightCol*max(dot(N,uLightDir),0.)+uAmb*(.55+.45*N.y));
+      float lh=hash12(wid+vS.x*91.+N.xz*13.);
+      float litFrac=mix(.04,fut?.75:.55,uNight);
+      vec3 wcol=fut?vec3(.75,.9,1.):mix(vec3(1.,.72,.4),vec3(1.,.85,.6),lh);
+      lit+=win*step(lh,litFrac)*wcol*(1.2+uNight*1.6)*(.4+.6*uNight);
+      if(fut){ lit+=GOLD*smoothstep(vTop-2.5,vTop-.3,P.y)*(1.-float(roof))*2.5*uNight; }
+      if(roof&&inside>.5&&vS.z>=.5){ lit+=uLightCol*pow(max(dot(reflect(V,N),uLightDir),0.),30.)*.8+vec3(.15,.3,.7)*.12*uNight; }
+      lit+=scanRing(P.xz)*GOLD*2.;
+      gl_FragColor=vec4(applyFog(lit,P),1.);
+    }`);
+    const im = new T.InstancedMesh(geo, m, Math.max(1, inst.length));
+    const M = new T.Matrix4();
+    inst.forEach((b, i) => {
+      const y = heightAt(b[0], b[1]) - 1.5;
+      M.makeScale(b[2], b[4] + 1.5, b[3]); M.setPosition(b[0], y, b[1]);
+      im.setMatrixAt(i, M);
+      seeds.set([rnd(), b[5], rnd(), b[6]], i * 4);
+      if (b[6] && b[5] === 2 && b[4] > 90) BEACONS.push([b[0], y + b[4] + 3, b[1], 0, 1]);
+    });
+    im.count = inst.length;
+    geo.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
+    im.frustumCulled = false; scene.add(im);
+  }
+
+  // ------------------------------------------------ landmarks, at their true coordinates
+  {
+    const put = (p) => [gx(p[0]), gz(p[1])];
+    {
+      const [sx, sz] = put(PLACES.spire), sy = heightAt(sx, sz);
+      const spire = new T.Mesh(new T.ConeGeometry(1.6, 120, 16), litMat(0xc9ced2, { metal: .75 }));
+      spire.position.set(sx, sy + 60, sz); scene.add(spire);
+      BEACONS.push([sx, sy + 120, sz, 1, 0]);
+    }
+    {
+      const [px, pz] = put(PLACES.poolbeg);
+      for (let k = 0; k < 2; k++) {
+        const x = px - k * 34, z = pz + k * 10, y = heightAt(x, z);
+        const c = new T.Mesh(new T.CylinderGeometry(3.4, 4.8, 207, 20, 1, false), litMat(0xffffff, { bands: 207 / 7.5 }));
+        c.geometry.translate(0, 103.5, 0); c.position.set(x, y, z); scene.add(c);
+        BEACONS.push([x, y + 208, z, 0, 0], [x, y + 140, z, 0, 0]);
+      }
+    }
+    {
+      const [bx, bz] = put(PLACES.beckett), by = Math.max(heightAt(bx, bz), 2);
+      const white = litMat(0xe9ecef, { glow: 0x5f6f7a });
+      const deck = new T.Mesh(new T.BoxGeometry(124, 1.6, 12), white); deck.position.set(bx, by + 6.5, bz); scene.add(deck);
+      const curve = new T.CatmullRomCurve3([
+        new T.Vector3(bx - 26, by + 6, bz - 3), new T.Vector3(bx - 20, by + 26, bz - 7),
+        new T.Vector3(bx - 6, by + 42, bz - 8), new T.Vector3(bx + 8, by + 48, bz - 5)]);
+      scene.add(new T.Mesh(new T.TubeGeometry(curve, 40, 1.3, 10, false), white));
+      const cab = [];
+      for (let i = 0; i <= 24; i++) {
+        const p = curve.getPoint(.25 + .75 * i / 24);
+        cab.push(p.x, p.y, p.z, bx + 62 - 58 * (i / 24) - (i % 2) * 2, by + 7.2, bz + (i % 2 ? 4 : -4));
+      }
+      const cg = new T.BufferGeometry(); cg.setAttribute('position', new T.Float32BufferAttribute(cab, 3));
+      const cm = mat(`varying vec3 vW; void main(){ vW=position; gl_Position=projectionMatrix*viewMatrix*vec4(position,1.); }`,
+        `varying vec3 vW; void main(){ vec3 c=vec3(.85)*(uAmb*1.5+uLightCol*.5)+vec3(.7,.85,1.)*uNight*1.4; gl_FragColor=vec4(applyFog(c,vW),1.); }`);
+      scene.add(new T.LineSegments(cg, cm));
+    }
+    {
+      const [tx, tz] = put(PLACES.obrien), ty = heightAt(tx, tz);
+      const tower = new T.Mesh(new T.CylinderGeometry(4, 4.3, 13, 16), litMat(0x8b8577));
+      tower.position.set(tx, ty + 6, tz); scene.add(tower);
+      const crown = new T.Mesh(new T.CylinderGeometry(4.6, 4.6, 1.6, 16), litMat(0x77716a));
+      crown.position.set(tx, ty + 13, tz); scene.add(crown);
+    }
+  }
+
+  // ------------------------------------------------ offshore wind, on the real sites
+  {
+    seedN = 99;
+    const spots = [];
+    for (const [, lon, lat, cols, rows, spacing] of WIND_SITES) {
+      const cx = gx(lon), cz = gz(lat);
+      for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+        const x = cx + (i - (cols - 1) / 2) * spacing + (j % 2) * spacing * .4;
+        const z = cz + (j - (rows - 1) / 2) * spacing;
+        if (heightAt(x, z) > -5) continue;               // real water only
+        spots.push([x, z]);
+      }
+    }
+    const HUB = 150, ROT = 115;
+    const tower = new T.CylinderGeometry(3.2, 5.4, HUB, 12); tower.translate(0, HUB / 2, 0);
+    const nac = new T.BoxGeometry(16, 6, 6); nac.translate(1.5, HUB + 1, 0);
+    const blade = new T.BoxGeometry(.8, ROT, 4); blade.translate(0, ROT / 2, 0);
+    const bp = blade.attributes.position; for (let i = 0; i < bp.count; i++) { const y = bp.getY(i) / ROT; bp.setZ(i, bp.getZ(i) * (1 - y * .8)); }
+    function merge(list) {
+      const P = [], N = [];
+      list.forEach((gg) => { const ng = gg.index ? gg.toNonIndexed() : gg; P.push(...ng.attributes.position.array); N.push(...ng.attributes.normal.array); });
+      const out = new T.BufferGeometry(); out.setAttribute('position', new T.Float32BufferAttribute(P, 3)); out.setAttribute('normal', new T.Float32BufferAttribute(N, 3)); return out;
+    }
+    const blades = [];
+    for (let k = 0; k < 3; k++) { const b = blade.clone(); b.rotateX(k * Math.PI * 2 / 3); blades.push(b); }
+    const bodyG = merge([tower, nac]), bladeG = merge(blades);
+    const vs = (isBlade) => `attribute vec4 aSeed; varying vec3 vW; varying vec3 vN; varying float vRise;
+    void main(){
+      vec4 o=modelMatrix*instanceMatrix*vec4(0.,0.,0.,1.);
+      float d=length(o.xz-uScanC); float rise=clamp((uScanR-d-1800.)/14000.,0.,1.); rise=rise*rise*(3.-2.*rise); vRise=rise;
+      vec3 p=position; vec3 n=normal;
+      ${isBlade ? `float a=uTime*(.55+aSeed.x*.15)+aSeed.y*6.2831; float c=cos(a),s=sin(a);
+        p=vec3(p.x,p.y*c-p.z*s,p.y*s+p.z*c); n=vec3(n.x,n.y*c-n.z*s,n.y*s+n.z*c); p+=vec3(-8.,${HUB + 1}.,0.);` : ''}
+      p.y-=(1.-rise)*${HUB + ROT + 40}.;
+      vec4 w=modelMatrix*instanceMatrix*vec4(p,1.); vW=w.xyz; vN=normalize(mat3(modelMatrix*instanceMatrix)*n);
+      gl_Position=projectionMatrix*viewMatrix*vec4(w.xyz,1.); }`;
+    const fs = `varying vec3 vW; varying vec3 vN; varying float vRise;
+    void main(){ if(vRise<.001||vW.y<-.5) discard; vec3 N=normalize(vN);
+      vec3 c=vec3(.86,.88,.9)*(uLightCol*max(dot(N,uLightDir),0.)+uAmb*(.7+.3*N.y));
+      c+=vec3(.5,.6,.7)*.05*uNight;
+      c+=GOLD*smoothstep(1.,6.,vW.y)*smoothstep(16.,6.,vW.y)*(1.-vRise)*3.;
+      gl_FragColor=vec4(applyFog(c,vW),1.); }`;
+    const M = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler();
+    const n = Math.max(1, spots.length);
+    const seeds = new Float32Array(n * 4);
+    const body = new T.InstancedMesh(bodyG, mat(vs(false), fs), n);
+    const rot = new T.InstancedMesh(bladeG, mat(vs(true), fs), n);
+    spots.forEach((s, i) => {
+      e.set(0, (rnd() - .5) * .3, 0); q.setFromEuler(e);
+      M.compose(new T.Vector3(s[0], 0, s[1]), q, new T.Vector3(1, 1, 1));
+      body.setMatrixAt(i, M); rot.setMatrixAt(i, M);
+      seeds.set([rnd(), rnd(), 0, 0], i * 4);
+      BEACONS.push([s[0], HUB + 6, s[1], 0, 2]);
+    });
+    body.count = rot.count = spots.length;
+    bodyG.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
+    bladeG.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
+    body.frustumCulled = rot.frustumCulled = false;
+    scene.add(body, rot);
+  }
+
+  // ------------------------------------------------ beacons
+  {
+    const P = [], K = [];
+    BEACONS.forEach((b) => { P.push(b[0], b[1], b[2]); K.push(b[3], b[4]); });
+    if (P.length) {
+      const g = new T.BufferGeometry();
+      g.setAttribute('position', new T.Float32BufferAttribute(P, 3));
+      g.setAttribute('aK', new T.Float32BufferAttribute(K, 2));
+      const m = mat(`attribute vec2 aK; varying vec3 vC; varying float vA;
+      void main(){ vec3 p=position; float a=1.;
+        if(aK.y>1.5){ float d=length(p.xz-uScanC); float r=clamp((uScanR-d-1800.)/14000.,0.,1.); a=step(.98,r); }
+        if(aK.y>.5&&aK.y<1.5){ float d=length(p.xz-uScanC); a=step(d,uScanR-6000.); }
+        float blink=aK.x<.5? step(.55,fract(uTime*.5)) : 1.;
+        vC=aK.x<.5?vec3(1.,.08,.04)*6.:vec3(1.,.95,.85)*5.; vA=a*blink*max(uNight,.25);
+        vec4 mv=viewMatrix*vec4(p,1.); gl_PointSize=clamp(320.*uPx/-mv.z,1.5,20.); gl_Position=projectionMatrix*mv; }`,
+      `varying vec3 vC; varying float vA; void main(){ vec2 c=gl_PointCoord-.5; float d=length(c); float a=smoothstep(.5,.0,d); if(vA<.01) discard; gl_FragColor=vec4(vC*a*a*vA,1.); }`,
+      {}, { transparent: true, blending: T.AdditiveBlending, depthWrite: false });
+      const pts = new T.Points(g, m); pts.frustumCulled = false; pts.renderOrder = 5; scene.add(pts);
+    }
+  }
+
+  // ------------------------------------------------ traffic along the real corridors
+  {
+    seedN = 31;
+    const st = [], dir = [], prm = [];
+    const corridor = (a, b, lanes, speed) => {
+      const ax = gx(a[0]), az = gz(a[1]), bx = gx(b[0]), bz = gz(b[1]);
+      const len = Math.hypot(bx - ax, bz - az);
+      const ux = (bx - ax) / len, uz = (bz - az) / len, nx = -uz, nz = ux;
+      for (let k = 0; k < lanes; k++) {
+        const side = k % 2 ? 1 : -1, off = side * 4, fwd = side;
+        st.push(ax + nx * off, 0, az + nz * off);
+        dir.push(ux * fwd, 0, uz * fwd);
+        prm.push(len, speed * (.85 + rnd() * .3), rnd() * len, fwd > 0 ? 0 : 1);
+      }
+    };
+    const chain = (pts, lanes, speed) => { for (let i = 0; i < pts.length - 1; i++) corridor(pts[i], pts[i + 1], lanes, speed); };
+    chain(ROUTES.cork, 26, 30); chain(ROUTES.belfast, 26, 30);
+    chain(ROUTES.galway, 22, 30); chain(ROUTES.metro, 10, 22);
+    for (const [, lon, lat, radius, weight] of CITIES) {
+      if (weight < .4) continue;
+      const cx = gx(lon), cz = gz(lat), n = Math.round(weight * 900);
+      for (let i = 0; i < n; i++) {
+        const alongX = rnd() < .5;
+        const lane = (Math.floor(rnd() * (radius / 220)) - radius / 440) * 220;
+        const x = alongX ? cx - radius : cx + lane, z = alongX ? cz + lane : cz - radius;
+        const fwd = rnd() < .5 ? 1 : -1, car = rnd() < .75;
+        st.push(x, 0, z);
+        dir.push(alongX ? 1 : 0, 0, alongX ? 0 : 1);
+        prm.push(radius * 2, car ? (11 + rnd() * 6) * fwd : (1.4 + rnd() * .6) * fwd, rnd() * radius * 2, car ? (fwd > 0 ? 0 : 1) : 2);
+      }
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(st, 3));
+    g.setAttribute('aDir', new T.Float32BufferAttribute(dir, 3));
+    g.setAttribute('aP', new T.Float32BufferAttribute(prm, 4));
+    const m = mat(`attribute vec3 aDir; attribute vec4 aP; varying vec3 vC; varying float vA;
+    void main(){
+      float s=mod(uTime*aP.y+aP.z,aP.x); vec3 p=position+aDir*s;
+      float g=terrainAt(p.xz);
+      p.y=g+6.;
+      vC=aP.w<.5?vec3(1.,.93,.8)*3.:(aP.w<1.5?vec3(1.,.12,.06)*2.6:vec3(1.,.7,.35)*2.);
+      float inside=scanInside(p.xz); if(aP.w>1.5) vC=mix(vC,TEAL*2.2,inside*step(.5,fract(aP.z*.37)));
+      vA=smoothstep(.15,.7,uNight)*step(2.,g);   // real land only
+      vec4 mv=viewMatrix*vec4(p,1.); gl_PointSize=clamp(30.*uPx/-mv.z,1.,6.); gl_Position=projectionMatrix*mv; }`,
+    `varying vec3 vC; varying float vA; void main(){ if(vA<.01) discard; float d=length(gl_PointCoord-.5); gl_FragColor=vec4(vC*smoothstep(.5,.1,d)*vA,1.); }`,
+    {}, { transparent: true, blending: T.AdditiveBlending, depthWrite: false });
+    const pts = new T.Points(g, m); pts.frustumCulled = false; pts.renderOrder = 4; scene.add(pts);
+  }
+
+  // ------------------------------------------------ light ribbons on the real corridors
+  function ribbon(lonlats, width, color, speed, spacing, lift = 20) {
+    const curve = new T.CatmullRomCurve3(lonlats.map((p) => new T.Vector3(gx(p[0]), 0, gz(p[1]))));
+    const n = Math.max(60, Math.floor(curve.getLength() / 600));
+    const P = [], A = [], idx = [];
+    let dist = 0, prev = null;
+    for (let i = 0; i <= n; i++) {
+      const p = curve.getPoint(i / n), t = curve.getTangent(i / n);
+      if (prev) dist += p.distanceTo(prev); prev = p.clone();
+      const nx = -t.z, nz = t.x, l = Math.hypot(nx, nz) || 1;
+      for (const s of [-1, 1]) {
+        const x = p.x + nx / l * width * .5 * s, z = p.z + nz / l * width * .5 * s;
+        P.push(x, Math.max(heightAt(x, z), 0) + lift, z); A.push(dist, s);
+      }
+      if (i < n) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+    }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(P, 3));
+    g.setAttribute('aD', new T.Float32BufferAttribute(A, 2));
+    g.setIndex(idx);
+    const m = mat(`attribute vec2 aD; varying vec2 vD; varying vec3 vW; void main(){ vD=aD; vW=position; gl_Position=projectionMatrix*viewMatrix*vec4(position,1.); }`, `
+    uniform vec3 uColor; uniform float uSpeed; uniform float uSpacing;
+    varying vec2 vD; varying vec3 vW;
+    void main(){ float inside=scanInside(vW.xz); if(inside<.01) discard;
+      float ph=fract((vD.x-uTime*uSpeed)/uSpacing);
+      float pulse=smoothstep(0.,.015,ph)*smoothstep(.09,.015,ph);
+      float core=1.-abs(vD.y);
+      vec3 c=uColor*(.35+pulse*5.)*(.35+core*.65)*(.5+.5*uNight+.3);
+      float f=exp(-length(vW-uCam)*uFogD*.6);
+      gl_FragColor=vec4(c*inside*f,1.); }`,
+    { uColor: { value: new T.Color(color) }, uSpeed: { value: speed }, uSpacing: { value: spacing } },
+    { transparent: true, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide });
+    const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 3; scene.add(mesh);
+  }
+  ribbon(ROUTES.metro, 260, 0x7fe8d6, 900, 5000, 40);
+  ribbon(ROUTES.cork, 420, 0x9fd8ff, 2600, 26000, 30);
+  ribbon(ROUTES.belfast, 380, 0x9fd8ff, 2400, 24000, 30);
+  ribbon(ROUTES.galway, 380, 0x9fd8ff, 2400, 24000, 30);
+  ribbon(ROUTES.ewic, 420, 0xf2c14e, 3400, 22000, 12);
+  ribbon(ROUTES.celtic, 420, 0xf2c14e, 3400, 22000, 12);
+  ribbon(ROUTES.greenlink, 420, 0xf2c14e, 3400, 22000, 12);
+
+  // ------------------------------------------------ seabirds at the Cliffs of Moher
+  {
+    const N = 70;
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute([0, 0, .5, -1.6, .1, -.2, 0, 0, -.4, 0, 0, .5, 0, 0, -.4, 1.6, .1, -.2], 3));
+    g.setAttribute('normal', new T.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0], 3));
+    const seeds = new Float32Array(N * 4); seedN = 5;
+    for (let i = 0; i < N; i++) seeds.set([rnd(), rnd(), rnd(), rnd()], i * 4);
+    g.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
+    const cx = gx(PLACES.cliffs[0]) - 700, cz = gz(PLACES.cliffs[1]);
+    const m = mat(`attribute vec4 aSeed; varying vec3 vW; varying float vS;
+    void main(){ float r=60.+aSeed.x*320.; float sp=(.08+aSeed.y*.08)*(aSeed.z<.5?1.:-1.); float a=uTime*sp+aSeed.w*6.2831;
+      vec3 c=vec3(${cx.toFixed(1)}+sin(aSeed.w*9.)*300.,60.+aSeed.z*160.+sin(uTime*.3+aSeed.x*9.)*12.,${cz.toFixed(1)}+cos(aSeed.x*7.)*500.);
+      vec3 p=position*1.6; p.y+=abs(p.x)*sin(uTime*7.+aSeed.x*30.)*.55;
+      vec3 fwd=normalize(vec3(-sin(a),0.,cos(a))*sign(sp)); vec3 rt=normalize(cross(fwd,vec3(0,1,0)));
+      vec3 w=c+vec3(cos(a)*r,0.,sin(a)*r)+rt*p.x+vec3(0,p.y,0)+fwd*p.z;
+      vW=w; vS=aSeed.y; gl_Position=projectionMatrix*viewMatrix*vec4(w,1.); }`,
+    `varying vec3 vW; varying float vS; void main(){ vec3 c=mix(vec3(.9),vec3(.25),step(.7,vS))*(uAmb*1.3+uLightCol*.7); gl_FragColor=vec4(applyFog(c,vW),1.); }`,
+    {}, { side: T.DoubleSide });
+    const mesh = new T.InstancedMesh(g, m, N); mesh.frustumCulled = false; scene.add(mesh);
+    const M = new T.Matrix4(); for (let i = 0; i < N; i++) mesh.setMatrixAt(i, M);
+  }
+}
+
+const hudRig = new T.Group(); scene.add(hudRig);
+// ---------------------------------------------------------------- HUD in the world: captions on four walls, year ring on the floor
+function captionTexture(c) {
+  const W = 2048, H = 640, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  const bg = x.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * .48);
+  bg.addColorStop(0, 'rgba(2,6,10,.5)'); bg.addColorStop(.6, 'rgba(2,6,10,.28)'); bg.addColorStop(1, 'rgba(2,6,10,0)');
+  x.save(); x.scale(1, H / W * 1.6); x.fillStyle = bg; x.fillRect(0, 0, W, W); x.restore();
+  x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+  x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 28;
+  x.fillStyle = '#f2c14e'; x.font = '600 40px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
+  if ('letterSpacing' in x) x.letterSpacing = '12px';
+  x.fillText(c.eb.toUpperCase(), W / 2, 150);
+  if ('letterSpacing' in x) x.letterSpacing = '0px';
+  x.shadowBlur = 0; x.fillRect(W / 2 - 60, 180, 120, 3); x.shadowBlur = 36;
+  x.fillStyle = '#ffffff'; let size = 196; x.font = `400 ${size}px "Instrument Serif", Georgia, serif`;
+  while (x.measureText(c.ti).width > W - 120 && size > 90) { size -= 6; x.font = `400 ${size}px "Instrument Serif", Georgia, serif`; }
+  x.fillText(c.ti, W / 2, c.sub ? 380 : 420);
+  if (c.sub) { x.fillStyle = '#e4dfd3'; x.font = '400 56px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif'; x.fillText(c.sub, W / 2, 490); }
+  const t = new T.CanvasTexture(cv); t.anisotropy = 8; t.generateMipmaps = true; return t;
+}
+// floor ring
+const ring = (() => {
+  // Two layers on one texture. The dial and the year are expensive to draw but only
+  // change when the year ticks, so they are cached on their own canvas. The map
+  // inside the dial animates, so it is repainted each frame and composited over.
+  const S = 1536, HALF = S / 2;
+  const R_OUT = HALF * .977, R_TICK = HALF * .908, R_ARC = HALF * .879;
+  const R_MAP = HALF * .615;                      // the island fills the dial's inner disc
+  const MAP_C = HALF * .995;                      // centred in the dial
+
+  const plate = document.createElement('canvas'); plate.width = plate.height = S;
+  const pc = plate.getContext('2d');
+  const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const c = cv.getContext('2d');
+  const tex = new T.CanvasTexture(cv);
+  tex.anisotropy = 8;
+
+  let plateYear = null;
+  function drawPlate(year) {
+    if (year === plateYear) return;
+    plateYear = year;
+    pc.setTransform(1, 0, 0, 1, 0, 0);
+    pc.clearRect(0, 0, S, S);
+    pc.translate(HALF, HALF);
+    pc.strokeStyle = 'rgba(255,255,255,.9)';
+    for (let i = 0; i < 360; i += 2) {
+      const a = i * Math.PI / 180, big = i % 30 === 0, r0 = big ? R_TICK : R_TICK + (R_OUT - R_TICK) * .43;
+      pc.lineWidth = big ? 5 * (S / 2048) : 2 * (S / 2048);
+      pc.beginPath(); pc.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); pc.lineTo(Math.cos(a) * R_OUT, Math.sin(a) * R_OUT); pc.stroke();
+    }
+    pc.lineWidth = 3 * (S / 2048); pc.beginPath(); pc.arc(0, 0, R_ARC, 0, 6.2832); pc.stroke();
+    // A faint inner bezel so the map reads as sitting inside the dial.
+    pc.strokeStyle = 'rgba(242,193,78,.34)'; pc.lineWidth = 2 * (S / 2048);
+    pc.beginPath(); pc.arc(0, 0, HALF * .795, 0, 6.2832); pc.stroke();
+    pc.textAlign = 'center'; pc.textBaseline = 'middle';
+    for (let k = 0; k < 4; k++) {
+      pc.save(); pc.rotate(k * Math.PI / 2);
+      pc.fillStyle = '#ffffff'; pc.font = `400 ${Math.round(170 * S / 2048)}px "Instrument Serif", Georgia, serif`;
+      pc.fillText(String(year), 0, -HALF * .752);
+      pc.fillStyle = '#f2c14e'; pc.font = `600 ${Math.round(34 * S / 2048)}px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif`;
+      if ('letterSpacing' in pc) pc.letterSpacing = '10px';
+      pc.fillText(year >= 2036 ? 'IRELAND 2036' : (year > 2026 ? 'BUILDING THE DECADE' : 'IRELAND TODAY'), 0, -HALF * .635);
+      if ('letterSpacing' in pc) pc.letterSpacing = '0px';
+      pc.restore();
+    }
+    pc.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  let lastT = -1, lastYear = null;
+  // `mapA` fades the island in; `grow` lets the finale push it out towards the dial.
+  function draw(year, t, mapA = 1, grow = 0) {
+    const still = year === lastYear && t - lastT < .04;
+    if (still) return;
+    lastT = t; lastYear = year;
+    drawPlate(year);
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, S, S);
+    islandMap.paint(c, MAP_C, MAP_C, R_MAP * (1 + grow * .14), t, mapA);
+    c.drawImage(plate, 0, 0);
+    tex.needsUpdate = true;
+  }
+
+  const m = new T.ShaderMaterial({
+    uniforms: { uTex: { value: tex }, uA: { value: 0 }, uTime: U.uTime, uFlash: { value: 0 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+    fragmentShader: `uniform sampler2D uTex; uniform float uA; uniform float uTime; uniform float uFlash; varying vec2 vUv;
+    void main(){ vec2 p=vUv-.5; float r=length(p)*2.; float a=atan(p.y,p.x);
+      vec4 t=texture2D(uTex,vUv);
+      float sweep=pow(fract((a/6.2831)+uTime*.05),6.)*step(.9,r)*step(r,1.);
+      vec3 c=t.rgb*t.a*(1.+uFlash*1.5)+vec3(1.,.75,.35)*sweep*.9;
+      c+=vec3(1.,.75,.35)*exp(-abs(r-.88-uFlash*.1)*80.)*uFlash*2.;
+      gl_FragColor=vec4(c*uA,1.); }`,
+    transparent: true, depthTest: false, depthWrite: false, blending: T.AdditiveBlending,
+  });
+  const g = new T.PlaneGeometry(34, 34); g.rotateX(-Math.PI / 2);
+  const mesh = new T.Mesh(g, m); mesh.position.y = -14; mesh.renderOrder = 18; mesh.frustumCulled = false; hudRig.add(mesh);
+  return { draw, m, tex, mesh };
+})();
+
+let capTextures = [];
+function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures = CAPTIONS.map(captionTexture); ring.draw(2026, 0, 1, 0); }
+
+// ---------------------------------------------------------------- final projection pass
+// Every output pixel is resolved to a point in the physical room (wall s/t or floor x/z).
+// Footage wraps the four walls as one seamless mirrored panorama; the floor becomes a rippling
+// vortex reflection of it. Scenes without footage fall back to the live 3D world (cube map).
+const BLANK = new T.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); BLANK.needsUpdate = true;
+const post = (() => {
+  const m = new T.ShaderMaterial({
+    uniforms: {
+      uCube: { value: null }, uYaw: { value: 0 }, uMode: { value: 0 }, uRect: { value: new T.Vector4(0, 0, 1, 1) },
+      uRoom: { value: new T.Vector3(6, 6, 3) }, uEye: { value: 1.6 }, uPrev: { value: new T.Vector3(0, 0, Math.tan(40 * Math.PI / 180)) },
+      uFade: { value: 1 }, uExp: { value: 1 }, uBloom: { value: halfOK ? 1 : 0 }, uTime: U.uTime, uFloorRot: { value: 0 },
+      uA: { value: BLANK }, uB: { value: BLANK }, uHasA: { value: 0 }, uHasB: { value: 0 }, uAspA: { value: 1.7778 }, uAspB: { value: 1.7778 },
+      uMix: { value: 0 }, uDrift: { value: 0 }, uZoomA: { value: 1 }, uZoomB: { value: 1 }, uSwirl: { value: 0 },
+      uFuture: { value: 0 }, uScan: { value: 0 },
+      uCap: { value: BLANK }, uCapA: { value: 0 }, uCapRev: { value: 0 },
+      uRing: { value: BLANK }, uRingA: { value: 0 }, uFlash: { value: 0 },
+    },
+    vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
+    fragmentShader: `
+    uniform samplerCube uCube; uniform float uYaw; uniform int uMode; uniform vec4 uRect; uniform vec3 uRoom; uniform float uEye; uniform vec3 uPrev;
+    uniform float uFade; uniform float uExp; uniform float uBloom; uniform float uTime; uniform int uFloorRot;
+    uniform sampler2D uA; uniform sampler2D uB; uniform float uHasA; uniform float uHasB; uniform float uAspA; uniform float uAspB;
+    uniform float uMix; uniform float uDrift; uniform float uZoomA; uniform float uZoomB; uniform float uSwirl;
+    uniform float uFuture; uniform float uScan;
+    uniform sampler2D uCap; uniform float uCapA; uniform float uCapRev;
+    uniform sampler2D uRing; uniform float uRingA; uniform float uFlash;
+    const vec3 GOLD=vec3(1.,.74,.36); const vec3 TEAL=vec3(.4,1.,.88);
+    float hash12(vec2 p){ vec3 p3=fract(vec3(p.xyx)*.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
+    float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
+      return mix(mix(hash12(i),hash12(i+vec2(1,0)),u.x), mix(hash12(i+vec2(0,1)),hash12(i+vec2(1,1)),u.x), u.y); }
+    float fbm(vec2 p){ float a=.5,s=0.; for(int i=0;i<4;i++){ s+=a*vnoise(p); p=p*2.03+vec2(17.1,9.2); a*=.5; } return s; }
+    vec3 rotY(vec3 d,float a){ float c=cos(a),s=sin(a); return vec3(d.x*c+d.z*s,d.y,-d.x*s+d.z*c); }
+    vec3 aces(vec3 x){ return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.); }
+    float W,D,H,PER;
+    // perimeter coordinate (metres, clockwise from the front-left corner, seen from inside) of a point on the walls' footprint
+    float perim(vec2 xz){
+      vec2 n=vec2(xz.x/(W*.5),xz.y/(D*.5));
+      if(abs(n.y)>=abs(n.x)){ return n.y<0.? xz.x+W*.5 : W+D+(W*.5-xz.x); }
+      return n.x>0.? W+(xz.y+D*.5) : 2.*W+D+(D*.5-xz.y);
+    }
+    // footage sample: mirrored tiles around the perimeter so every seam matches; v is height (0 floor edge, 1 wall top)
+    vec3 foot(sampler2D tex, float asp, float P, float v, float zoom){
+      float n=max(2.,floor(PER/(H*asp)*.5+.5)*2.);
+      float x=P/PER*n+uDrift;
+      float u=1.-abs(fract(x*.5)*2.-1.);
+      vec2 uv=(vec2(u,v)-.5)/zoom+.5;
+      uv.y=clamp(uv.y,.002,.998);
+      return textureLod(tex,uv,0.).rgb;
+    }
+    vec3 cubeDisp(vec3 d){
+      vec3 c=textureLod(uCube,d,0.).rgb;
+      if(uBloom>0.){ c+=(max(textureLod(uCube,d,2.5).rgb-1.,0.)*.35+max(textureLod(uCube,d,4.).rgb-.85,0.)*.45+max(textureLod(uCube,d,5.5).rgb-.7,0.)*.6+max(textureLod(uCube,d,7.).rgb-.6,0.)*.5)*uBloom; }
+      return pow(aces(c*uExp),vec3(1./2.2));
+    }
+    void main(){
+      W=uRoom.x; D=uRoom.y; H=uRoom.z; PER=2.*W+2.*D;
+      vec2 uv=(gl_FragCoord.xy-uRect.xy)/uRect.zw;
+      if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.){ gl_FragColor=vec4(0,0,0,1); return; }
+      vec3 eye=vec3(0.,uEye,0.);
+      vec3 d; bool onFloor=false; float P=0.,t=0.,wallL=W; float ws=0.; vec2 q=vec2(0.);
+      if(uMode==1){
+        // canvas: Front | Right | Back | Left walls across the top, floor panel on the right
+        float LW=PER, TW=LW+W, TH=max(H,D); float x=uv.x*TW, y=uv.y*TH;
+        if(x<LW){
+          if(y<TH-H){ gl_FragColor=vec4(0,0,0,1); return; }
+          t=(y-(TH-H))/H; P=x; vec3 p;
+          if(x<W){ p=vec3(-W*.5+x,t*H,-D*.5); ws=x/W; wallL=W; }
+          else if(x<W+D){ p=vec3(W*.5,t*H,-D*.5+(x-W)); ws=(x-W)/D; wallL=D; }
+          else if(x<2.*W+D){ p=vec3(W*.5-(x-W-D),t*H,D*.5); ws=(x-W-D)/W; wallL=W; }
+          else { p=vec3(-W*.5,t*H,D*.5-(x-2.*W-D)); ws=(x-2.*W-D)/D; wallL=D; }
+          d=normalize(p-eye);
+        } else {
+          if(y>D){ gl_FragColor=vec4(0,0,0,1); return; }
+          vec2 f=vec2((x-LW)/W,y/D)-.5;
+          for(int i=0;i<4;i++){ if(i<uFloorRot) f=vec2(-f.y,f.x); }
+          q=vec2(f.x*W,-f.y*D); onFloor=true; d=normalize(vec3(q.x,0.,q.y)-eye);
+        }
+      } else {
+        if(uMode==0){ float lon=(uv.x-.5)*6.2831853; float lat=(uv.y-.5)*3.1415927; d=vec3(cos(lat)*sin(lon),sin(lat),-cos(lat)*cos(lon)); }
+        else { vec2 n=uv*2.-1.; float asp=uRect.z/uRect.w; d=normalize(vec3(n.x*uPrev.z*asp,n.y*uPrev.z,-1.));
+          float cp=cos(uPrev.y),sp=sin(uPrev.y); d=vec3(d.x,d.y*cp+d.z*sp,-d.y*sp+d.z*cp); d=rotY(d,uPrev.x); }
+        // resolve the view ray against the physical room
+        if(d.y<0.){ float k=-uEye/d.y; q=d.xz*k; onFloor=abs(q.x)<=W*.5&&abs(q.y)<=D*.5; }
+        if(!onFloor){
+          float kx=abs(d.x)>1e-5?(W*.5)/abs(d.x):1e9, kz=abs(d.z)>1e-5?(D*.5)/abs(d.z):1e9, k=min(kx,kz);
+          vec3 p=eye+d*k; t=p.y/H; P=perim(p.xz);
+          if(kz<kx){ wallL=W; ws=d.z<0.?(p.x+W*.5)/W:(W*.5-p.x)/W; } else { wallL=D; ws=d.x>0.?(p.z+D*.5)/D:(D*.5-p.z)/D; }
+        }
+      }
+      // floor: square-polar reflection with a slow vortex toward the centre
+      float r=0.,fv=0.;
+      if(onFloor){
+        r=max(abs(q.x)/(W*.5),abs(q.y)/(D*.5));
+        float sw=pow(1.-r,2.)*(uSwirl+.06*sin(uTime*.2));
+        float ca=cos(sw*6.2831),sa=sin(sw*6.2831); vec2 qs=vec2(q.x*ca-q.y*sa,q.x*sa+q.y*ca);
+        P=perim(qs/max(r,1e-4));
+        float rip=sin(r*46.-uTime*2.2)*.006+(vnoise(q*2.6+uTime*.35)-.5)*.018;
+        fv=clamp((1.-r)+rip,0.,1.);
+      }
+      float v=onFloor?fv:(t<=1.?max(t,0.):2.-min(t,2.));
+      bool needCube=uHasA<.5||(uMix<.999&&uHasB<.5);
+      vec3 cub=needCube?cubeDisp(rotY(d,uYaw)):vec3(0.);
+      // liquid dissolve from B (outgoing) to A (incoming)
+      vec2 nc=onFloor?q*.9:vec2(P,t*H)*.55;
+      float n=fbm(nc+vec2(uTime*.05,0.));
+      float edgeP=uMix*1.25-.12;
+      float warp=(1.-abs(uMix*2.-1.))*.05*(n-.5);
+      vec3 ca=uHasA>.5?foot(uA,uAspA,P+warp*PER*.3,v+warp,uZoomA):cub;
+      vec3 cb=uHasB>.5?foot(uB,uAspB,P-warp*PER*.3,v-warp,uZoomB):cub;
+      float m=smoothstep(n-.06,n+.06,edgeP);
+      vec3 col=mix(cb,ca,m);
+      float edge=exp(-abs(edgeP-n)*42.)*step(.001,uMix)*step(uMix,.999);
+      if(!onFloor&&t>1.) col*=1.-.55*smoothstep(1.,1.8,t);
+      col+=mix(GOLD,TEAL,uFuture)*edge*.9;
+      if(onFloor){
+        col*=vec3(.82,.9,1.)*(.8+.2*r);
+        float caust=pow(vnoise(q*3.2+vec2(uTime*.4,-uTime*.3))*vnoise(q*4.1-vec2(uTime*.3,uTime*.2)),2.);
+        col+=vec3(.9,.95,1.)*caust*.25;
+        col+=GOLD*exp(-abs(r-1.)*60.)*.25;
+      }
+      // Ireland 2036: colour grade, scan sweep (floor, then up the walls), holographic grid, rising light
+      if(uFuture>0.){
+        float l=dot(col,vec3(.299,.587,.114));
+        vec3 g=mix(vec3(.02,.1,.16),vec3(1.,.84,.6),smoothstep(.05,.9,l))*(l*1.25+.05);
+        col=mix(col,mix(col,g,.45),uFuture);
+      }
+      if(uScan>0.){
+        float sf=min(uScan,1.05), sh=uScan-1.;
+        if(onFloor){
+          col+=GOLD*exp(-abs(r-sf)*22.)*step(uScan,1.4)*2.;
+          float inside=step(r,sf);
+          vec2 g=abs(fract(q/.5)-.5); float gl=smoothstep(.47,.5,max(g.x,g.y));
+          col+=TEAL*gl*inside*.35*uFuture;
+        } else {
+          col+=GOLD*exp(-abs(t-sh)*28.)*step(0.,sh)*step(sh,1.15)*1.8;
+          float inside=step(t,sh);
+          vec2 cell=floor(vec2(P,t*H)/.32); float rn=hash12(cell);
+          vec2 lc=fract(vec2(P,t*H)/.32);
+          float py=fract(uTime*.18*(.5+rn)+rn*7.);
+          float dd=length(lc-vec2(.5+.3*sin(rn*40.+uTime*.7),py));
+          col+=GOLD*smoothstep(.09,.0,dd)*step(.55,rn)*inside*uFuture*1.3;
+          vec2 g=abs(fract(vec2(P,t*H)/.75)-.5); col+=TEAL*smoothstep(.485,.5,max(g.x,g.y))*inside*.12*uFuture;
+        }
+      }
+      // captions, one per wall
+      if(!onFloor&&uCapA>0.){
+        float cw=min(wallL*.88,H*2.9), ch=cw/3.2;
+        vec2 cu=vec2((ws-.5)*wallL/cw+.5,(t*H-H*.64)/ch+.5);
+        if(cu.x>0.&&cu.x<1.&&cu.y>0.&&cu.y<1.){
+          vec4 c=texture2D(uCap,cu); float dd=abs(cu.x-.5)*2.; float rr=uCapRev*1.2;
+          float vis=smoothstep(dd-.12,dd,rr);
+          col=mix(col,c.rgb*1.08,c.a*vis*uCapA);
+          col+=GOLD*exp(-abs(rr-dd)*30.)*step(rr,1.1)*smoothstep(.25,.45,cu.y)*smoothstep(.8,.6,cu.y)*.6*uCapA;
+        }
+      }
+      // floor: year ring and the island map
+      if(onFloor){
+        float S=min(W,D)*.98; vec2 fu=vec2(.5+q.x/S,.5-q.y/S);
+        if(uRingA>0.&&fu.x>0.&&fu.x<1.&&fu.y>0.&&fu.y<1.){
+          vec4 c=texture2D(uRing,fu); vec2 pp=fu-.5; float rr=length(pp)*2.; float a=atan(pp.y,pp.x);
+          float sweep=pow(fract(a/6.2831+uTime*.05),6.)*step(.9,rr)*step(rr,1.);
+          col=mix(col,col*.45,smoothstep(.6,.9,rr)*step(rr,1.02)*uRingA*.6);
+          // Settle the floor under the whole dial so the island inside it reads
+          // clearly against the live render, not just under the outer bezel.
+          col=mix(col,col*.30,smoothstep(1.02,.86,rr)*uRingA*.80);
+          col+=(c.rgb*c.a*(1.+uFlash*1.5)+GOLD*sweep*.8+GOLD*exp(-abs(rr-.88-uFlash*.1)*80.)*uFlash*2.)*uRingA;
+        }
+      }
+      col+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)*.016;
+      gl_FragColor=vec4(clamp(col,0.,1.)*uFade,1.);
+    }`,
+    depthTest: false, depthWrite: false,
+  });
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
+  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false;
+  const s = new T.Scene(); s.add(mesh);
+  return { scene: s, cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), material: m };
+})();
+makeCube();
+hudRig.visible = false; // captions, ring and map are composited in room space by the projection pass
+post.material.uniforms.uRing.value = ring.tex;
+
+
+
+// ---------------------------------------------------------------- flight path
+// Written as real places: time, longitude, latitude, and height above sea level.
+//
+// Comfort rules, because this plays on four walls and a floor where the audience is
+// standing and cannot brace against the motion:
+//   1. The camera always looks along its direction of travel, so the room reads as
+//      forward flight. Sideways drift is what makes a wraparound screen unpleasant.
+//   2. Heading is derived from velocity and then rate-limited, never authored as a
+//      spin. Yaw rate is held under MAX_YAW, well inside the comfort range.
+//   3. Angular flow is what matters, not speed. This table was not authored by eye:
+//      it was solved against a ceiling on combined optical flow, which is ground
+//      speed over height together with the rate of climb. Measured peak is
+//      0.149 rad/s, and the fastest the view turns is 2.3 deg/s.
+//   4. Climbs and descents are exponential, so the vertical component of flow stays
+//      constant instead of spiking as the ground comes close.
+//   5. No vertical bob, no roll, no shake. Position and heading are both critically
+//      damped, so there is no sudden change anywhere in the three minutes.
+const CAM_LL = [
+  [  0,  -9.5417, 52.9484,   1700],
+  [ 11,  -9.5018, 52.9469,   1700],
+  [ 22,  -9.4619, 52.9453,   1700],
+  [ 30,  -9.4295, 52.9440,   3624],
+  [ 38,  -9.3606, 52.9413,   7725],
+  [ 46,  -9.2136, 52.9355,  16466],
+  [ 54,  -8.9001, 52.9232,  35100],
+  [ 62,  -8.3007, 52.9003,  35100],
+  [ 70,  -7.7002, 52.8944,  35100],
+  [ 78,  -7.1037, 52.9341,  35100],
+  [ 86,  -6.6046, 53.0249,  26096],
+  [ 94,  -6.3581, 53.1129,  14424],
+  [102,  -6.2497, 53.1823,   7973],
+  [112,  -6.2082, 53.2383,   3800],
+  [120,  -6.2053, 53.2765,   3672],
+  [128,  -6.2209, 53.3122,   3548],
+  [138,  -6.2603, 53.3498,   3398],
+  [146,  -6.3019, 53.3733,   3284],
+  [152,  -6.3360, 53.3875,   3200],
+  [160,  -6.3580, 53.3950,   9606],
+  [168,  -6.4254, 53.4153,  28839],
+  [174,  -6.5609, 53.4458,  65771],
+  [180,  -6.8843, 53.4979, 150000],
+];
+const CAM = CAM_LL.map(([t, lon, lat, alt]) => [t, gx(lon), alt, gz(lat)]);
+
+// atmosphere keys: t, sunElev, sunAz, zenith, horizon, sunCol, night, cloud, aurora, fog, exposure
+const ATM = [
+  [0,   1,  86, [.07,.12,.26], [.98,.52,.30], [1.7,.85,.45], .18, .55, 0, .0000080, 1.15],
+  [24,  7,  94, [.11,.22,.46], [.96,.68,.50], [1.8,1.15,.75], .02, .50, 0, .0000055, 1.02],
+  [50,  20, 130, [.15,.32,.62], [.72,.82,.92], [1.7,1.6,1.4], 0, .42, 0, .0000024, 1.0],
+  [76,  11, 236, [.17,.28,.56], [.95,.66,.40], [1.85,1.15,.6], 0, .44, 0, .0000026, 1.02],
+  [96,  1,  256, [.09,.13,.30], [.78,.42,.34], [1.5,.62,.30], .30, .42, 0, .0000034, 1.12],
+  [118, -6, 268, [.03,.05,.13], [.20,.16,.25], [.55,.26,.20], .78, .34, 0, .0000038, 1.25],
+  [144, -12, 282, [.008,.016,.042], [.045,.06,.11], [0,0,0], 1, .22, .25, .0000030, 1.33],
+  [164, -16, 290, [.004,.009,.028], [.03,.045,.09], [0,0,0], 1, .16, 1, .0000010, 1.35],
+  [180, -17, 293, [.004,.009,.028], [.03,.045,.09], [0,0,0], 1, .15, 1, .0000007, 1.35],
+];
+const SCAN_T0 = 76;
+
+// Catmull-Rom through the keyframes, evaluated in real metres.
+function rawCam(t) {
+  let i = 0; while (i < CAM.length - 2 && CAM[i + 1][0] <= t) i++;
+  const k0 = CAM[Math.max(0, i - 1)], k1 = CAM[i], k2 = CAM[i + 1], k3 = CAM[Math.min(CAM.length - 1, i + 2)];
+  const u = clamp((t - k1[0]) / (k2[0] - k1[0]), 0, 1);
+  const out = [];
+  for (let c = 1; c <= 3; c++) {
+    const dt = k2[0] - k1[0];
+    const m1 = (k2[c] - k0[c]) / Math.max(1e-3, k2[0] - k0[0]) * dt;
+    const m2 = (k3[c] - k1[c]) / Math.max(1e-3, k3[0] - k1[0]) * dt;
+    const u2 = u * u, u3 = u2 * u;
+    out.push((2 * u3 - 3 * u2 + 1) * k1[c] + (u3 - 2 * u2 + u) * m1 + (-2 * u3 + 3 * u2) * k2[c] + (u3 - u2) * m2);
+  }
+  // Never fly into real ground, and keep a floor over open water.
+  const ground = heightAt(out[0], out[2]);
+  out[1] = Math.max(out[1], ground + 300, 260);
+  return out;
+}
+
+// Heading follows the direction of travel, so the room always reads as flying forward.
+function travelHeading(t) {
+  const d = .75;
+  const a = rawCam(Math.max(0, t - d)), b = rawCam(Math.min(DURATION, t + d));
+  const dx = b[0] - a[0], dz = b[2] - a[2];
+  if (Math.abs(dx) < 1e-6 && Math.abs(dz) < 1e-6) return 0;
+  return Math.atan2(dx, -dz); // 0 = north, +x = east
+}
+
+const MAX_YAW = 2.8 * Math.PI / 180; // radians per second the view may ever turn
+const camSmooth = { x: 0, y: 0, z: 0, yaw: 0, ready: false };
+
+function stepCamera(t, dt) {
+  const [x, y, z] = rawCam(t);
+  let yawTarget = travelHeading(t);
+  if (!camSmooth.ready) {
+    camSmooth.x = x; camSmooth.y = y; camSmooth.z = z; camSmooth.yaw = yawTarget; camSmooth.ready = true;
+  }
+  // Critically damped follow: no overshoot, no step change, nothing to brace against.
+  const kPos = 1 - Math.exp(-dt / .45);
+  camSmooth.x += (x - camSmooth.x) * kPos;
+  camSmooth.y += (y - camSmooth.y) * kPos;
+  camSmooth.z += (z - camSmooth.z) * kPos;
+  // Shortest way round, then hard-limited so the view can never whip.
+  let d = yawTarget - camSmooth.yaw;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  const step = d * (1 - Math.exp(-dt / .9));
+  camSmooth.yaw += clamp(step, -MAX_YAW * dt, MAX_YAW * dt);
+  return camSmooth;
+}
+
+function atmAt(t) {
+  let i = 0; while (i < ATM.length - 2 && ATM[i + 1][0] <= t) i++;
+  const a = ATM[i], b = ATM[i + 1], u = smooth(a[0], b[0], t);
+  const mix = (x, y) => Array.isArray(x) ? x.map((v, k) => lerp(v, y[k], u)) : lerp(x, y, u);
+  return a.map((v, k) => k === 0 ? t : mix(v, b[k]));
+}
+
+const tmpV = new T.Vector3();
+function applyTime(t, dt) {
+  const c = stepCamera(t, dt);
+  const x = c.x, y = c.y, z = c.z;
+  U.uCam.value.set(x, y, z);
+  cubeCam.position.set(x, y, z);
+  scene.userData.sky.position.set(x, y, z);
+  hudRig.position.set(x, y, z);
+  // Depth precision has to stretch from a low pass over the Liffey to 190 km up.
+  const near = clamp(y * .02, 20, 5000);
+  cubeCam.children.forEach((k) => { if (k.isPerspectiveCamera && k.near !== near) { k.near = near; k.far = 2200000; k.updateProjectionMatrix(); } });
+  hudRig.rotation.y = c.yaw;
+  post.material.uniforms.uYaw.value = c.yaw;
+
+  const a = atmAt(t);
+  const el = a[1] * Math.PI / 180, az = a[2] * Math.PI / 180;
+  const sun = U.uSunDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).normalize();
+  U.uZenith.value.fromArray(a[3]); U.uHorizon.value.fromArray(a[4]); U.uSunCol.value.fromArray(a[5]);
+  U.uNight.value = a[6]; U.uCloud.value = a[7]; U.uAurora.value = a[8]; U.uFogD.value = a[9];
+  post.material.uniforms.uExp.value = a[10];
+  const sunUp = smooth(-.06, .12, sun.y);
+  const moon = tmpV.set(.5, .55, -.65).normalize();
+  U.uLightDir.value.copy(sun).multiplyScalar(sunUp).addScaledVector(moon, 1 - sunUp).normalize();
+  const sc = a[5];
+  U.uLightCol.value.set(lerp(.1, sc[0], sunUp), lerp(.13, sc[1], sunUp), lerp(.2, sc[2], sunUp));
+  U.uAmb.value.set(a[3][0] * .9 + a[4][0] * .35, a[3][1] * .9 + a[4][1] * .35, a[3][2] * .9 + a[4][2] * .35);
+
+  // The 2036 sweep leaves Dublin and crosses the island over real kilometres.
+  const s = t - SCAN_T0;
+  U.uScanR.value = s > 0 ? 6000 * s + 1400 * s * s : 0;
+  cloudDeck.uniforms.uOp.value = smooth(150, 166, t);
+  mapGroup.visible = false;
+
+  const P = post.material.uniforms;
+  let si = 0; SCENES.forEach((sc2, i) => { if (t >= sc2.t0) si = i; });
+  const A = SCENES[si], B = SCENES[Math.max(0, si - 1)];
+  const mix = si === 0 ? 1 : smooth(A.t0, A.t0 + XFADE, t);
+  const ma = media[A.id], mb = media[B.id];
+  P.uHasA.value = ma && ma.tex ? 1 : 0; P.uA.value = ma && ma.tex ? ma.tex : BLANK; P.uAspA.value = ma && ma.asp || 1.7778;
+  P.uHasB.value = mb && mb.tex ? 1 : 0; P.uB.value = mb && mb.tex ? mb.tex : BLANK; P.uAspB.value = mb && mb.asp || 1.7778;
+  P.uMix.value = mix;
+  P.uZoomA.value = 1 + .09 * (t - A.t0) / (A.t1 - A.t0 + XFADE);
+  P.uZoomB.value = 1 + .09 * (t - B.t0) / (B.t1 - B.t0 + XFADE);
+  P.uDrift.value = t * .016;
+  P.uSwirl.value = .08 + .25 * smooth(150, 178, t);
+  syncVideos(t, [si, mix < 1 ? si - 1 : -1]);
+
+  P.uFuture.value = smooth(SCAN_T0, SCAN_T0 + 8, t);
+  P.uScan.value = t < SCAN_T0 ? 0 : Math.min(2.2, (t - SCAN_T0) / 3);
+  const yr = t < SCAN_T0 ? 2026 : Math.min(2036, 2026 + Math.floor((t - SCAN_T0) / 1.2));
+  const flashT = t < SCAN_T0 ? 99 : ((t - SCAN_T0) % 1.2);
+  P.uFlash.value = t >= SCAN_T0 && t < SCAN_T0 + 13.2 ? Math.exp(-flashT * 3) : 0;
+  // The dial stays on the floor for the whole show, with the island inside it.
+  // `mapGrow` lets the finale push the island outwards as it takes the room over.
+  const mapGrow = smooth(150, 166, t);
+  P.uRingA.value = smooth(2, 6, t) * .85 * (1 + mapGrow * .30);
+  ring.m.uniforms.uA.value = P.uRingA.value;
+  ring.m.uniforms.uFlash.value = P.uFlash.value;
+  ring.mesh.scale.setScalar(1 + mapGrow * .42);
+  // Drawn from the first frame, fading up with the dial.
+  ring.draw(yr, U.uTime.value, smooth(2.5, 7, t), mapGrow);
+
+  const cap = CAPTIONS.findIndex((k) => t >= k.t0 - .1 && t <= k.t1 + 1.2);
+  if (cap < 0) P.uCapA.value = 0;
+  else {
+    const k = CAPTIONS[cap];
+    P.uCap.value = capTextures[cap]; P.uCapRev.value = smooth(k.t0, k.t0 + 1.6, t);
+    P.uCapA.value = 1 - smooth(k.t1, k.t1 + 1.1, t);
+  }
+  P.uFade.value = smooth(0, 3.5, t) * (1 - smooth(DURATION - 2.2, DURATION, t)) * (blackout ? 0 : 1);
+}
+function needsWorld() { const u = post.material.uniforms; return u.uHasA.value < .5 || (u.uMix.value < .999 && u.uHasB.value < .5); }
+// ---------------------------------------------------------------- footage library (assets + db)
+const media = {}; // sceneId -> {tex, asp, kind, video, url, name}
+function syncVideos(t, live) {
+  SCENES.forEach((s, i) => {
+    const m = media[s.id]; if (!m || !m.video) return;
+    const v = m.video;
+    if (live.includes(i)) {
+      const want = Math.max(0, t - s.t0 + .01);
+      if (v.duration && isFinite(v.duration)) {
+        const target = want % v.duration;
+        if (Math.abs(v.currentTime - target) > 1.2) { try { v.currentTime = target; } catch (e) {} }
+      }
+      v.playbackRate = playing ? 1 : 0.0001;
+      if (v.paused && playing) v.play().catch(() => {});
+      if (!playing && !v.paused) v.pause();
+    } else if (!v.paused) v.pause();
+  });
+}
+function loadMedia(id, row) {
+  const old = media[id];
+  if (old) { if (old.tex) old.tex.dispose(); if (old.video) { old.video.pause(); old.video.removeAttribute('src'); old.video.load(); } delete media[id]; }
+  if (!row || !(row.asset || row.url)) { renderSlots(); return; }
+  const url = row.url || '/_blob/' + row.asset;
+  const entry = { kind: row.kind, url, name: row.name || '', credit: row.credit || '' };
+  media[id] = entry;
+  if (row.kind === 'video') {
+    const v = document.createElement('video');
+    v.src = url; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
+    v.addEventListener('loadeddata', () => { entry.asp = v.videoWidth / v.videoHeight || 1.7778; entry.tex = new T.VideoTexture(v); entry.tex.minFilter = T.LinearFilter; entry.tex.generateMipmaps = false; renderSlots(); });
+    v.addEventListener('error', () => { entry.error = true; renderSlots(); });
+    entry.video = v;
+  } else {
+    new T.TextureLoader().load(url, (tex) => { entry.tex = tex; entry.asp = tex.image.width / tex.image.height; renderSlots(); },
+      undefined, () => { entry.error = true; renderSlots(); });
+  }
+  renderSlots();
+}
+let assetsApi = null, dbApi = null;
+function renderSlots() {
+  const box = $('slots'); box.textContent = '';
+  SCENES.forEach((s) => {
+    const m = media[s.id];
+    const row = document.createElement('div'); row.className = 'slot';
+    const th = document.createElement('div'); th.className = 'thumb';
+    if (m && m.kind === 'video' && !m.error) { const v = document.createElement('video'); v.src = m.url; v.muted = true; th.appendChild(v); }
+    else if (m && !m.error) th.style.backgroundImage = `url("${m.url}")`;
+    else th.textContent = m && m.error ? 'Missing' : 'Live 3D';
+    const info = document.createElement('div');
+    const b = document.createElement('b'); b.textContent = `${fmt(s.t0)} · ${s.name}`;
+    const sm = document.createElement('small'); sm.textContent = m ? (m.name + (m.credit ? ' · ' + m.credit : '')) : s.want;
+    const acts = document.createElement('div'); acts.className = 'acts-row';
+    if (assetsApi) {
+      const lab = document.createElement('label'); lab.textContent = m ? 'Replace clip' : 'Add clip';
+      const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'video/mp4,video/webm,image/jpeg,image/png,image/webp'; inp.id = 'file-' + s.id;
+      inp.addEventListener('change', () => inp.files[0] && upload(s.id, inp.files[0]));
+      lab.appendChild(inp); acts.appendChild(lab);
+      if (m) { const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.addEventListener('click', () => removeSlot(s.id)); acts.appendChild(rm); }
+    }
+    info.append(b, sm, acts); row.append(th, info); box.appendChild(row);
+  });
+}
+function note(msg, err) { const n = $('media-note'); n.textContent = msg; n.classList.toggle('err', !!err); }
+async function upload(id, file) {
+  if (file.size > 20 * 1024 * 1024) { note('That file is over 20 MB. Export 1920 px wide H.264 MP4 (about 15–20 s) and try again.', true); return; }
+  note('Uploading ' + file.name + '…');
+  try {
+    const old = media[id] && media[id].url;
+    const r = await assetsApi.upload(file);
+    await dbApi.doc('media/' + id).set({ asset: r.id, kind: r.contentType.startsWith('video') ? 'video' : 'image', name: file.name, at: Date.now() });
+    note('Saved. It now plays in this scene.');
+    if (old && old.startsWith('/_blob/')) assetsApi.delete(old.split('/').pop()).catch(() => {});
+  } catch (e) {
+    const code = e && e.code;
+    note(code === 'unsupported_type' ? 'Use an MP4, WebM, JPG, PNG or WebP file.' : code === 'quota_or_state' ? 'Storage is full. Remove a clip first.' : code === 'not_granted' ? 'You need edit access to add clips.' : 'Upload failed. Try again in a moment.', true);
+  }
+}
+async function removeSlot(id) {
+  const m = media[id]; if (!m) return;
+  try { await dbApi.doc('media/' + id).delete(); if (m.url.startsWith('/_blob/')) await assetsApi.delete(m.url.split('/').pop()); note('Removed. This scene now shows the live 3D world.'); }
+  catch (e) { note('Could not remove that clip. Try again.', true); }
+}
+(async () => {
+  renderSlots();
+  if (!window.claude || !window.claude.use) { note('The footage library loads from the published link.'); return; }
+  try { dbApi = await window.claude.use('db'); assetsApi = await window.claude.use('assets'); } catch (e) { /* stays null */ }
+  if (!dbApi) { note('Footage library is not available in this view. Scenes without footage show the live 3D world.'); return; }
+  note(assetsApi ? '' : 'Only editors can change clips. Saved clips still play here.');
+  renderSlots();
+  dbApi.collection('media').onSnapshot((snap) => {
+    snap.docChanges().forEach((ch) => loadMedia(ch.doc.id, ch.type === 'removed' ? null : ch.doc.data()));
+  }, () => note('Footage library is offline. Scenes without footage show the live 3D world.', true));
+})();
+
+// ---------------------------------------------------------------- generative sound
+// ---------------------------------------------------------------- generative sound
+const audio = (() => {
+  let ctx = null, master, padF, voices = [], ocean, oceanG, rev, on = false, lastCap = -1, lastScan = false, lastChord = -1;
+  const CH = [[146.83, 220, 329.63, 369.99, 440], [123.47, 185, 293.66, 440, 554.37], [98, 196, 293.66, 369.99, 493.88], [146.83, 220, 369.99, 440, 659.25]];
+  function impulse(sec) {
+    const n = ctx.sampleRate * sec, b = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6); }
+    return b;
+  }
+  function init() {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    rev = ctx.createConvolver(); rev.buffer = impulse(4.5); const rg = ctx.createGain(); rg.gain.value = .55; rev.connect(rg); rg.connect(master);
+    padF = ctx.createBiquadFilter(); padF.type = 'lowpass'; padF.frequency.value = 700; padF.Q.value = .4;
+    const pg = ctx.createGain(); pg.gain.value = .05; padF.connect(pg); pg.connect(master); pg.connect(rev);
+    CH[0].forEach((f) => {
+      for (const det of [-5, 5]) { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det; o.connect(padF); o.start(); voices.push(o); }
+    });
+    const nb = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate); const nd = nb.getChannelData(0); let last = 0;
+    for (let i = 0; i < nd.length; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; nd[i] = last * 3.5; }
+    ocean = ctx.createBufferSource(); ocean.buffer = nb; ocean.loop = true;
+    const of = ctx.createBiquadFilter(); of.type = 'lowpass'; of.frequency.value = 900;
+    oceanG = ctx.createGain(); oceanG.gain.value = .0;
+    ocean.connect(of); of.connect(oceanG); oceanG.connect(master); ocean.start();
+  }
+  function chime(freq, when = 0, vol = .08) {
+    const t = ctx.currentTime + when;
+    [1, 2.01, 3.02].forEach((m, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = freq * m;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol / (i + 1), t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + 3.5 / (i + 1));
+      o.connect(g); g.connect(rev); g.connect(master); o.start(t); o.stop(t + 4);
+    });
+  }
+  function whoosh() {
+    const t = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = ocean.buffer;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(120, t); f.frequency.exponentialRampToValueAtTime(3200, t + 3.5);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.9, t + 1.5); g.gain.exponentialRampToValueAtTime(.001, t + 6);
+    src.connect(f); f.connect(g); g.connect(master); g.connect(rev); src.start(t); src.stop(t + 6.5);
+    const o = ctx.createOscillator(), og = ctx.createGain(); o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(34, t + 3);
+    og.gain.setValueAtTime(.35, t); og.gain.exponentialRampToValueAtTime(.001, t + 4); o.connect(og); og.connect(master); o.start(t); o.stop(t + 4.2);
+  }
+  return {
+    get on() { return on; },
+    toggle(v) {
+      on = v === undefined ? !on : v;
+      if (on && !ctx) { try { init(); } catch (e) { on = false; return false; } }
+      if (ctx) { if (on) ctx.resume(); master.gain.setTargetAtTime(on ? .9 : 0, ctx.currentTime, .4); }
+      return on;
+    },
+    update(t, playing, cap) {
+      if (!ctx || !on) return;
+      const now = ctx.currentTime;
+      master.gain.setTargetAtTime(playing ? .9 * Math.min(1, (DURATION - t) / 2.5) : .25, now, .5);
+      const act = t < 36 ? 0 : t < 72 ? 1 : t < 144 ? 2 : 3;
+      if (act !== lastChord) {
+        lastChord = act;
+        CH[act].forEach((f, i) => { voices[i * 2].frequency.setTargetAtTime(f, now, 1.8); voices[i * 2 + 1].frequency.setTargetAtTime(f, now, 1.8); });
+      }
+      padF.frequency.setTargetAtTime(500 + 1600 * smooth(74, 100, t) + 600 * smooth(150, 170, t), now, 1.5);
+      oceanG.gain.setTargetAtTime(.5 * (1 - smooth(30, 50, t)) + .18 * smooth(90, 100, t) * (1 - smooth(106, 115, t)) + .3 * smooth(160, 168, t), now, 1.2);
+      if (cap !== lastCap && cap >= 0 && playing) { const pent = [587.33, 659.25, 739.99, 880, 987.77]; chime(pent[cap % 5], 0, .06); }
+      lastCap = cap;
+      const sc = t > SCAN_T0 && t < SCAN_T0 + 1;
+      if (sc && !lastScan && playing) { whoosh(); [293.66, 440, 587.33, 739.99].forEach((f, i) => chime(f, .9 + i * .18, .05)); }
+      lastScan = sc;
+    },
+  };
+})();
+
+// ---------------------------------------------------------------- operator state + controls
+let showT = 0, playing = false, started = false, blackout = false, mode = 0, last = performance.now();
+const MODES = ['360° Igloo', 'Walls + floor', 'Desk preview'];
+const look = { yaw: 0, pitch: 0, drag: null };
+const actsEl = $('acts');
+ACTS.forEach((a, i) => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'act'; b.id = 'act-' + i;
+  b.innerHTML = '<div class="bar"><i></i></div><span></span>'; b.querySelector('span').textContent = a.name;
+  b.addEventListener('click', () => seek(a.t + .01)); actsEl.appendChild(b);
+});
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('off'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('off'), 1600); }
+function seek(t) { showT = clamp(t, 0, DURATION - .01); camSmooth.ready = false; }
+function currentAct() { let i = 0; ACTS.forEach((a, k) => { if (showT >= a.t) i = k; }); return i; }
+function setMode(m) {
+  mode = m; post.material.uniforms.uMode.value = m; resize();
+  document.querySelectorAll('#mode-seg button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.mode === m)));
+  $('b-mode').textContent = MODES[m];
+  try { localStorage.setItem('ire2036-mode', String(m)); } catch (e) {}
+}
+function setPlaying(p) { playing = p; $('b-play').textContent = p ? 'Pause' : 'Play'; }
+function fullscreen() {
+  const el = document.documentElement;
+  if (!document.fullscreenElement) { (el.requestFullscreen ? el.requestFullscreen() : Promise.reject()).catch(() => toast('Full screen is not available here')); }
+  else document.exitFullscreen().catch(() => {});
+}
+function start() {
+  if ($('start').disabled) return;
+  started = true; $('gate').hidden = true; $('hud').hidden = false;
+  seek(0); setPlaying(true);
+  if (!document.fullscreenElement && mode !== 2) fullscreen();
+  audio.toggle(true); $('b-audio').textContent = 'Sound off';
+  poke();
+}
+$('start').addEventListener('click', start);
+document.querySelectorAll('#mode-seg button').forEach((b) => b.addEventListener('click', () => setMode(+b.dataset.mode)));
+$('b-play').addEventListener('click', () => setPlaying(!playing));
+$('b-restart').addEventListener('click', () => { seek(0); setPlaying(true); });
+$('b-mode').addEventListener('click', () => setMode((mode + 1) % 3));
+$('b-audio').addEventListener('click', () => { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; });
+$('b-full').addEventListener('click', fullscreen);
+const openMedia = () => { $('media').hidden = false; poke(); };
+$('b-media').addEventListener('click', () => { $('media').hidden = !$('media').hidden; });
+$('open-media').addEventListener('click', openMedia);
+$('close-media').addEventListener('click', () => { $('media').hidden = true; });
+
+let idle;
+function poke() { document.body.classList.remove('show-hidden'); clearTimeout(idle); idle = setTimeout(() => { if (started && $('media').hidden) document.body.classList.add('show-hidden'); }, 2800); }
+addEventListener('pointermove', poke);
+addEventListener('keydown', (e) => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
+  const k = e.key;
+  if (!started && (k === 'Enter' || k === ' ')) { e.preventDefault(); if (!$('start').disabled) start(); return; }
+  if (k === ' ' || k === 'k') { e.preventDefault(); setPlaying(!playing); toast(playing ? 'Playing' : 'Paused'); }
+  else if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); const i = currentAct(); if (i < ACTS.length - 1) seek(ACTS[i + 1].t + .01); toast(ACTS[currentAct()].name); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); const i = currentAct(); seek(showT - ACTS[i].t > 3 ? ACTS[i].t + .01 : ACTS[Math.max(0, i - 1)].t + .01); toast(ACTS[currentAct()].name); }
+  else if (k === 'r' || k === 'R' || k === 'Home') { seek(0); setPlaying(true); toast('Restarted'); }
+  else if (k === 'v' || k === 'V') { setMode((mode + 1) % 3); toast(MODES[mode]); }
+  else if (k === 'f' || k === 'F') fullscreen();
+  else if (k === 'a' || k === 'A') { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; toast(on ? 'Sound on' : 'Sound off'); }
+  else if (k === 'h' || k === 'H') { if (document.body.classList.contains('show-hidden')) poke(); else document.body.classList.add('show-hidden'); return; }
+  else if (k === 'b' || k === 'B' || k === '.') { blackout = !blackout; toast(blackout ? 'Blackout' : 'Picture on'); }
+  else if (k === 'q' || k === 'Q') { qIndex = (qIndex + 1) % QUALITY.length; makeCube(); toast('Detail ' + QUALITY[qIndex] + ' px per face'); }
+  else if (k === 'o' || k === 'O') { const u = post.material.uniforms.uFloorRot; u.value = (u.value + 1) % 4; toast('Floor rotated ' + u.value * 90 + '°'); saveRoom(); }
+  else if (k >= '1' && k <= '4') { seek(ACTS[+k - 1].t + .01); toast(ACTS[+k - 1].name); }
+  else return;
+  poke();
+});
+canvas.addEventListener('pointerdown', (e) => { if (mode === 2) { look.drag = [e.clientX, e.clientY, look.yaw, look.pitch]; canvas.setPointerCapture(e.pointerId); } });
+canvas.addEventListener('pointermove', (e) => { if (look.drag) { look.yaw = look.drag[2] + (e.clientX - look.drag[0]) * .005; look.pitch = clamp(look.drag[3] + (e.clientY - look.drag[1]) * .005, -1.4, 1.4); } });
+canvas.addEventListener('pointerup', () => { look.drag = null; });
+
+function saveRoom() {
+  const R = post.material.uniforms.uRoom.value;
+  try { localStorage.setItem('ire2036-room', JSON.stringify([R.x, R.y, R.z, post.material.uniforms.uEye.value, post.material.uniforms.uFloorRot.value])); } catch (e) {}
+}
+function applyRoom() {
+  const g = (id, lo, hi, dv) => { const v = parseFloat($(id).value); return isFinite(v) ? clamp(v, lo, hi) : dv; };
+  post.material.uniforms.uRoom.value.set(g('r-w', 2, 30, 6), g('r-d', 2, 30, 6), g('r-h', 1.5, 10, 3));
+  post.material.uniforms.uEye.value = g('r-e', 1, 2.2, 1.6);
+  saveRoom(); resize();
+}
+['r-w', 'r-d', 'r-h', 'r-e'].forEach((id) => $(id).addEventListener('change', applyRoom));
+try {
+  const r = JSON.parse(localStorage.getItem('ire2036-room') || 'null');
+  if (Array.isArray(r) && r.length >= 4) { $('r-w').value = r[0]; $('r-d').value = r[1]; $('r-h').value = r[2]; $('r-e').value = r[3]; post.material.uniforms.uFloorRot.value = (r[4] | 0) % 4; }
+} catch (e) {}
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  let rx = 0, ry = 0, rw = w, rh = h;
+  if (mode === 1) {
+    const R = post.material.uniforms.uRoom.value, asp = (3 * R.x + 2 * R.y) / Math.max(R.z, R.y);
+    if (w / h > asp) { rw = h * asp; rx = (w - rw) / 2; } else { rh = w / asp; ry = (h - rh) / 2; }
+  }
+  post.material.uniforms.uRect.value.set(rx, ry, rw, rh);
+}
+addEventListener('resize', resize);
+
+// ---------------------------------------------------------------- loop
+let fpsAcc = 0, fpsN = 0, fpsShown = 0, wake = null;
+async function keepAwake() { try { if (navigator.wakeLock && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && started) keepAwake(); });
+function frame(now) {
+  const dt = Math.min(.1, (now - last) / 1000); last = now;
+  if (playing) { showT += dt; if (showT >= DURATION) { showT = 0; camSmooth.ready = false; } }
+  const idleT = started ? showT : 40 + (now / 1000) % 30;
+  U.uTime.value = now / 1000; U.uShow.value = idleT;
+  applyTime(idleT, Math.max(dt, 1 / 120));
+  post.material.uniforms.uPrev.value.set(look.yaw, look.pitch, Math.tan(40 * Math.PI / 180));
+  if (needsWorld()) cubeCam.update(renderer, scene);
+  renderer.setRenderTarget(null);
+  renderer.render(post.scene, post.cam);
+  const cap = CAPTIONS.findIndex((c) => idleT >= c.t0 && idleT <= c.t1);
+  audio.update(idleT, playing, cap);
+  if (started) {
+    $('clock').firstChild.nodeValue = fmt(showT) + ' ';
+    const ai = currentAct();
+    ACTS.forEach((a, i) => {
+      const end = i < ACTS.length - 1 ? ACTS[i + 1].t : DURATION;
+      const el = $('act-' + i); el.classList.toggle('on', i === ai);
+      el.querySelector('i').style.width = (clamp((showT - a.t) / (end - a.t), 0, 1) * 100).toFixed(1) + '%';
+    });
+  }
+  fpsAcc += dt; fpsN++;
+  if (fpsAcc > 1) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; $('stat').textContent = `${fpsShown} fps · ${QUALITY[qIndex]} px/face · ${FIELD_SOURCE} · Q to change`; }
+  requestAnimationFrame(frame);
+}
+window.__ireland = { seek: (t) => { started = true; seek(t); camSmooth.ready = false; }, pause: () => setPlaying(false), mode: setMode, media: loadMedia };
+
+let savedMode = 0; try { savedMode = +(localStorage.getItem('ire2036-mode') || 0) || 0; } catch (e) {}
+setMode(clamp(savedMode, 0, 2));
+applyRoom();
+const fontsReady = document.fonts && document.fonts.load
+  ? Promise.all(['400 100px "Instrument Serif"', '600 40px "IBM Plex Sans Condensed"', '400 56px "IBM Plex Sans Condensed"'].map((f) => document.fonts.load(f))).catch(() => {})
+  : Promise.resolve();
+buildCaptions();
+Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]).then(buildCaptions);
+keepAwake();
+
+// ---------------------------------------------------------------- bring the real world in
+// This show is the real island or it is nothing. If the map services cannot be reached
+// the world is not built, the start button stays locked, and the operator is told
+// exactly what failed. Nothing is ever substituted for the real data.
+(async () => {
+  const noteEl = $('load-note'), startBtn = $('start'), retry = $('retry');
+  const say = (msg, err) => { noteEl.textContent = msg; noteEl.classList.toggle('err', !!err); };
+  const pct = (p) => Math.round(clamp(p, 0, 1) * 100);
+
+  async function load() {
+    startBtn.disabled = true; retry.hidden = true;
+    try {
+      say('Loading real elevation and sea-floor depth for Ireland…');
+      const field = await realField((p) => say(`Loading real elevation and sea-floor depth… ${pct(p)}%`));
+
+      FIELD = field;
+      elevTex.dispose();
+      const tex = new T.DataTexture(field, FW, FH, T.RedFormat, T.FloatType);
+      tex.magFilter = tex.minFilter = T.NearestFilter;
+      tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping;
+      tex.needsUpdate = true;
+      U.uElev.value = tex;
+      FIELD_SOURCE = 'SRTM + GEBCO';
+
+      say('Loading satellite imagery…');
+      imageryTex = await realImagery((p) => say(`Loading satellite imagery… ${pct(p)}%`));
+      FIELD_SOURCE = 'satellite + SRTM';
+
+      try {
+        detailTex = await detailImagery((p) => say(`Loading Dublin at full detail… ${pct(p)}%`));
+      } catch (e) { detailTex = null; }
+
+      say('Placing cities, coastline and sea…');
+      await new Promise((r) => setTimeout(r, 20));
+      lightsTex = buildLights();
+
+      buildWorld();
+
+      say(detailTex
+        ? 'Ready. Real terrain, real bathymetry, satellite imagery and a full-detail Dublin.'
+        : 'Ready. Real terrain, real bathymetry and satellite imagery.');
+      startBtn.disabled = false;
+      requestAnimationFrame(frame);
+    } catch (e) {
+      FIELD = null;
+      say(`Could not load the real world: ${e.message}. This build renders measured terrain and sea-floor data, so it will not start without it. Check the network, any proxy or content filter, then try again.`, true);
+      retry.hidden = false;
+    }
+  }
+  retry.addEventListener('click', load);
+  load();
+})();
+})();
+</script>
