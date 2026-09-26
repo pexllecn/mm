@@ -56,7 +56,7 @@ and press V until "Desk preview" (drag to look around).
 ----------------
 Space pause/play   Right/PageDown next act   Left/PageUp previous act
 1-4 jump to act    R restart   B or . blackout   A sound   F full screen
-H hide controls    V output format   O rotate floor panel
+H hide controls    V output format   O rotate floor
 Presentation clickers (PageDown / PageUp / .) work out of the box.
 
 
