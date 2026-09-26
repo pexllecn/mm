@@ -1,15 +1,4 @@
 {
-  "scenes": {
-    "s01": { "src": ["assets/video/s01.mp4", "assets/video/s01.webm"], "credit": "" },
-    "s02": { "src": ["assets/video/s02.mp4", "assets/video/s02.webm"], "credit": "" },
-    "s03": { "src": ["assets/video/s03.mp4", "assets/video/s03.webm"], "credit": "" },
-    "s04": { "src": ["assets/video/s04.mp4", "assets/video/s04.webm"], "credit": "" },
-    "s05": { "src": ["assets/video/s05.mp4", "assets/video/s05.webm"], "credit": "" },
-    "s06": { "src": ["assets/video/s06.mp4", "assets/video/s06.webm"], "credit": "" },
-    "s07": { "src": ["assets/video/s07.mp4", "assets/video/s07.webm"], "credit": "" },
-    "s08": { "src": ["assets/video/s08.mp4", "assets/video/s08.webm"], "credit": "" },
-    "s09": { "src": ["assets/video/s09.mp4", "assets/video/s09.webm"], "credit": "" },
-    "s10": { "src": ["assets/video/s10.mp4", "assets/video/s10.webm"], "credit": "" }
-  },
-  "music": "assets/audio/music.mp3"
+  "music": "assets/audio/music.mp3",
+  "clips": {}
 }

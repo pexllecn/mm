@@ -59,6 +59,7 @@
   .go:hover { filter: brightness(1.08); }
   .ghost { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 14px 20px; font-size: 15px; cursor: pointer; }
   .ghost:hover { border-color: var(--stone); }
+  .credit { margin: 0; font-size: 12px; line-height: 1.45; color: var(--mute); max-width: 60ch; }
   .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 16px; font-size: 13px; color: var(--mute); }
   kbd { font-family: var(--sans); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; color: var(--stone); margin-right: 6px; }
 
@@ -142,6 +143,7 @@
       <button type="button" class="go" id="start">▶ Start the show</button>
       <button type="button" class="ghost" id="open-media">Footage library</button>
     </div>
+    <p class="credit">Footage: General views of Dublin, © European Union 2026, European Parliament (CC BY 4.0). Cliffs of Moher drone-video, Wiebe de Jager (CC BY-SA 4.0). Connor Pass, Superbass (CC BY-SA 4.0). Adapted: trimmed, cropped, graded and blended. No endorsement implied.</p>
     <div class="keys" aria-label="Operator keys">
       <span><kbd>Space</kbd>Pause / play</span>
       <span><kbd>→</kbd><kbd>←</kbd>Next / previous act</span>
@@ -176,7 +178,7 @@
     <h2 id="media-title">Footage library</h2>
     <button type="button" class="ghost" id="close-media" style="padding:8px 14px">Close</button>
   </div>
-  <p>One clip per scene. Each clip wraps all four walls as a seamless panorama and pools across the floor as a moving reflection. In the Igloo package, clips are read from <code>assets/video</code>; here you can also add them directly (MP4 or WebM, 20 MB each).</p>
+  <p>Each scene plays a segment of real footage, wrapped around all four walls and reflected across the floor. You can swap any scene for your own licensed clip (MP4 or WebM, 20 MB).</p>
   <div id="slots"></div>
   <div class="note" id="media-note" role="status"></div>
 </aside>
@@ -192,24 +194,34 @@ const $ = (id) => document.getElementById(id);
 const DURATION = 180;
 // Each scene is one real clip wrapped around the room. `want` describes the shot.
 // `grade`: [saturation, warmth, contrast, exposure]
+// Real footage, credited below. Each scene plays a segment of one clip from `in` seconds.
+const CLIPS = {
+  dublinDocks:   { file: '01-dublin-today',     credit: 'General views of Dublin · © European Union, 2026, European Parliament · CC BY 4.0' },
+  dublinStreets: { file: '02-connected-dublin', credit: 'General views of Dublin · © European Union, 2026, European Parliament · CC BY 4.0' },
+  moher:         { file: '03-atlantic-energy',  credit: 'Cliffs of Moher drone-video · Wiebe de Jager, 2014 · CC BY-SA 4.0 (adapted)' },
+  conorPass:     { file: '04-closer-to-home',   credit: 'Connor Pass Flug Richtung Dingle · Superbass, 2019 · CC BY-SA 4.0 (adapted)' },
+  moherFaces:    { file: '05-across-ireland',   credit: 'Cliffs of Moher drone-video · Wiebe de Jager, 2014 · CC BY-SA 4.0 (adapted)' },
+  liffey:        { file: '06-our-next-decade',  credit: 'General views of Dublin · © European Union, 2026, European Parliament · CC BY 4.0' },
+};
+// `grade`: [saturation, warmth, contrast, exposure]
 const SCENES = [
-  { id: 's01', t0: 0,   name: 'Atlantic dawn', want: 'Cliffs of Moher or the Wild Atlantic Way, aerial at sunrise', grade: [1.05, .10, 1.06, 1.02] },
-  { id: 's02', t0: 18,  name: 'The land',      want: 'Green fields and stone walls, aerial (Connemara, Kerry, Wicklow)', grade: [1.08, .04, 1.05, 1.00] },
-  { id: 's03', t0: 36,  name: 'The capital',   want: 'Dublin streets and people: Grafton Street, Temple Bar, Ha’penny Bridge', grade: [1.02, .06, 1.06, 1.00] },
-  { id: 's04', t0: 54,  name: 'Open economy',  want: 'Dublin Docklands and the Liffey at dusk, Samuel Beckett Bridge', grade: [1.04, .00, 1.08, 1.00] },
-  { id: 's05', t0: 72,  name: 'The turn',      want: 'Night time-lapse of Dublin, or light trails over the city', grade: [1.00, -.04, 1.10, 1.02] },
-  { id: 's06', t0: 90,  name: 'Energy',        want: 'Offshore wind farm, aerial, ideally at sunset', grade: [1.00, .00, 1.06, 1.00] },
-  { id: 's07', t0: 108, name: 'Transport',     want: 'Modern train, tram or metro in motion (Luas, DART, rail)', grade: [1.00, .00, 1.06, 1.00] },
-  { id: 's08', t0: 126, name: 'Housing',       want: 'New homes and construction, aerial; sustainable architecture', grade: [1.00, .00, 1.06, 1.00] },
-  { id: 's09', t0: 144, name: 'One nation',    want: 'Ireland at night from above, or stars and aurora over the coast', grade: [1.00, -.02, 1.08, .98] },
-  { id: 's10', t0: 162, name: 'Together',      want: 'Sunrise over the sea or a hilltop, people looking out', grade: [1.05, .12, 1.05, 1.03] },
+  { id: 's01', t0: 0,   name: 'Atlantic edge',   clip: 'moher',         in: 0,  grade: [1.06, .10, 1.06, 1.03], want: 'Cliffs of Moher, aerial' },
+  { id: 's02', t0: 18,  name: 'The land',        clip: 'conorPass',     in: 0,  grade: [1.08, .05, 1.05, 1.02], want: 'Green valleys, aerial' },
+  { id: 's03', t0: 36,  name: 'The capital',     clip: 'dublinStreets', in: 17, grade: [1.04, .06, 1.06, 1.00], want: 'Dublin streets and people' },
+  { id: 's04', t0: 54,  name: 'Open economy',    clip: 'dublinDocks',   in: 0,  grade: [1.02, .02, 1.08, 1.00], want: 'Dublin Docklands, aerial' },
+  { id: 's05', t0: 72,  name: 'The turn',        clip: 'liffey',        in: 0,  grade: [.96, -.04, 1.10, .98],  want: 'The Liffey from above' },
+  { id: 's06', t0: 90,  name: 'Energy',          clip: 'moherFaces',    in: 0,  grade: [1.02, .00, 1.08, 1.00], want: 'Atlantic coast and sea' },
+  { id: 's07', t0: 108, name: 'Transport',       clip: 'dublinStreets', in: 0,  grade: [1.00, .00, 1.07, 1.00], want: 'City movement' },
+  { id: 's08', t0: 126, name: 'Housing',         clip: 'dublinDocks',   in: 11, grade: [1.00, .02, 1.07, 1.00], want: 'New buildings and cranes' },
+  { id: 's09', t0: 144, name: 'One nation',      clip: 'conorPass',     in: 19, grade: [.98, -.02, 1.08, .96],  want: 'Wide landscape' },
+  { id: 's10', t0: 162, name: 'Together',        clip: 'moher',         in: 19, grade: [1.06, .12, 1.05, 1.04], want: 'Cliffs at golden light' },
 ];
 SCENES.forEach((s, i) => { s.t1 = i < SCENES.length - 1 ? SCENES[i + 1].t0 : DURATION; });
 const XFADE = 3.4;
 const SCAN_T0 = 76;
 const ACTS = [{ name: 'Today', t: 0 }, { name: 'Momentum', t: 36 }, { name: 'Ireland 2036', t: 72 }, { name: 'Together', t: 144 }];
 const CAPTIONS = [
-  { t0: 3,   t1: 15,  eb: 'Ireland · 2026',       ti: 'Where we stand today',         sub: 'The Wild Atlantic Way at first light' },
+  { t0: 3,   t1: 15,  eb: 'Ireland · 2026',       ti: 'Where we stand today',         sub: 'The Cliffs of Moher, on the Wild Atlantic Way' },
   { t0: 21,  t1: 33,  eb: 'Our people',           ti: '5.4 million people',           sub: 'One of the youngest populations in Europe' },
   { t0: 39,  t1: 51,  eb: 'Dublin · the capital', ti: 'A capital on the move',        sub: 'Talent, technology and trade along the Liffey' },
   { t0: 57,  t1: 69,  eb: 'Open economy',         ti: 'Connected to the world',       sub: 'European home to many of the world’s leading companies' },
@@ -274,9 +286,11 @@ vec3 grade(vec3 c, vec4 g){
 // footage: mirrored tiles around the perimeter so every seam matches; v is height (0 floor edge, 1 wall top)
 vec3 foot(sampler2D tex, float asp, float P, float v, float zoom, float lod){
   float n=max(2.,floor(PER/(H*asp)*.5+.5)*2.);
+  float want=(PER/n)/H;                       // aspect each tile covers on the wall
+  vec2 crop=vec2(min(1.,want/asp),min(1.,asp/want)); // crop, never stretch
   float x=P/PER*n+uDrift;
   float u=1.-abs(fract(x*.5)*2.-1.);
-  vec2 uv=(vec2(u,v)-.5)/zoom+.5;
+  vec2 uv=(vec2(u,v)-.5)*crop/zoom+.5;
   uv.y=clamp(uv.y,.002,.998);
   return toLin(textureLod(tex,uv,lod).rgb);
 }
@@ -531,6 +545,7 @@ gl.uniform2fv(L('uCities'), new Float32Array(cityUV.flat()));
 // ---------------------------------------------------------------- footage
 // A clip can come from the Igloo package (assets/video/<scene>.mp4 or .webm, listed in
 // assets/manifest.json) or from the published page's own footage library (db + assets).
+let assetsApi = null, dbApi = null;
 const media = {}; // sceneId -> { el, tex, asp, kind, url, name, credit, ready, error, dirty, lod }
 function mediaEntry(id, spec) {
   const old = media[id];
@@ -562,13 +577,17 @@ function mediaEntry(id, spec) {
   }
   renderSlots(); updateClipNote();
 }
+// A scene plays its own library clip if one was added, otherwise its shared footage clip.
+const entryFor = (sc) => (media[sc.id] && !media[sc.id].error ? media[sc.id] : media['clip:' + sc.clip]);
 function syncVideos(t, live, run) {
-  SCENES.forEach((s, i) => {
-    const e = media[s.id]; if (!e || !e.el || e.kind !== 'video' || !e.ready) return;
+  const want = new Map();
+  live.forEach((i) => { const sc = SCENES[i]; const e = entryFor(sc); if (e && !want.has(e)) want.set(e, sc.in + Math.max(0, t - sc.t0)); });
+  Object.values(media).forEach((e) => {
+    if (!e.el || e.kind !== 'video' || !e.ready) return;
     const v = e.el;
-    if (live.includes(i)) {
+    if (want.has(e)) {
       if (v.duration && isFinite(v.duration)) {
-        const target = Math.max(0, t - s.t0) % v.duration;
+        const target = want.get(e) % v.duration;
         if (Math.abs(v.currentTime - target) > 1.5) { try { v.currentTime = target; } catch (err) {} }
       }
       if (run && v.paused && !e.pending) { e.pending = true; v.play().then(() => { e.pending = false; }, (err) => { e.pending = false; e.playError = String(err && err.name); }); }
@@ -586,28 +605,33 @@ function bindScene(unit, e) {
   return 1;
 }
 function updateClipNote() {
-  const have = SCENES.filter((s) => media[s.id] && media[s.id].ready && !media[s.id].error).length;
+  const have = SCENES.filter((s) => { const e = entryFor(s); return e && e.ready && !e.error; }).length;
   const n = $('clip-note');
   n.innerHTML = have === SCENES.length ? `<b>${have}/10</b> clips loaded` : `<span class="warn">${have}/10 clips loaded · open Footage library</span>`;
 }
 
-// package manifest (Igloo export)
+// Shared footage lives next to the page in assets/video (both in the Igloo package and on
+// the published page). MP4 (H.264) is tried first, then WebM (VP9) for players without H.264.
+Object.keys(CLIPS).forEach((k) => {
+  const c = CLIPS[k];
+  mediaEntry('clip:' + k, { urls: ['assets/video/' + c.file + '.mp4', 'assets/video/' + c.file + '.webm'], kind: 'video', name: c.file, credit: c.credit });
+});
+// Optional package manifest: a music track, or replacement files for any clip.
 fetch('assets/manifest.json', { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((m) => {
   if (!m) return;
-  if (m.scenes) Object.keys(m.scenes).forEach((id) => {
-    if (media[id] && media[id].fromDb) return;
-    const s = m.scenes[id]; const urls = Array.isArray(s.src) ? s.src : [s.src];
-    mediaEntry(id, { urls, kind: s.kind || (/\.(jpe?g|png|webp)$/i.test(urls[0]) ? 'image' : 'video'), name: urls[0].split('/').pop(), credit: s.credit || '' });
+  if (m.clips) Object.keys(m.clips).forEach((k) => {
+    if (!CLIPS[k]) return;
+    const c = m.clips[k]; const urls = Array.isArray(c.src) ? c.src : [c.src];
+    mediaEntry('clip:' + k, { urls, kind: /\.(jpe?g|png|webp)$/i.test(urls[0]) ? 'image' : 'video', name: urls[0].split('/').pop(), credit: c.credit || CLIPS[k].credit });
   });
   if (m.music) audio.setTrack(m.music);
 }).catch(() => {});
 
 // published page: footage library through the platform's asset store
-let assetsApi = null, dbApi = null;
 function renderSlots() {
   const box = $('slots'); box.textContent = '';
   SCENES.forEach((s) => {
-    const m = media[s.id];
+    const m = entryFor(s);
     const row = document.createElement('div'); row.className = 'slot';
     const th = document.createElement('div'); th.className = 'thumb';
     if (m && m.ready && !m.error && m.kind === 'video') { const v = document.createElement('video'); v.src = m.url; v.muted = true; v.preload = 'metadata'; th.appendChild(v); }
@@ -615,14 +639,14 @@ function renderSlots() {
     else { th.classList.add('miss'); th.textContent = m && m.error ? 'Not found' : (m ? 'Loading' : 'Needed'); }
     const info = document.createElement('div');
     const b = document.createElement('b'); b.textContent = `${fmt(s.t0)} · ${s.name}`;
-    const sm = document.createElement('small'); sm.textContent = m && m.ready ? (m.name + (m.credit ? ' · ' + m.credit : '')) : s.want;
+    const sm = document.createElement('small'); sm.textContent = m && m.ready ? (m.fromDb ? m.name : m.credit + ' · from ' + (s.in | 0) + ' s') : s.want;
     const acts = document.createElement('div'); acts.className = 'acts-row';
     if (assetsApi) {
-      const lab = document.createElement('label'); lab.textContent = m ? 'Replace clip' : 'Add clip';
+      const lab = document.createElement('label'); lab.textContent = media[s.id] ? 'Replace clip' : 'Use my own clip';
       const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'video/mp4,video/webm,image/jpeg,image/png,image/webp'; inp.id = 'file-' + s.id;
       inp.addEventListener('change', () => inp.files[0] && addClip(s.id, inp.files[0]));
       lab.appendChild(inp); acts.appendChild(lab);
-      if (m && m.fromDb) { const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.addEventListener('click', () => removeClip(s.id)); acts.appendChild(rm); }
+      if (media[s.id] && media[s.id].fromDb) { const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.addEventListener('click', () => removeClip(s.id)); acts.appendChild(rm); }
     }
     info.append(b, sm, acts); row.append(th, info); box.appendChild(row);
   });
@@ -855,7 +879,7 @@ function frame(now) {
   syncVideos(t, mix < 1 ? [si, si - 1] : [si], playing || !started);
 
   gl.viewport(0, 0, canvas.width, canvas.height);
-  const ea = media[A.id], eb = media[B.id];
+  const ea = entryFor(A), eb = entryFor(B);
   const hasA = bindScene(0, ea), hasB = bindScene(1, eb);
   u1f('uHasA', hasA); u1f('uHasB', hasB);
   u1f('uAspA', ea && ea.asp || 16 / 9); u1f('uAspB', eb && eb.asp || 16 / 9);
@@ -900,7 +924,7 @@ function frame(now) {
   }
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 1) {
-    const have = SCENES.filter((s) => media[s.id] && media[s.id].ready && !media[s.id].error).length;
+    const have = SCENES.filter((s) => { const e = entryFor(s); return e && e.ready && !e.error; }).length;
     $('stat').innerHTML = `${Math.round(fpsN / fpsAcc)} fps · ${canvas.width}×${canvas.height} · ` + (have < 10 ? `<b>${have}/10 clips</b>` : '10/10 clips');
     fpsAcc = 0; fpsN = 0;
   }

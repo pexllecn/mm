@@ -7,23 +7,26 @@ pools across the floor as a moving reflection. At 1:16 a wave of light sweeps
 the room and the show moves into Ireland 2036.
 
 
-1. ADD THE FOOTAGE (ten clips)
-------------------------------
-Put one clip per scene in  assets\video  named s01 ... s10.
-Use H.264 MP4 (s01.mp4) and/or VP9 WebM (s01.webm). Having both is safest.
-3840 px wide (4K) looks best; 1920 px works. 18-20 seconds each, no sound needed.
-tools\prepare-clips.bat converts any source clip into both formats.
+1. THE FOOTAGE (included)
+-------------------------
+Real footage of Ireland is already in  assets\video  as H.264 MP4 plus
+VP9 WebM copies, so it plays in any Chromium-based player, with or without
+H.264 support. See CREDITS.txt for sources and licences.
 
-  s01  0:00  Atlantic dawn   Cliffs of Moher / Wild Atlantic Way, aerial at sunrise
-  s02  0:18  The land        Green fields and stone walls, aerial
-  s03  0:36  The capital     Dublin streets and people (Grafton St, Temple Bar)
-  s04  0:54  Open economy    Docklands and the Liffey at dusk
-  s05  1:12  The turn        Night time-lapse of Dublin / light trails
-  s06  1:30  Energy          Offshore wind farm, aerial
-  s07  1:48  Transport       Train, tram or metro in motion
-  s08  2:06  Housing         New homes, construction, modern architecture
-  s09  2:24  One nation      Ireland at night / stars / aurora
-  s10  2:42  Together        Sunrise over the sea, people looking out
+  0:00  Atlantic edge   Cliffs of Moher, aerial
+  0:18  The land        Conor Pass, Dingle, aerial
+  0:36  The capital     Dublin quays, Dublin Bus, Convention Centre, Samuel Beckett Bridge
+  0:54  Open economy    Dublin Docklands, aerial
+  1:12  The turn        The Liffey from above - the 2036 sweep starts at 1:16
+  1:30  Energy          Atlantic cliffs and sea
+  1:48  Transport       City movement along the quays
+  2:06  Housing         New buildings and cranes, Grand Canal Dock
+  2:24  One nation      Conor Pass valley - the island map draws on the floor
+  2:42  Together        Cliffs of Moher and O'Brien's Tower
+
+To use higher-resolution or licensed EY footage for any clip, replace the
+file with the same name in assets\video (keep both .mp4 and .webm, or use
+tools\prepare-clips.bat to make them).
 
 Optional music: assets\audio\music.mp3 (licensed). Without it the show plays
 its own soft ambient score.
@@ -59,6 +62,7 @@ Presentation clickers (PageDown / PageUp / .) work out of the box.
 4. BEFORE THE VISIT
 -------------------
 - Check every clip plays: the start screen shows "10/10 clips loaded".
+- Keep CREDITS.txt with the show; the footage licences require attribution.
 - Confirm on-screen facts with EY: 5.4 million people; offshore wind targets
   5 GW by 2030 and 20 GW by 2040; MetroLink airport to city centre.
 - Confirm licences for every clip and the music.

@@ -1,7 +1,7 @@
 @echo off
 rem Converts your source clips into the two formats the show plays.
 rem 1. Install ffmpeg (https://www.gyan.dev/ffmpeg/builds/) so "ffmpeg" works in a command prompt.
-rem 2. Put your source clips in tools\source named s01.mp4 ... s10.mp4 (any format ffmpeg reads; .mov is fine too).
+rem 2. Put source clips in tools\source, named like the file they replace (e.g. 03-atlantic-energy.mov).
 rem 3. Double-click this file. Results go to assets\video. Takes a few minutes per clip.
 cd /d "%~dp0"
 if not exist source ( echo Put your clips in tools\source first. & pause & exit /b 1 )

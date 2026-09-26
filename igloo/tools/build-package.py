@@ -2,7 +2,7 @@
 """Build the self-contained Igloo package: dist/Ireland2036/ and dist/Ireland2036-Igloo.zip.
 
 Usage: python3 tools/build-package.py [--videos DIR]
-  --videos DIR   copy s01..s10 .mp4/.webm (and music.mp3) from DIR into the package
+  --videos DIR   also copy replacement .mp4/.webm clips (and music.mp3) from DIR into assets/video
 """
 import os, shutil, sys, zipfile, glob
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -30,16 +30,17 @@ for f in ['serve.ps1', 'Start Ireland 2036.bat', 'Preview in Chrome.bat']:
 shutil.copy(os.path.join(SRC, 'tools', 'prepare-clips.bat'), os.path.join(OUT, 'tools', 'prepare-clips.bat'))
 crlf(os.path.join(OUT, 'tools', 'prepare-clips.bat'))
 shutil.copy(os.path.join(SRC, 'README.txt'), os.path.join(OUT, 'README.txt')); crlf(os.path.join(OUT, 'README.txt'))
-open(os.path.join(OUT, 'assets', 'video', 'PUT CLIPS HERE.txt'), 'w').write(
-    'Name clips s01.mp4 ... s10.mp4 (H.264) and/or s01.webm ... s10.webm (VP9).\r\n'
-    'See README.txt for what each scene shows. tools\\prepare-clips.bat makes both formats.\r\n')
+for f in sorted(glob.glob(os.path.join(ROOT, 'assets', 'video', '*'))):
+    if f.endswith(('.mp4', '.webm')):
+        shutil.copy(f, os.path.join(OUT, 'assets', 'video'))
+shutil.copy(os.path.join(SRC, 'CREDITS.txt'), os.path.join(OUT, 'CREDITS.txt')); crlf(os.path.join(OUT, 'CREDITS.txt'))
 open(os.path.join(OUT, 'assets', 'audio', 'PUT MUSIC HERE.txt'), 'w').write(
     'Optional: a licensed music track named music.mp3. Without it the show plays its own soft ambient score.\r\n')
 open(os.path.join(OUT, 'tools', 'source', 'PUT SOURCE CLIPS HERE.txt'), 'w').write(
     'Source clips named s01.mp4 ... s10.mp4 (any format ffmpeg reads). Then run tools\\prepare-clips.bat.\r\n')
 if '--videos' in sys.argv:
     src = sys.argv[sys.argv.index('--videos') + 1]
-    for f in glob.glob(os.path.join(src, 's[01][0-9].mp4')) + glob.glob(os.path.join(src, 's[01][0-9].webm')):
+    for f in glob.glob(os.path.join(src, '*.mp4')) + glob.glob(os.path.join(src, '*.webm')):
         shutil.copy(f, os.path.join(OUT, 'assets', 'video'))
     if os.path.exists(os.path.join(src, 'music.mp3')):
         shutil.copy(os.path.join(src, 'music.mp3'), os.path.join(OUT, 'assets', 'audio'))
