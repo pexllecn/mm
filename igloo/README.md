@@ -1,6 +1,6 @@
 # Ireland 2036: Igloo showcase
 
-A three-minute immersive show for an Igloo room with four walls and a floor. There is no 3D rendering. Real footage of Ireland wraps all four walls as a panorama that turns slowly around the room, and the floor becomes a dark, softly rippling water reflection of it. Scenes change with a liquid-light dissolve. At 1:16 a wave of light crosses the floor and climbs the walls, the floor year counter runs 2026 → 2036, and the footage takes on the 2036 grade. The finale draws the island map across the floor.
+A three-minute immersive show for an Igloo room with four walls and a floor. There is no 3D rendering. Real footage of Ireland wraps all four walls as a panorama that turns slowly around the room. Scenes change with a liquid-light dissolve. At 1:16 a line of light climbs the walls and the footage takes on the 2036 grade. The floor carries the map of Ireland and Northern Ireland with a rounded 2026 → 2036 timeline for the whole show, over a faint moving film.
 
 `index.html` is the whole show: one WebGL2 shader, no libraries.
 
@@ -19,7 +19,7 @@ After editing `index.html`, run `python3 tools/build-package.py` to refresh the 
 
 ## Footage
 
-Six credited clips are cast into ten 18-second scenes. Each scene's front half plays one segment; the back half plays another moment from the same kind of shot, joined by feathered seams. The floor is a dark water reflection.
+Six credited clips are cast into ten 18-second scenes. Each scene's front half plays one segment; the back half plays another moment from the same kind of shot, joined by feathered seams. The floor is the film-room floor from `Ireland-2036.html?view=floor`, ported unchanged: the Natural Earth map of Ireland and Northern Ireland, illustrative city connections with moving dots, and the rounded 300° timeline running from 2026 to 2036 over the three minutes. The current scene's film moves faintly underneath it.
 
 | Time | Scene | Footage |
 |---|---|---|
@@ -31,7 +31,7 @@ Six credited clips are cast into ten 18-second scenes. Each scene's front half p
 | 1:30 | Energy | Atlantic cliffs and sea |
 | 1:48 | Transport | City streets from above |
 | 2:06 | Housing | Construction and new homes, Grand Canal Dock |
-| 2:24 | One nation (map on floor) | Conor Pass valley |
+| 2:24 | One nation | Conor Pass valley |
 | 2:42 | Together | Cliffs of Moher and O'Brien's Tower |
 
 Credits: Dublin © European Union 2026, European Parliament (CC BY 4.0). Cliffs of Moher, Wiebe de Jager (CC BY-SA 4.0). Conor Pass, Superbass (CC BY-SA 4.0). The adapted clips from the CC BY-SA sources stay under CC BY-SA 4.0.
@@ -39,7 +39,7 @@ Credits: Dublin © European Union 2026, European Parliament (CC BY 4.0). Cliffs 
 ## Output formats (`V`)
 
 - **360° Igloo**: 2:1 equirectangular for the Igloo 360 web layer.
-- **Walls + floor**: Front | Right | Back | Left across the top, with the floor panel on the right. `O` rotates the floor panel.
+- **Walls + floor**: Front | Right | Back | Left across the top, with the floor panel on the right. `O` rotates the floor in 90° steps.
 - **Desk preview**: a perspective view for rehearsing. Drag to look around.
 
 Room size and eye height are set on the start screen.
