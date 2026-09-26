@@ -194,7 +194,9 @@ const $ = (id) => document.getElementById(id);
 const DURATION = 180;
 // Each scene is one real clip wrapped around the room. `want` describes the shot.
 // `grade`: [saturation, warmth, contrast, exposure]
-// Real footage, credited below. Each scene plays a segment of one clip from `in` seconds.
+// Real footage, credited below. Each scene plays one clip: the front half of the room from `in`
+// seconds at `rate`, the back half from `in2` at `rate2`. Segments (plus the 3.4 s dissolve out)
+// stay inside a single kind of shot, so aerial never faces street level.
 const CLIPS = {
   dublinDocks:   { file: '01-dublin-today',     credit: 'General views of Dublin · © European Union, 2026, European Parliament · CC BY 4.0' },
   dublinStreets: { file: '02-connected-dublin', credit: 'General views of Dublin · © European Union, 2026, European Parliament · CC BY 4.0' },
@@ -205,16 +207,16 @@ const CLIPS = {
 };
 // `grade`: [saturation, warmth, contrast, exposure]
 const SCENES = [
-  { id: 's01', t0: 0,   name: 'Atlantic edge',   clip: 'moher',         in: 0,  grade: [1.06, .10, 1.06, 1.03], want: 'Cliffs of Moher, aerial' },
-  { id: 's02', t0: 18,  name: 'The land',        clip: 'conorPass',     in: 0,  grade: [1.08, .05, 1.05, 1.02], want: 'Green valleys, aerial' },
-  { id: 's03', t0: 36,  name: 'The capital',     clip: 'dublinStreets', in: 17, grade: [1.04, .06, 1.06, 1.00], want: 'Dublin streets and people' },
-  { id: 's04', t0: 54,  name: 'Open economy',    clip: 'dublinDocks',   in: 0,  grade: [1.02, .02, 1.08, 1.00], want: 'Dublin Docklands, aerial' },
-  { id: 's05', t0: 72,  name: 'The turn',        clip: 'liffey',        in: 0,  grade: [.96, -.04, 1.10, .98],  want: 'The Liffey from above' },
-  { id: 's06', t0: 90,  name: 'Energy',          clip: 'moherFaces',    in: 0,  grade: [1.02, .00, 1.08, 1.00], want: 'Atlantic coast and sea' },
-  { id: 's07', t0: 108, name: 'Transport',       clip: 'dublinStreets', in: 0,  grade: [1.00, .00, 1.07, 1.00], want: 'City movement' },
-  { id: 's08', t0: 126, name: 'Housing',         clip: 'dublinDocks',   in: 11, grade: [1.00, .02, 1.07, 1.00], want: 'New buildings and cranes' },
-  { id: 's09', t0: 144, name: 'One nation',      clip: 'conorPass',     in: 19, grade: [.98, -.02, 1.08, .96],  want: 'Wide landscape' },
-  { id: 's10', t0: 162, name: 'Together',        clip: 'moher',         in: 19, grade: [1.06, .12, 1.05, 1.04], want: 'Cliffs at golden light' },
+  { id: 's01', t0: 0,   name: 'Atlantic edge',   clip: 'moher',         in: 0,  rate: 1,   in2: 20, rate2: .55, grade: [1.06, .10, 1.06, 1.03], want: 'Cliffs of Moher, aerial' },
+  { id: 's02', t0: 18,  name: 'The land',        clip: 'conorPass',     in: 0,  rate: 1,   in2: 19, rate2: .6, grade: [1.08, .05, 1.05, 1.02], want: 'Green valleys, aerial' },
+  { id: 's03', t0: 36,  name: 'The capital',     clip: 'dublinStreets', in: 17, rate: .8,  in2: 21, rate2: .6, grade: [1.04, .06, 1.06, 1.00], want: 'Dublin streets and people' },
+  { id: 's04', t0: 54,  name: 'Open economy',    clip: 'dublinDocks',   in: 0,  rate: 1,   in2: 12, rate2: .8, grade: [1.02, .02, 1.08, 1.00], want: 'Dublin Docklands, aerial' },
+  { id: 's05', t0: 72,  name: 'The turn',        clip: 'liffey',        in: 0,  rate: .65, in2: 7,  rate2: .34, grade: [.96, -.04, 1.10, .98],  want: 'The Liffey from above' },
+  { id: 's06', t0: 90,  name: 'Energy',          clip: 'moherFaces',    in: 8,  rate: .85, in2: 16, rate2: .8, grade: [1.02, .00, 1.08, 1.00], want: 'Atlantic coast and sea' },
+  { id: 's07', t0: 108, name: 'Transport',       clip: 'dublinStreets', in: 0,  rate: .7,  in2: 3,  rate2: .6, grade: [1.00, .00, 1.07, 1.00], want: 'City movement' },
+  { id: 's08', t0: 126, name: 'Housing',         clip: 'dublinDocks',   in: 11, rate: .95, in2: 5,  rate2: .8, grade: [1.00, .02, 1.07, 1.00], want: 'New buildings and cranes' },
+  { id: 's09', t0: 144, name: 'One nation',      clip: 'conorPass',     in: 19, rate: .85, in2: 2,  rate2: .75, grade: [.98, -.02, 1.08, .96],  want: 'Wide landscape' },
+  { id: 's10', t0: 162, name: 'Together',        clip: 'moher',         in: 19, rate: .85, in2: 0,  rate2: .8, grade: [1.06, .12, 1.05, 1.04], want: 'Cliffs at golden light' },
 ];
 SCENES.forEach((s, i) => { s.t1 = i < SCENES.length - 1 ? SCENES[i + 1].t0 : DURATION; });
 const XFADE = 3.4;
@@ -252,7 +254,7 @@ precision highp float;
 out vec4 o;
 uniform vec4 uRect; uniform int uMode; uniform vec3 uRoom; uniform float uEye; uniform vec3 uPrev; uniform int uFloorRot;
 uniform float uTime; uniform float uFade;
-uniform sampler2D uA; uniform sampler2D uB; uniform float uHasA; uniform float uHasB; uniform float uAspA; uniform float uAspB;
+uniform sampler2D uA; uniform sampler2D uB; uniform sampler2D uA2; uniform sampler2D uB2; uniform float uHasA; uniform float uHasB; uniform float uAspA; uniform float uAspB;
 uniform float uLodA; uniform float uLodB; uniform vec4 uGrA; uniform vec4 uGrB;
 uniform float uMix; uniform float uDrift; uniform float uZoomA; uniform float uZoomB; uniform float uSwirl;
 uniform float uFuture; uniform float uScan;
@@ -283,16 +285,24 @@ vec3 grade(vec3 c, vec4 g){
   c=toSrgb(c); c=clamp((c-.5)*g.z+.5,0.,1.); c=toLin(c);
   return c;
 }
-// footage: mirrored tiles around the perimeter so every seam matches; v is height (0 floor edge, 1 wall top)
-vec3 foot(sampler2D tex, float asp, float P, float v, float zoom, float lod){
-  float n=max(2.,floor(PER/(H*asp)*.5+.5)*2.);
-  float want=(PER/n)/H;                       // aspect each tile covers on the wall
-  vec2 crop=vec2(min(1.,want/asp),min(1.,asp/want)); // crop, never stretch
-  float x=P/PER*n+uDrift;
-  float u=1.-abs(fract(x*.5)*2.-1.);
-  vec2 uv=(vec2(u,v)-.5)*crop/zoom+.5;
-  uv.y=clamp(uv.y,.002,.998);
-  return toLin(textureLod(tex,uv,lod).rgb);
+// footage: the clip plays as a true panorama across the front half of the room; the back half
+// shows the same place at another moment of the flight (a second, time-offset copy). The two
+// halves meet in soft, uneven seams on the side walls. Nothing is mirrored or stretched.
+vec3 foot(sampler2D fr, sampler2D bk, float asp, float P, float v, float zoom, float lod){
+  float hp=PER*.5, fe=1.3;                        // feather, metres either side of a seam
+  float x=mod(P-W*.5-uDrift+hp,PER)-hp;        // metres from the front-wall centre, -hp..hp
+  float span=hp+2.*fe;                            // each view overlaps the other inside the seams
+  float want=span/H;
+  vec2 crop=vec2(min(1.,want/asp),min(1.,asp/want));
+  float xb=mod(x,PER)-hp;                         // metres from the back-wall centre
+  vec2 uf=(vec2(x/span+.5,v)-.5)*crop/zoom+.5;
+  vec2 ub=(vec2(xb/span+.5,v)-.5)*crop/zoom+.5;
+  uf.y=clamp(uf.y,.002,.998); ub.y=uf.y;
+  float jag=(vnoise(vec2(v*3.,uTime*.05))-.5)*.6;  // an organic seam, not a straight line
+  float w=smoothstep(-fe,fe,abs(x)-hp*.5+jag);   // 0 = front view, 1 = back view
+  vec3 cf=w<.999?textureLod(fr,uf,lod).rgb:vec3(0.);
+  vec3 cbk=w>.001?textureLod(bk,ub,lod).rgb:vec3(0.);
+  return toLin(mix(cf,cbk,w));
 }
 // a quiet stand-in while a scene has no clip: deep water light, never a flat colour
 vec3 standby(float P, float v, bool fl, vec2 q){
@@ -335,22 +345,22 @@ void main(){
   float r=0.,fv=0.,lodF=0.;
   if(onFloor){
     r=max(abs(q.x)/(W*.5),abs(q.y)/(D*.5));
-    float sw=pow(1.-r,2.)*(uSwirl+.05*sin(uTime*.17));
+    float sw=pow(1.-r,2.)*uSwirl;
     float ca=cos(sw*6.2831),sa=sin(sw*6.2831); vec2 qs=vec2(q.x*ca-q.y*sa,q.x*sa+q.y*ca);
     vec2 wob=vec2(vnoise(q*1.7+uTime*.23),vnoise(q*1.7-uTime*.19+7.))-.5;
-    float rip=sin(r*38.-uTime*1.6)*.004*(1.-r)+wob.x*.02;
-    P=perim(qs/max(r,1e-4))+wob.y*.25;
-    fv=clamp((1.-r)*.92+rip,0.,1.);
-    lodF=1.2+2.6*(1.-r);
+    float rip=sin(r*30.-uTime*1.1)*.003*(1.-r)+wob.x*.012;
+    P=perim(qs/max(r,1e-4))+wob.y*.12;
+    fv=clamp((1.-r)*.55+rip,0.,1.);                 // the lower part of the walls, reflected
+    lodF=2.2+2.8*(1.-r);
   }
-  float v=onFloor?fv:(t<=1.?max(t,0.):2.-min(t,2.));
+  float v=onFloor?fv:clamp(t,0.,1.);
   // liquid dissolve from B (outgoing) to A (incoming)
   vec2 nc=onFloor?q*.8:vec2(P,t*H)*.5;
   float n=fbm(nc+vec2(uTime*.05,0.));
   float edgeP=uMix*1.25-.12;
-  float warp=(1.-abs(uMix*2.-1.))*.06*(n-.5);
-  vec3 ca=uHasA>.5?grade(foot(uA,uAspA,P+warp*PER*.25,v+warp,uZoomA,onFloor?min(lodF,uLodA):0.),uGrA):standby(P,v,onFloor,q);
-  vec3 cb=uHasB>.5?grade(foot(uB,uAspB,P-warp*PER*.25,v-warp,uZoomB,onFloor?min(lodF,uLodB):0.),uGrB):standby(P,v,onFloor,q);
+  float warp=(1.-abs(uMix*2.-1.))*.035*(n-.5);
+  vec3 ca=uHasA>.5?grade(foot(uA,uA2,uAspA,P+warp*PER*.25,v+warp,uZoomA,onFloor?min(lodF,uLodA):0.),uGrA):standby(P,v,onFloor,q);
+  vec3 cb=uHasB>.5?grade(foot(uB,uB2,uAspB,P-warp*PER*.25,v-warp,uZoomB,onFloor?min(lodF,uLodB):0.),uGrB):standby(P,v,onFloor,q);
   float m=smoothstep(n-.05,n+.05,edgeP);
   vec3 col=mix(cb,ca,m);
   float inT=step(.001,uMix)*step(uMix,.999);
@@ -359,12 +369,12 @@ void main(){
   // light leak travelling round the room during each transition
   float leakX=fract(P/PER-uMix*1.3+.15);
   col+=toLin(vec3(1.,.62,.3))*exp(-pow((leakX-.5)*7.,2.))*(1.-abs(uMix*2.-1.))*inT*.22*(onFloor?.5:1.);
-  if(!onFloor&&t>1.) col*=1.-.6*smoothstep(1.,1.8,t);
+  if(!onFloor&&t>1.) col*=1.-smoothstep(1.,1.04,t);
   if(onFloor){
     // water: darker toward the centre, caustic glints, a thin light line where floor meets wall
-    col*=mix(vec3(.42,.5,.58),vec3(.9,.95,1.),smoothstep(.0,1.,r));
-    float caust=pow(vnoise(q*3.1+vec2(uTime*.35,-uTime*.28))*vnoise(q*4.3-vec2(uTime*.27,uTime*.21)),2.2);
-    col+=vec3(.7,.85,1.)*caust*.09;
+    col*=mix(vec3(.16,.21,.26),vec3(.62,.7,.78),smoothstep(.0,1.,r));   // deep water toward the centre
+    float caust=pow(vnoise(q*3.1+vec2(uTime*.3,-uTime*.24))*vnoise(q*4.3-vec2(uTime*.22,uTime*.18)),2.4);
+    col+=vec3(.6,.75,.9)*caust*.05;
     col+=toLin(GOLD)*exp(-abs(r-1.)*70.)*.25;
   } else {
     // soft floor bounce on the lower walls
@@ -471,7 +481,7 @@ function upload(tex, src, mips) {
   else gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 }
 const TEX = { cap: makeTex(), ring: makeTex(), map: makeTex() };
-['uA', 'uB', 'uCap', 'uRing', 'uMap'].forEach((n, i) => u1i(n, i));
+['uA', 'uB', 'uCap', 'uRing', 'uMap', 'uA2', 'uB2'].forEach((n, i) => u1i(n, i));
 
 // ---------------------------------------------------------------- canvases: captions, year ring, island map
 function captionCanvas(c) {
@@ -549,9 +559,13 @@ let assetsApi = null, dbApi = null;
 const media = {}; // sceneId -> { el, tex, asp, kind, url, name, credit, ready, error, dirty, lod }
 function mediaEntry(id, spec) {
   const old = media[id];
-  if (old) { if (old.tex) gl.deleteTexture(old.tex); if (old.el && old.el.pause) { old.el.pause(); old.el.removeAttribute('src'); old.el.textContent = ''; try { old.el.load(); } catch (e) {} } delete media[id]; }
+  if (old) {
+    [old.tex, old.tex2].forEach((t) => t && gl.deleteTexture(t));
+    [old.el, old.el2].forEach((el) => { if (el && el.pause) { el.pause(); el.removeAttribute('src'); el.textContent = ''; try { el.load(); } catch (e) {} } });
+    delete media[id];
+  }
   if (!spec) { renderSlots(); updateClipNote(); return; }
-  const e = { kind: spec.kind || 'video', url: spec.urls[0], name: spec.name || '', credit: spec.credit || '', tex: makeTex(), asp: 16 / 9, ready: false, lod: 0 };
+  const e = { kind: spec.kind || 'video', url: spec.urls[0], name: spec.name || '', credit: spec.credit || '', tex: makeTex(), tex2: null, asp: 16 / 9, ready: false, lod: 0 };
   media[id] = e;
   if (e.kind === 'image') {
     const im = new Image();
@@ -559,9 +573,18 @@ function mediaEntry(id, spec) {
     im.onerror = () => { e.error = true; renderSlots(); updateClipNote(); };
     im.src = e.url; e.el = im;
   } else {
-    const v = document.createElement('video');
-    v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('playsinline', '');
-    spec.urls.forEach((u) => { const s = document.createElement('source'); s.src = u; if (/\.webm($|\?)/i.test(u)) s.type = 'video/webm'; else if (/\.mp4($|\?)/i.test(u)) s.type = 'video/mp4'; v.appendChild(s); });
+    const mk = () => {
+      const el = document.createElement('video');
+      el.muted = true; el.loop = true; el.playsInline = true; el.preload = 'auto'; el.setAttribute('playsinline', '');
+      spec.urls.forEach((u) => { const s = document.createElement('source'); s.src = u; if (/\.webm($|\?)/i.test(u)) s.type = 'video/webm'; else if (/\.mp4($|\?)/i.test(u)) s.type = 'video/mp4'; el.appendChild(s); });
+      return el;
+    };
+    const v = mk();
+    // the second copy shows the same place at another moment, for the back half of the room
+    const v2 = mk(); e.el2 = v2; e.tex2 = makeTex();
+    v2.addEventListener('loadeddata', () => { e.ready2 = true; e.dirty2 = true; });
+    if (v2.requestVideoFrameCallback) { const cb2 = () => { e.dirty2 = true; v2.requestVideoFrameCallback(cb2); }; v2.requestVideoFrameCallback(cb2); }
+    v2.load();
     const last = v.lastElementChild;
     if (last) last.addEventListener('error', () => { e.error = true; renderSlots(); updateClipNote(); });
     else v.src = e.url;
@@ -581,27 +604,35 @@ function mediaEntry(id, spec) {
 const entryFor = (sc) => (media[sc.id] && !media[sc.id].error ? media[sc.id] : media['clip:' + sc.clip]);
 function syncVideos(t, live, run) {
   const want = new Map();
-  live.forEach((i) => { const sc = SCENES[i]; const e = entryFor(sc); if (e && !want.has(e)) want.set(e, sc.in + Math.max(0, t - sc.t0)); });
+  live.forEach((i) => { const sc = SCENES[i]; const e = entryFor(sc); if (e && !want.has(e)) want.set(e, [sc, Math.max(0, t - sc.t0)]); });
   Object.values(media).forEach((e) => {
     if (!e.el || e.kind !== 'video' || !e.ready) return;
-    const v = e.el;
-    if (want.has(e)) {
-      if (v.duration && isFinite(v.duration)) {
-        const target = want.get(e) % v.duration;
-        if (Math.abs(v.currentTime - target) > 1.5) { try { v.currentTime = target; } catch (err) {} }
+    [[e.el, 'pending', 0], [e.el2, 'pending2', 1]].forEach(([el, flag, back]) => {
+      if (!el) return;
+      if (!want.has(e)) { if (!el.paused) el.pause(); return; }
+      const [sc, dt] = want.get(e);
+      const own = !!e.fromDb; // a library clip plays from its start, back view half a clip later
+      const rate = own ? 1 : (back ? sc.rate2 : sc.rate);
+      if (el.duration && isFinite(el.duration)) {
+        const target = own ? (dt + (back ? el.duration / 2 : 0)) % el.duration : Math.min(el.duration - .05, (back ? sc.in2 : sc.in) + dt * rate);
+        if (Math.abs(el.currentTime - target) > 1.2) { try { el.currentTime = target; } catch (err) {} }
       }
-      if (run && v.paused && !e.pending) { e.pending = true; v.play().then(() => { e.pending = false; }, (err) => { e.pending = false; e.playError = String(err && err.name); }); }
-      if (!run && !v.paused) v.pause();
-    } else if (!v.paused) v.pause();
+      if (Math.abs(el.playbackRate - rate) > .01) el.playbackRate = rate;
+      if (run && el.paused && !e[flag]) { e[flag] = true; el.play().then(() => { e[flag] = false; }, (err) => { e[flag] = false; e.playError = String(err && err.name); }); }
+      if (!run && !el.paused) el.pause();
+    });
   });
 }
-function bindScene(unit, e) {
+function bindScene(unit, unit2, e) {
   gl.activeTexture(gl.TEXTURE0 + unit);
-  if (!e || !e.ready || e.error) { gl.bindTexture(gl.TEXTURE_2D, null); return 0; }
-  if (e.kind === 'video' && (e.dirty || !e.el.requestVideoFrameCallback) && e.el.readyState >= 2) {
-    upload(e.tex, e.el, true); e.dirty = false;
-  }
+  if (!e || !e.ready || e.error) { gl.bindTexture(gl.TEXTURE_2D, null); gl.activeTexture(gl.TEXTURE0 + unit2); gl.bindTexture(gl.TEXTURE_2D, null); return 0; }
+  if (e.kind === 'video' && (e.dirty || !e.el.requestVideoFrameCallback) && e.el.readyState >= 2) { upload(e.tex, e.el, true); e.dirty = false; }
   gl.bindTexture(gl.TEXTURE_2D, e.tex);
+  gl.activeTexture(gl.TEXTURE0 + unit2);
+  if (e.el2 && e.ready2) {
+    if ((e.dirty2 || !e.el2.requestVideoFrameCallback) && e.el2.readyState >= 2) { upload(e.tex2, e.el2, true); e.dirty2 = false; }
+    gl.bindTexture(gl.TEXTURE_2D, e.tex2);
+  } else gl.bindTexture(gl.TEXTURE_2D, e.tex); // images, or until the second copy is ready
   return 1;
 }
 function updateClipNote() {
@@ -880,7 +911,7 @@ function frame(now) {
 
   gl.viewport(0, 0, canvas.width, canvas.height);
   const ea = entryFor(A), eb = entryFor(B);
-  const hasA = bindScene(0, ea), hasB = bindScene(1, eb);
+  const hasA = bindScene(0, 5, ea), hasB = bindScene(1, 6, eb);
   u1f('uHasA', hasA); u1f('uHasB', hasB);
   u1f('uAspA', ea && ea.asp || 16 / 9); u1f('uAspB', eb && eb.asp || 16 / 9);
   u1f('uLodA', ea && ea.lod || 0); u1f('uLodB', eb && eb.lod || 0);
@@ -888,8 +919,8 @@ function frame(now) {
   u1f('uMix', mix);
   u1f('uZoomA', 1 + .08 * (t - A.t0) / (A.t1 - A.t0 + XFADE));
   u1f('uZoomB', 1 + .08 * clamp((t - B.t0) / (B.t1 - B.t0 + XFADE), 0, 1));
-  u1f('uDrift', t * .014);
-  u1f('uSwirl', .06 + .2 * smooth(140, 176, t));
+  u1f('uDrift', t * .045); // the panorama turns slowly round the room, about 8 m over the show
+  u1f('uSwirl', .05 * smooth(144, 176, t));
   u1f('uFuture', smooth(SCAN_T0, SCAN_T0 + 8, t));
   u1f('uScan', t < SCAN_T0 ? 0 : Math.min(2.2, (t - SCAN_T0) / 3));
   const yr = t < SCAN_T0 ? 2026 : Math.min(2036, 2026 + Math.floor((t - SCAN_T0) / 1.2));
