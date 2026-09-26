@@ -576,31 +576,48 @@ const islandMap = (() => {
     const s = R * 1.95;                           // text and dot sizes scale with the circle
     ctx.save();
     ctx.globalAlpha = alpha;
-    mglow(ctx, cx, cy, R * 1.20, MAP_CYAN, .21);
+    mglow(ctx, cx, cy, R * 1.20, MAP_CYAN, .42);
     for (const poly of IRELAND_MAP) {
       ctx.beginPath();
       poly.ring.forEach(([lon, lat], i) => { const p = project(lon, lat); i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); });
       ctx.closePath();
-      ctx.fillStyle = poly.name === 'Ireland' ? 'rgba(23,71,79,.46)' : 'rgba(23,52,62,.34)';
+      ctx.fillStyle = poly.name === 'Ireland' ? 'rgba(46,132,142,.62)' : 'rgba(34,84,98,.48)';
       ctx.fill();
-      ctx.lineWidth = Math.max(1.1, s * .0018);
-      ctx.strokeStyle = mrgba(MAP_CYAN, .5);
+      // A bright, glowing coastline: a soft wide pass, then a hard bright core.
+      ctx.save();
+      ctx.shadowColor = mrgba(MAP_CYAN, .95);
+      ctx.shadowBlur = Math.max(6, s * .016);
+      ctx.lineWidth = Math.max(2.2, s * .0042);
+      ctx.strokeStyle = mrgba(MAP_CYAN, .9);
       ctx.stroke();
+      ctx.shadowBlur = Math.max(3, s * .007);
+      ctx.lineWidth = Math.max(1.4, s * .0022);
+      ctx.strokeStyle = 'rgba(214,252,255,.98)';
+      ctx.stroke();
+      ctx.restore();
     }
     // Light travelling between the cities: the Igloo route animation, unchanged.
     MAP_PAIRS.forEach(([ai, bi], i) => {
       const p = pts[ai], q = pts[bi], my = (p.y + q.y) / 2 - s * .06;
       mroute(ctx, [p, { x: p.x, y: my }, { x: q.x, y: my }, q], t,
-        i % 3 === 0 ? MAP_GOLD : MAP_CYAN, Math.max(1.1, s * .002), .84, .037, mseed(i + 420));
+        i % 3 === 0 ? MAP_GOLD : MAP_CYAN, Math.max(1.8, s * .0034), 1, .037, mseed(i + 420));
     });
     MAP_TOWNS.forEach((town, i) => {
       const p = pts[i];
-      mglow(ctx, p.x, p.y, s * .026, i === 0 ? MAP_GOLD : MAP_CYAN, .75);
-      mdot(ctx, p.x, p.y, s * .0038, i === 0 ? MAP_GOLD : MAP_CYAN, .95);
-      ctx.font = `500 ${Math.max(11, s * .017)}px "IBM Plex Sans Condensed", Arial, Helvetica, sans-serif`;
-      ctx.fillStyle = 'rgba(222,238,241,.82)';
+      const hot = i === 0 ? MAP_GOLD : MAP_CYAN;
+      // A slow pulse on each city so the map never sits completely still.
+      const beat = .82 + .18 * Math.sin(t * 1.5 + i * 1.1);
+      mglow(ctx, p.x, p.y, s * .040 * beat, hot, 1);
+      mdot(ctx, p.x, p.y, s * .0075, hot, 1);
+      mdot(ctx, p.x, p.y, s * .0034, '255,255,255', 1);
+      const lx = p.x + town.dx * s / 720, ly = p.y + town.dy * s / 720;
       ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-      ctx.fillText(town.name, p.x + town.dx * s / 720, p.y + town.dy * s / 720);
+      ctx.font = `600 ${Math.max(12, s * .020)}px "IBM Plex Sans Condensed", Arial, Helvetica, sans-serif`;
+      ctx.save();
+      ctx.shadowColor = 'rgba(2,10,14,.95)'; ctx.shadowBlur = Math.max(4, s * .010);
+      ctx.fillStyle = i === 0 ? 'rgba(255,238,170,1)' : 'rgba(240,253,255,.98)';
+      ctx.fillText(town.name, lx, ly);
+      ctx.restore();
     });
     ctx.restore();
   }
@@ -1131,11 +1148,22 @@ function buildWorld() {
         spots.push([x, z]);
       }
     }
-    const HUB = 150, ROT = 115;
-    const tower = new T.CylinderGeometry(3.2, 5.4, HUB, 12); tower.translate(0, HUB / 2, 0);
-    const nac = new T.BoxGeometry(16, 6, 6); nac.translate(1.5, HUB + 1, 0);
-    const blade = new T.BoxGeometry(.8, ROT, 4); blade.translate(0, ROT / 2, 0);
-    const bp = blade.attributes.position; for (let i = 0; i < bp.count; i++) { const y = bp.getY(i) / ROT; bp.setZ(i, bp.getZ(i) * (1 - y * .8)); }
+    // A 15 MW turbine is 150 m to the hub with a 118 m blade and a chord of about
+    // six metres. At the altitude this show flies over the wind farms, that blade
+    // renders 0.14 px wide -- mathematically invisible, which is why they could not
+    // be seen. These are drawn at roughly twice real scale so they read as turbines
+    // in the room. Positions, spacing and site boundaries remain the real ones.
+    const HUB = 300, ROT = 210, T_TOP = 26, T_BOT = 40, CHORD = 20;
+    const tower = new T.CylinderGeometry(T_TOP, T_BOT, HUB, 18); tower.translate(0, HUB / 2, 0);
+    const nac = new T.BoxGeometry(60, 26, 26); nac.translate(6, HUB + 4, 0);
+    const blade = new T.BoxGeometry(CHORD, ROT, 11); blade.translate(0, ROT / 2, 0);
+    // Taper the blade toward the tip so it still reads as an aerofoil, not a plank.
+    const bp = blade.attributes.position;
+    for (let i = 0; i < bp.count; i++) {
+      const y = bp.getY(i) / ROT;
+      bp.setX(i, bp.getX(i) * (1 - y * .55));
+      bp.setZ(i, bp.getZ(i) * (1 - y * .7));
+    }
     function merge(list) {
       const P = [], N = [];
       list.forEach((gg) => { const ng = gg.index ? gg.toNonIndexed() : gg; P.push(...ng.attributes.position.array); N.push(...ng.attributes.normal.array); });
@@ -1149,17 +1177,34 @@ function buildWorld() {
       vec4 o=modelMatrix*instanceMatrix*vec4(0.,0.,0.,1.);
       float d=length(o.xz-uScanC); float rise=clamp((uScanR-d-1800.)/14000.,0.,1.); rise=rise*rise*(3.-2.*rise); vRise=rise;
       vec3 p=position; vec3 n=normal;
+      // Thin geometry vanishes with distance: a blade that is 3.5 px wide overhead is
+      // under 1 px from the far side of the bay. Hold a minimum on-screen thickness so
+      // the rotors stay legible across the whole approach, without changing their span.
+      float dcam=length(o.xyz-uCam);
+      float fat=clamp(dcam/5000.,1.,4.5);
       ${isBlade ? `float a=uTime*(.55+aSeed.x*.15)+aSeed.y*6.2831; float c=cos(a),s=sin(a);
-        p=vec3(p.x,p.y*c-p.z*s,p.y*s+p.z*c); n=vec3(n.x,n.y*c-n.z*s,n.y*s+n.z*c); p+=vec3(-8.,${HUB + 1}.,0.);` : ''}
-      p.y-=(1.-rise)*${HUB + ROT + 40}.;
+        p.x*=fat; p.z*=fat;
+        p=vec3(p.x,p.y*c-p.z*s,p.y*s+p.z*c); n=vec3(n.x,n.y*c-n.z*s,n.y*s+n.z*c); p+=vec3(-30.,${HUB + 4}.,0.);`
+      : `p.xz*=mix(1.,fat,.7);`}
+      p.y-=(1.-rise)*${HUB + ROT + 80}.;
       vec4 w=modelMatrix*instanceMatrix*vec4(p,1.); vW=w.xyz; vN=normalize(mat3(modelMatrix*instanceMatrix)*n);
       gl_Position=projectionMatrix*viewMatrix*vec4(w.xyz,1.); }`;
     const fs = `varying vec3 vW; varying vec3 vN; varying float vRise;
     void main(){ if(vRise<.001||vW.y<-.5) discard; vec3 N=normalize(vN);
-      vec3 c=vec3(.86,.88,.9)*(uLightCol*max(dot(N,uLightDir),0.)+uAmb*(.7+.3*N.y));
-      c+=vec3(.5,.6,.7)*.05*uNight;
+      vec3 V=normalize(vW-uCam);
+      // Turbines are white against dark water. Keep them bright and self-lit enough
+      // to hold their shape at distance and at night, with a rim so the silhouette
+      // separates from the sea instead of dissolving into it.
+      float dif=max(dot(N,uLightDir),0.);
+      vec3 c=vec3(.97,.98,1.)*(uLightCol*dif*1.25+uAmb*(1.5+.5*N.y));
+      c+=vec3(.97,.98,1.)*.22;                                  // ambient floor
+      float rim=pow(1.-max(dot(-V,N),0.),2.2);
+      c+=vec3(.85,.93,1.)*rim*(.55+.9*uNight);
+      c+=vec3(.6,.72,.9)*.35*uNight;                            // readable at night
       c+=GOLD*smoothstep(1.,6.,vW.y)*smoothstep(16.,6.,vW.y)*(1.-vRise)*3.;
-      gl_FragColor=vec4(applyFog(c,vW),1.); }`;
+      // Hold contrast through haze: turbines matter more than the air in front of them.
+      vec3 f=applyFog(c,vW);
+      gl_FragColor=vec4(mix(f,c,.45),1.); }`;
     const M = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler();
     const n = Math.max(1, spots.length);
     const seeds = new Float32Array(n * 4);
@@ -1170,7 +1215,7 @@ function buildWorld() {
       M.compose(new T.Vector3(s[0], 0, s[1]), q, new T.Vector3(1, 1, 1));
       body.setMatrixAt(i, M); rot.setMatrixAt(i, M);
       seeds.set([rnd(), rnd(), 0, 0], i * 4);
-      BEACONS.push([s[0], HUB + 6, s[1], 0, 2]);
+      BEACONS.push([s[0], HUB + 22, s[1], 0, 2]);
     });
     body.count = rot.count = spots.length;
     bodyG.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
@@ -1387,7 +1432,8 @@ const ring = (() => {
   let lastT = -1, lastYear = null;
   // `mapA` fades the island in; `grow` lets the finale push it out towards the dial.
   function draw(year, t, mapA = 1, grow = 0) {
-    const still = year === lastYear && t - lastT < .04;
+    // The city pulse means the island is never static, so only the 25 fps cap applies.
+    const still = t - lastT < .04 && year === lastYear;
     if (still) return;
     lastT = t; lastYear = year;
     drawPlate(year);
@@ -1582,8 +1628,12 @@ const post = (() => {
           col=mix(col,col*.45,smoothstep(.6,.9,rr)*step(rr,1.02)*uRingA*.6);
           // Settle the floor under the whole dial so the island inside it reads
           // clearly against the live render, not just under the outer bezel.
-          col=mix(col,col*.30,smoothstep(1.02,.86,rr)*uRingA*.80);
-          col+=(c.rgb*c.a*(1.+uFlash*1.5)+GOLD*sweep*.8+GOLD*exp(-abs(rr-.88-uFlash*.1)*80.)*uFlash*2.)*uRingA;
+          col=mix(col,col*.22,smoothstep(1.02,.86,rr)*uRingA*.85);
+          // The dial's inner disc carries the island: lift it well clear of the
+          // live render so the map reads as the bright object on the floor.
+          float isMap=smoothstep(.80,.74,rr);
+          vec3 lifted=c.rgb*(1.+1.35*isMap);
+          col+=(lifted*c.a*(1.+uFlash*1.5)+GOLD*sweep*.8+GOLD*exp(-abs(rr-.88-uFlash*.1)*80.)*uFlash*2.)*uRingA;
         }
       }
       col+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)*.016;
