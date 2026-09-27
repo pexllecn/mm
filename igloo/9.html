@@ -62,8 +62,6 @@
   .credit { margin: 0; font-size: 12px; line-height: 1.45; color: var(--mute); max-width: 58ch; }
   .ghost { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 14px 20px; font-size: 15px; cursor: pointer; }
   .ghost:hover { border-color: var(--stone); }
-  .gkey { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--mute); }
-  .gkey input { width: min(340px, 70vw); background: rgba(8,19,26,.7); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; color: var(--stone); font: inherit; }
   .room { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--mute); }
   .room input { width: 4.2em; background: rgba(8,19,26,.7); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--stone); font: inherit; font-variant-numeric: tabular-nums; }
   .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 16px; font-size: 13px; color: var(--mute); }
@@ -166,10 +164,6 @@
       </div>
       <span class="stat" id="quality-note"></span>
     </div>
-    <div class="row" role="group" aria-label="Photorealistic 3D cities">
-      <label class="gkey" for="g-key">Real 3D cities <input id="g-key" type="password" autocomplete="off" spellcheck="false" placeholder="Google Maps Platform key, or a Cesium ion token"></label>
-      <span class="stat" id="g-note">Optional: photorealistic buildings and sharper ground from Google.</span>
-    </div>
     <div class="room" role="group" aria-label="Room size in metres">
       <label for="r-w">Front wall <input id="r-w" type="number" min="2" max="30" step="0.1" value="6"> m</label>
       <label for="r-d">Side wall <input id="r-d" type="number" min="2" max="30" step="0.1" value="6"> m</label>
@@ -242,8 +236,8 @@
     <div class="sl"><label for="c-warm">Grade warmth</label><input id="c-warm" type="range" min="0" max="1" step="0.02"><output></output></div>
     <div class="sl"><label for="c-nlight">City light at night</label><input id="c-nlight" type="range" min="0" max="2" step="0.02"><output></output></div>
     <div class="sl"><label for="c-land">Land brightness</label><input id="c-land" type="range" min="0.3" max="1.8" step="0.02"><output></output></div>
-    <label class="chk"><input type="checkbox" id="c-auto"> Lower detail automatically if the frame rate drops</label>
-    <p class="hint">If Dublin looks sandy in the last act, lower <b>Grade warmth</b> and <b>City light at night</b>. <b>Light lines</b> sets the cove line, the year lines and the sweeps of light together. Detail stays at its highest unless the box above is ticked.</p>
+    <label class="chk"><input type="checkbox" id="c-auto"> Keep 60 fps: lower detail one step if the frame rate drops</label>
+    <p class="hint">If Dublin looks sandy in the last act, lower <b>Grade warmth</b> and <b>City light at night</b>. <b>Light lines</b> sets the cove line, the year lines and the sweeps of light together. With the box above ticked (the default) the show steps the world down from 2048 to 1536 px per face if it cannot hold 60 fps.</p>
   </div>
 
   <div class="tabpane" data-pane="floor" hidden>
@@ -281,13 +275,11 @@
 </aside>
 <div id="toast" class="off" role="status"></div>
 
-<!-- three.js and the 3D Tiles renderer are ES modules; the map below resolves their imports. -->
+<!-- three.js is an ES module; the map below resolves its imports. -->
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
-  "3d-tiles-renderer": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer@0.5.3/build/index.js",
-  "3d-tiles-renderer/plugins": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer@0.5.3/build/index.plugins.js"
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
 } }
 </script>
 <script>
@@ -831,17 +823,16 @@ const floatLinear = !!gl.getExtension('OES_texture_float_linear');
 $('gpu-note').textContent = halfOK ? 'HDR render ready' : 'Standard render';
 
 const QUALITY = [1024, 1536, 2048, 3072, 4096];
-// The cube is sized to the output: at least 2048 px per face, and half as much again as the
-// output needs, so the world is always supersampled rather than stretched. Q overrides it;
-// automatic step-down is off unless the operator turns it on.
+// The cube is sized to the output, 1536 to 2048 px per face: about one cube pixel per output
+// pixel on the walls, which holds 60 fps on a show PC. Q overrides it, and the show steps down
+// one size by itself if the frame rate cannot be held.
 const softGPU = /swiftshader|llvmpipe|software/i.test((() => { try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''; } catch (x) { return ''; } })());
 const MAX_CUBE = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE) | 0;
 let qIndex = softGPU ? 0 : 2, qManual = false;
 function idealCubeIndex(outW, outH) {
   if (softGPU) return 0;
-  const want = Math.max(2048, .375 * Math.max(outW, 2 * outH));
-  let i = QUALITY.findIndex((q) => q >= want);
-  if (i < 0) i = QUALITY.length - 1;
+  const want = .27 * Math.max(outW, 2 * outH);
+  let i = want <= 1536 ? 1 : 2;
   while (i > 0 && QUALITY[i] > MAX_CUBE) i--;
   return i;
 }
@@ -851,7 +842,7 @@ const maxAniso = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.
 // antialiased before the projection pass filters them for the room's own pixel size.
 // A quarter-size bright-pass cube is written alongside, and bloom is read from it.
 // 8x multisampling up to 2048 px faces, 4x above that to keep the memory sensible.
-const msaaFor = (size) => Math.min(size <= 2048 ? 8 : 4, (renderer.capabilities.maxSamples | 0) || 0);
+const msaaFor = (size) => Math.min(4, (renderer.capabilities.maxSamples | 0) || 0);
 let cubeRT, cubeCam, faceRT, brightRT;
 const copyPass = (() => {
   const m = new T.ShaderMaterial({
@@ -893,7 +884,12 @@ function renderCube() {
   }
   cubeCam.updateMatrixWorld(true);
   const cams = cubeCam.children;
+  // Above the walls the room is dark, so the upward face is never seen from the walls or
+  // floor unless the walls rise past 42 degrees from the eye; skip it then (a sixth of the work).
+  const R = post.material.uniforms.uRoom.value;
+  const skipUp = mode !== 2 && Math.atan2(R.z - post.material.uniforms.uEye.value, Math.min(R.x, R.y) / 2) < 42 * Math.PI / 180;
   for (let f = 0; f < 6; f++) {
+    if (f === 2 && skipUp) continue;
     renderer.setRenderTarget(faceRT); renderer.render(scene, cams[f]);
     copyPass.uniforms.uSrc.value = faceRT.texture;
     copyPass.uniforms.uBright.value = 0; cubeRT.texture.generateMipmaps = f === 5;
@@ -912,7 +908,7 @@ const U = {
   uNight: { value: 0 }, uCloud: { value: .5 }, uAurora: { value: 0 }, uFogD: { value: .000006 },
   uScanR: { value: 0 }, uScanC: { value: new T.Vector2(gx(PLACES.dublin[0]), gz(PLACES.dublin[1])) }, uPx: { value: 512 },
   uElev: { value: elevTex }, uLights: { value: elevTex },
-  uNightLights: { value: 1 }, uLandLift: { value: 1 }, uCoast: { value: 0 }, uG3D: { value: 0 },
+  uNightLights: { value: 1 }, uLandLift: { value: 1 }, uCoast: { value: 0 },
   uFB: { value: new T.Vector4(FX0, FZ0, 1 / (FX1 - FX0), 1 / (FZ1 - FZ0)) },
   uFRes: { value: new T.Vector2(FW, FH) },
   uSky: { value: null }, uNoise: { value: null }, uRelief: { value: null },
@@ -924,7 +920,7 @@ uniform float uTime; uniform float uShow; uniform vec3 uCam; uniform vec3 uSunDi
 uniform vec3 uZenith; uniform vec3 uHorizon; uniform vec3 uSunCol; uniform float uNight; uniform float uCloud; uniform float uAurora; uniform float uFogD;
 uniform float uScanR; uniform vec2 uScanC; uniform float uPx;
 uniform sampler2D uElev; uniform sampler2D uLights; uniform vec4 uFB; uniform vec2 uFRes;
-uniform float uNightLights; uniform float uLandLift; uniform float uCoast; uniform float uG3D;
+uniform float uNightLights; uniform float uLandLift; uniform float uCoast;
 float hash12(vec2 p){ vec3 p3=fract(vec3(p.xyx)*.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
 float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
   return mix(mix(hash12(i),hash12(i+vec2(1,0)),u.x), mix(hash12(i+vec2(0,1)),hash12(i+vec2(1,1)),u.x), u.y); }
@@ -1203,8 +1199,8 @@ const cloudLayer = (() => {
     if(t1<=t0) discard;
     // March coarsely until the ray meets cloud, then step back and walk in at a fifth of the
     // stride, so edges are sampled finely even on long grazing paths near the horizon.
-    const int NC=110;
-    float stC=(t1-t0)/40., stp=stC;
+    const int NC=72;
+    float stC=(t1-t0)/30., stp=stC;
     bool fine=false; int empty=0; float tDone=t0;
     vec3 L=normalize(uLightDir); float mu=dot(d,L);
     float ph=hg(mu,.62)*.72+hg(mu,-.22)*.28;
@@ -1225,7 +1221,7 @@ const cloudLayer = (() => {
         // so a ray that only grazes an edge is still caught (no speckle along the edges)
         float sc=cloudCover(p.xz)+.07;
         float top=uCloudH.x+(uCloudH.y-uCloudH.x)*pow(clamp(sc*2.6,0.,1.),.7)+80.;
-        if(sc>0.&&p.y>uCloudH.x-80.&&p.y<top){ fine=true; empty=0; tt=max(tDone,tt-stC); stp=stC*.2; }
+        if(sc>0.&&p.y>uCloudH.x-80.&&p.y<top){ fine=true; empty=0; tt=max(tDone,tt-stC); stp=stC*.25; }
         tt+=stp; continue;
       }
       float hf; float den=dens(p,hf);
@@ -1240,7 +1236,7 @@ const cloudLayer = (() => {
         float a=1.-exp(-den*stp*.0065);
         Ls+=Tr*a*S; Tr*=1.-a;
         if(Tr<.02) break;
-      } else if(++empty>8){ fine=false; stp=stC; tDone=tt; }
+      } else if(++empty>6){ fine=false; stp=stC; tDone=tt; }
       tt+=stp;
     }
     float A=1.-Tr;
@@ -1276,7 +1272,6 @@ function litMat(color, opts = {}) {
 let imageryTex = null, lightsTex = null;
 const insetTex = [null, null];        // high-zoom layers, blended over the base
 const BEACONS = [];
-const LANDMARKS = [];
 
 function buildWorld() {
   U.uLights.value = lightsTex;
@@ -1302,7 +1297,6 @@ function buildWorld() {
       p.y=terrainAt(p.xz);
       // Under streamed photorealistic tiles this surface only fills gaps: it sits a little
       // below them (more with distance), so the real meshes always win the depth test.
-      p.y-=uG3D*(4.+.0025*length(p-uCam));
       vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
     uniform sampler2D uImage; uniform float uHasImage;
     uniform sampler2D uDetail;  uniform float uHasDetail;  uniform vec4 uDetailBox;
@@ -1697,7 +1691,6 @@ function buildWorld() {
       crown.position.set(tx, ty + 13, tz); scene.add(crown);
     }
     // Kept aside so real 3D city meshes, when streamed, can take their place.
-    LANDMARKS.push(...scene.children.slice(lmStart));
   }
 
   // ------------------------------------------------ offshore wind, on the real sites
@@ -1994,7 +1987,7 @@ const post = (() => {
       // y strength, z kind (0 chapter, 1 2036, 2 opening, 3 finale), w seed.
       uSw: { value: Array.from({ length: 3 }, () => new T.Vector4(-9, 0, 0, 0)) },
       uF36: { value: -1 }, uFI: { value: 99 },
-      uIntro: { value: 99 }, uAttr: { value: BLANK }, uHasAttr: { value: 0 },
+      uIntro: { value: 99 },
     },
     vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
     fragmentShader: `
@@ -2017,7 +2010,7 @@ const post = (() => {
     uniform float uLabelA; uniform float uLock; uniform float uCoast; uniform float uAurora;
     uniform vec3 uCove; uniform vec4 uMerA[11]; uniform vec4 uMerB[11];
     uniform vec4 uSw[3]; uniform float uF36; uniform float uFI; uniform float uIntro;
-    uniform sampler2D uAttr; uniform float uHasAttr;
+   
 
     const float PI=3.14159265;
     const vec3 GOLD=vec3(1.,.74,.36); const vec3 TEAL=vec3(.4,1.,.88); const vec3 WARM=vec3(1.,.9,.72);
@@ -2413,11 +2406,6 @@ const post = (() => {
           float win=smoothstep(0.,.14,yb.y)*(1.-smoothstep(.86,1.,yb.y));
           dial+=vec3(1.,.9,.66)*(ga+gb)*dialA*1.25*mix(1.,win,step(.001,uYearMix));
         }
-        // map data credit, when streamed 3D tiles are showing
-        if(uHasAttr>.5){
-          vec2 ab=(cD-vec2(512.-240.,968.-8.5))/vec2(480.,17.);
-          if(ab.x>0.&&ab.x<1.&&ab.y>0.&&ab.y<1.) dial+=vec3(.82,.86,.84)*textureGrad(uAttr,ab,cdx/vec2(480.,17.),cdy/vec2(480.,17.)).r*.6*dialA;
-        }
         col+=srgb(tone(dial*.9));
       }
 
@@ -2493,7 +2481,7 @@ const post = (() => {
       // ---- captions, one per wall
       if(!onFloor&&uCapA>0.){
         float cw=min(wallL*.88,H*2.9), ch=cw/3.2;
-        vec2 cu=vec2((ws-.5)*wallL/cw+.5,(t*H-H*.64)/ch+.5);
+        vec2 cu=vec2((ws-.5)*wallL/cw+.5,(t*H-H*.56)/ch+.5);
         if(cu.x>0.&&cu.x<1.&&cu.y>0.&&cu.y<1.){
           vec4 c=texture(uCap,cu); float dd=abs(cu.x-.5)*2.; float rr2=uCapRev*1.2;
           float vis=smoothstep(dd-.12,dd,rr2);
@@ -2501,6 +2489,8 @@ const post = (() => {
           col+=GOLD*exp(-abs(rr2-dd)*60.)*step(rr2,1.1)*smoothstep(.3,.45,cu.y)*(1.-smoothstep(.6,.75,cu.y))*.14*uCapA;
         }
       }
+      // The top of every wall dissolves into the dark ceiling: nothing is drawn above the room.
+      if(!onFloor) col*=1.-smoothstep(.72,1.,t)*(.55+.45*smoothstep(.72,1.,t));
       col+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)/255.;
       gl_FragColor=black?vec4(0.,0.,0.,1.):vec4(clamp(col,0.,1.)*uFade,1.);
     }`,
@@ -2514,225 +2504,6 @@ const post = (() => {
 
 makeCube();
 
-// ---------------------------------------------------------------- photorealistic 3D tiles
-// Google's Photorealistic 3D Tiles: photogrammetry of towns and cities, every building in 3D,
-// and high-resolution ground everywhere else. They stream only when an API key is given
-// (start screen, or ?gkey= in the address); without one the show runs on its own terrain.
-// A venue with its own 3D Tiles set can pass ?tileset=<url to tileset.json> instead.
-//
-// Tiles arrive in Earth-centred coordinates. The tiles renderer chooses detail and culls with
-// six virtual cameras placed where the show's cube cameras are, in that Earth-centred frame.
-// Each mesh is then carried vertex by vertex into the show's own map frame (true longitude and
-// latitude, height above sea level) by the vertex shader below, so the photogrammetry sits
-// exactly on the elevation field, the sea, the clouds' shadows and the floor map.
-const G3D = { status: '', tiles: null, cams: [], geoidN: 56, geoid: [], visible: 0, attr: '', started: false, google: false };
-const WGS_A = 6378137, WGS_E2 = 6.69437999014e-3, D2R = Math.PI / 180;
-function ecefOf(latD, lonD, h) {
-  const la = latD * D2R, lo = lonD * D2R, s = Math.sin(la), c = Math.cos(la);
-  const N = WGS_A / Math.sqrt(1 - WGS_E2 * s * s);
-  return [(N + h) * c * Math.cos(lo), (N + h) * c * Math.sin(lo), (N * (1 - WGS_E2) + h) * s];
-}
-function geoOf(x, y, z) {
-  const lon = Math.atan2(y, x), p = Math.hypot(x, y);
-  let lat = Math.atan2(z, p * (1 - WGS_E2)), h = 0;
-  for (let i = 0; i < 5; i++) {
-    const s = Math.sin(lat), N = WGS_A / Math.sqrt(1 - WGS_E2 * s * s);
-    h = p / Math.cos(lat) - N;
-    lat = Math.atan2(z, p * (1 - WGS_E2 * N / (N + h)));
-  }
-  return [lat / D2R, lon / D2R, h];
-}
-// Radii of curvature: along the meridian (M) and across it (N), at a latitude.
-function radiiAt(latD) { const s = Math.sin(latD * D2R), w = Math.sqrt(1 - WGS_E2 * s * s); return [WGS_A * (1 - WGS_E2) / (w * w * w), WGS_A / w]; }
-// East, north and up unit vectors at a place, in Earth-centred coordinates.
-function enuAt(latD, lonD) {
-  const la = latD * D2R, lo = lonD * D2R, sl = Math.sin(la), cl = Math.cos(la), so = Math.sin(lo), co = Math.cos(lo);
-  return [[-so, co, 0], [-sl * co, -sl * so, cl], [cl * co, cl * so, sl]];
-}
-
-const G3D_VS = `
-uniform mat4 uL; uniform vec3 uG0; uniform vec2 uAW; uniform vec2 uRad; uniform float uGeoidN;
-varying vec2 vUv; varying vec3 vW;
-void main(){
-  vUv=uv;
-  // metres east, north and up of this mesh's anchor
-  vec3 enu=(uL*vec4(position,1.)).xyz;
-  float e=enu.x, n=enu.y, u=enu.z, la=uG0.x, tl=tan(la);
-  // to latitude, longitude and height, second order in the offset: the ground curves away
-  // and a straight line east drifts off its parallel, both of which matter across a tile
-  float dLat=(n-e*e*tl/(2.*uRad.y))/uRad.x;
-  float dLon=e/(uRad.y*cos(la))*(1.+n*tl/uRad.y);
-  float h=uG0.z+u+e*e/(2.*uRad.y)+n*n/(2.*uRad.x);
-  vec3 w=vec3(uAW.x+dLon*${g(M_LON / D2R)},h-uGeoidN,uAW.y-dLat*${g(M_LAT / D2R)});
-  vW=w; gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);
-}`;
-const G3D_FS = `
-uniform sampler2D uMap; uniform float uHasMap;
-varying vec2 vUv; varying vec3 vW;
-void main(){
-  vec3 P=vW;
-  float hD=terrainAt(P.xz);
-  vec3 fx=dFdx(P), fy=dFdy(P);
-  float foot=max(length(fx),length(fy));
-  vec3 N=normalize(cross(fx,fy)); if(dot(N,uCam-P)<0.) N=-N;
-  // Water: the show's own animated sea takes over wherever the elevation data says sea.
-  if(abs(P.y)<1.4&&N.y>.97&&hD<1.5) discard;
-  vec3 tex=uHasMap>.5?texture2D(uMap,vUv).rgb:vec3(.18,.17,.16);
-  vec3 alb=tex*uLandLift;
-  // The photographs carry their own light and shade from a clear day. Relight them for the
-  // show's hour: scaled and tinted by the sun (or moon) and sky, faces toward the light a
-  // little brighter, cloud shadows passing over.
-  float dif=max(dot(N,uLightDir),0.);
-  float csh=cloudShadow(P);
-  vec3 lit=alb*(uLightCol*(.30+.42*dif)*csh+uAmb*1.05);
-  lit+=alb*vec3(.16,.19,.26)*uNight*.5;
-  // Night: street light on built-up ground, lit windows on walls, sodium then 2036 white.
-  float settle=texture2D(uLights,fieldUV(P.xz)).r;
-  float rl=dot(tex,vec3(.2126,.7152,.0722)), rmx=max(tex.r,max(tex.g,tex.b));
-  float chroma=(rmx-min(tex.r,min(tex.g,tex.b)))/max(rmx,1e-3);
-  float urban=smoothstep(.03,.085,rl)*(1.-smoothstep(.22,.5,chroma));
-  float inside=scanInside(P.xz);
-  vec3 lamp=mix(vec3(1.,.6,.28),vec3(1.,.82,.6),inside);
-  if(uNight>.01){
-    const float CELL=28., LR=3.2;
-    vec2 cid=floor(P.xz/CELL), cf=P.xz/CELL-cid;
-    float hh=hash12(cid);
-    vec2 pp=vec2(hash12(cid+17.3),hash12(cid+41.9))*.76+.12;
-    float rr=max(LR,foot*.8), dd=length((cf-pp)*CELL);
-    float pt=exp(-dd*dd/(rr*rr))*LR*LR/(rr*rr), avgPt=PI*LR*LR/(CELL*CELL);
-    float spark=mix(pt,avgPt,smoothstep(CELL*.2,CELL*.55,foot))*step(.3,hh)*(.55+.9*fract(hh*13.7));
-    float lights=(settle*(.1+1.5*urban))*smoothstep(.55,.8,N.y);
-    lit+=alb*lamp*lights*uNight*1.1*uNightLights+lamp*lights*spark*uNight*16.*uNightLights;
-    // windows: a lit or dark pane on a 3.2 m by 3.3 m grid across every wall in town
-    float wall=1.-smoothstep(.3,.5,abs(N.y));
-    vec2 ft=normalize(vec2(-N.z,N.x)+1e-5);
-    vec2 wc=vec2(dot(P.xz,ft)/3.2,P.y/3.3), wid=floor(wc), wf=fract(wc);
-    float pane=step(.2,wf.x)*step(wf.x,.8)*step(.28,wf.y)*step(wf.y,.78);
-    float wh=hash12(wid+floor(P.xz/60.)*7.13);
-    float on=step(wh,mix(.18,.55,smoothstep(.02,.3,settle)));
-    float paneAvg=.6*.5*mix(.18,.55,smoothstep(.02,.3,settle));
-    float wlit=mix(pane*on,paneAvg,smoothstep(.8,2.4,foot));
-    vec3 wcol=mix(mix(vec3(1.,.72,.42),vec3(1.,.86,.64),fract(wh*7.)),vec3(1.,.9,.78),inside);
-    lit+=wcol*wlit*wall*smoothstep(.01,.12,settle)*uNight*2.2*uNightLights;
-  }
-  lit+=scanRing(P.xz)*mix(GOLD,vec3(1.,.93,.8),.35)*4.;
-  gl_FragColor=vec4(applyFog(lit,P),1.);
-}`;
-
-// Where the sea level sits on the ellipsoid: measured from the tiles' own water, which lies
-// at mean sea level, wherever the elevation data says the water is open and deep.
-function calibrateGeoid(pos, M) {
-  const v = new T.Vector3(), found = [];
-  const step = Math.max(1, Math.floor(pos.count / 300));
-  for (let i = 0; i < pos.count; i += step) {
-    v.fromBufferAttribute(pos, i).applyMatrix4(M);
-    const [lat, lon, h] = geoOf(v.x, v.y, v.z);
-    if (lat < LAT_S || lat > LAT_N || lon < LON_W || lon > LON_E) continue;
-    if (heightAt(gx(lon), gz(lat)) < -15 && h > 30 && h < 80) found.push(h);
-  }
-  if (found.length < 20) return;
-  found.sort((a, b) => a - b);
-  G3D.geoid.push(found[found.length >> 1]);
-  if (G3D.geoid.length > 60) G3D.geoid.shift();
-  const all = G3D.geoid.slice().sort((a, b) => a - b);
-  G3D.geoidN = clamp(all[all.length >> 1], 48, 64);
-}
-const G3D_PLUGIN = {
-  name: 'IRELAND_MAP_FRAME',
-  processTileModel(scene) {
-    scene.updateMatrixWorld(true);
-    scene.traverse((o) => {
-      if (!o.isMesh) return;
-      const geo = o.geometry;
-      if (!geo.boundingSphere) geo.computeBoundingSphere();
-      const M = o.matrixWorld;
-      const c = geo.boundingSphere.center.clone().applyMatrix4(M);
-      const [lat0, lon0, h0] = geoOf(c.x, c.y, c.z);
-      const [E, Nn, Up] = enuAt(lat0, lon0);
-      // local vertex -> metres east, north, up of the anchor (computed in double precision)
-      const L = new T.Matrix4().set(E[0], E[1], E[2], 0, Nn[0], Nn[1], Nn[2], 0, Up[0], Up[1], Up[2], 0, 0, 0, 0, 1)
-        .multiply(new T.Matrix4().makeTranslation(-c.x, -c.y, -c.z)).multiply(M);
-      const [Mr, Nr] = radiiAt(lat0);
-      if (geo.attributes.position) calibrateGeoid(geo.attributes.position, M);
-      const old = o.material, map = old && old.map ? old.map : null;
-      const mat = new T.ShaderMaterial({
-        uniforms: Object.assign({}, U, {
-          uMap: { value: map || BLANK }, uHasMap: { value: map ? 1 : 0 },
-          uL: { value: L }, uG0: { value: new T.Vector3(lat0 * D2R, 0, h0) },
-          uAW: { value: new T.Vector2(gx(lon0), gz(lat0)) }, uRad: { value: new T.Vector2(Mr + h0, Nr + h0) },
-          uGeoidN: G3D_GEOID,
-        }),
-        vertexShader: COMMON + G3D_VS, fragmentShader: COMMON + G3D_FS, side: T.DoubleSide,
-      });
-      mat.map = map;                        // so the tiles renderer frees it with the tile
-      if (old) old.dispose();
-      o.material = mat;
-      o.frustumCulled = false;              // placement is ours; culling is done by the tiles renderer
-    });
-  },
-};
-const G3D_GEOID = { value: 56 };
-
-async function startTiles(opts) {
-  if (G3D.started) return;
-  G3D.started = true; G3D.status = '3D cities loading';
-  try {
-    const [{ TilesRenderer }, plugins, { DRACOLoader }] = await Promise.all([
-      import('3d-tiles-renderer'), import('3d-tiles-renderer/plugins'), import('three/addons/loaders/DRACOLoader.js')]);
-    const tiles = opts.url ? new TilesRenderer(opts.url) : new TilesRenderer();
-    // A Google Maps Platform key reads Google's tiles directly. A Cesium ion token (a JWT,
-    // "eyJ…") reads the same Google tiles through Cesium ion's copy of them, asset 2275207.
-    const ion = /^eyJ/.test(opts.key || '');
-    if (opts.key && ion) tiles.registerPlugin(new plugins.CesiumIonAuthPlugin({ apiToken: opts.key, assetId: '2275207', autoRefreshToken: true, useRecommendedSettings: false }));
-    else if (opts.key) tiles.registerPlugin(new plugins.GoogleCloudAuthPlugin({ apiToken: opts.key, autoRefreshToken: true, useRecommendedSettings: false }));
-    G3D.google = !!opts.key;
-    const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/');
-    tiles.registerPlugin(new plugins.GLTFExtensionsPlugin({ dracoLoader: draco }));
-    tiles.registerPlugin(G3D_PLUGIN);
-    tiles.errorTarget = 14;                           // finer than the provider's default
-    tiles.lruCache.minBytesSize = 0.8e9; tiles.lruCache.maxBytesSize = 1.4e9; tiles.lruCache.maxSize = 12000;
-    for (let i = 0; i < 6; i++) {
-      const cam = new T.PerspectiveCamera(94, 1, 5, 4e6);
-      tiles.setCamera(cam); G3D.cams.push(cam);
-    }
-    tiles.addEventListener('load-error', (e) => {
-      const msg = String(e && e.error && e.error.message || '');
-      if (/403|401|PERMISSION|key/i.test(msg) || (e && e.url && /root\.json|api\.cesium\.com/.test(String(e.url)))) G3D.status = '3D cities: key or tileset rejected';
-    });
-    scene.add(tiles.group);
-    G3D.tiles = tiles;
-    G3D.status = '3D cities streaming';
-  } catch (e) {
-    G3D.status = '3D cities unavailable (' + (e.message || e) + ')';
-  }
-}
-const tmpM4 = new T.Matrix4();
-function updateTiles() {
-  const tiles = G3D.tiles;
-  if (!tiles) return;
-  G3D_GEOID.value = G3D.geoidN;
-  const c = U.uCam.value;
-  const [lon, lat] = lonLatOf(c.x, c.z);
-  const P = ecefOf(lat, lon, c.y + G3D.geoidN);
-  const [E, N, Up] = enuAt(lat, lon);
-  // world axes in Earth-centred coordinates: x east, y up, z south
-  const B = new T.Matrix4().set(E[0], Up[0], -N[0], 0, E[1], Up[1], -N[1], 0, E[2], Up[2], -N[2], 0, 0, 0, 0, 1);
-  cubeCam.updateMatrixWorld(true);
-  const size = QUALITY[qIndex];
-  cubeCam.children.forEach((src, i) => {
-    const cam = G3D.cams[i];
-    tmpM4.extractRotation(src.matrixWorld).premultiply(B).setPosition(P[0], P[1], P[2]);
-    tmpM4.decompose(cam.position, cam.quaternion, cam.scale);
-    cam.near = Math.max(5, c.y * .01); cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
-    tiles.setResolution(cam, size, size);
-  });
-  tiles.update();
-  G3D.visible = tiles.visibleTiles ? tiles.visibleTiles.size : 0;
-  const on = G3D.visible > 0 ? 1 : 0;
-  U.uG3D.value = on;
-  LANDMARKS.forEach((o) => { o.visible = !on; });
-  if (on && /loading|streaming/.test(G3D.status)) G3D.status = '3D cities on';
-}
 
 
 
@@ -3356,9 +3127,9 @@ try {
 } catch (e) {}
 function resize() {
   // Render at the display's own pixels (a scaled Windows desktop would otherwise upscale a
-  // smaller image), within a 40-megapixel budget.
+  // smaller image), within a 16-megapixel budget.
   const cw = innerWidth, ch = innerHeight;
-  const dpr = Math.min(window.devicePixelRatio || 1, Math.sqrt(40e6 / Math.max(1, cw * ch)));
+  const dpr = Math.min(window.devicePixelRatio || 1, Math.sqrt(16e6 / Math.max(1, cw * ch)));
   renderer.setPixelRatio(dpr);
   renderer.setSize(cw, ch, false);
   const w = canvas.width, h = canvas.height;
@@ -3379,10 +3150,14 @@ addEventListener('resize', resize);
 const CTRL_DEFAULTS = {
   fmapb: 1, lines: 1, grade: .45, warm: .35, nlight: .55, land: 1,
   inset: 0, fscale: 1, tiltx: 0, tilty: 0, dscale: 1, dx: 0, dy: 0,
-  vol: .9, harp: 1, arp: 1, sea: 1, autoDetail: false,
+  vol: .9, harp: 1, arp: 1, sea: 1, autoDetail: true,
 };
 const ctrl = Object.assign({}, CTRL_DEFAULTS);
-try { Object.assign(ctrl, JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}')); } catch (e) {}
+try {
+  const saved = JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}');
+  if (!saved.v2) delete saved.autoDetail;       // settings saved before 60 fps became the default
+  delete saved.v2; Object.assign(ctrl, saved);
+} catch (e) {}
 
 $('c-auto').addEventListener('change', (e) => { ctrl.autoDetail = e.target.checked; applyCtrl(); });
 function applyCtrl() {
@@ -3403,7 +3178,7 @@ function applyCtrl() {
   audio.setLevel('pad', ctrl.harp);
   audio.setLevel('chime', ctrl.arp);
   audio.setLevel('ocean', ctrl.sea);
-  try { localStorage.setItem('ire2036-ctrl', JSON.stringify(ctrl)); } catch (e) {}
+  try { localStorage.setItem('ire2036-ctrl', JSON.stringify(Object.assign({ v2: 1 }, ctrl))); } catch (e) {}
 }
 
 const SLIDERS = [
@@ -3533,27 +3308,6 @@ syncSliders();
 
 // ---------------------------------------------------------------- loop
 let fpsAcc = 0, fpsN = 0, fpsShown = 0, wake = null;
-// Map data credit, shown on the floor under the year whenever streamed tiles are on screen.
-const attrCv = document.createElement('canvas'); attrCv.width = 2048; attrCv.height = 72;
-const attrTex = canvasTex(attrCv);
-function refreshAttribution() {
-  if (G3D.status) $('g-note').textContent = G3D.status;
-  if (!G3D.tiles) return;
-  let list = [];
-  try { list = G3D.tiles.getAttributions ? G3D.tiles.getAttributions() : []; } catch (e) {}
-  const txt = list.filter((a) => a.type === 'string' && a.value).map((a) => a.value).join(' \u00b7 ');
-  const show = G3D.visible > 0 ? (G3D.google ? (txt ? 'Google \u00b7 ' + txt : 'Google') : txt) : '';
-  if (show === G3D.attr) return;
-  G3D.attr = show;
-  const x = attrCv.getContext('2d');
-  x.clearRect(0, 0, 2048, 72); x.fillStyle = '#000'; x.fillRect(0, 0, 2048, 72);
-  x.fillStyle = '#f00'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = `500 30px ${SANS_F}`;
-  if ('letterSpacing' in x) x.letterSpacing = '1px';
-  let size = 30; while (x.measureText(show).width > 2000 && size > 16) { size -= 2; x.font = `500 ${size}px ${SANS_F}`; }
-  x.fillText(show, 1024, 38);
-  attrTex.needsUpdate = true;
-  post.material.uniforms.uAttr.value = attrTex; post.material.uniforms.uHasAttr.value = show ? 1 : 0;
-}
 async function keepAwake() { try { if (navigator.wakeLock && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch (e) {} }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && started) keepAwake(); });
 // If the machine cannot hold a smooth frame rate at the current cube size, step down
@@ -3561,18 +3315,18 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && st
 let slowSecs = 0;
 function adaptQuality(fps) {
   if (!started || !playing || softGPU || !ctrl.autoDetail) { slowSecs = 0; return; }
-  slowSecs = fps < 28 ? slowSecs + 1 : 0;
-  if (slowSecs >= 4 && qIndex > 1) { qIndex--; qManual = true; makeCube(); slowSecs = 0; toast('Detail ' + QUALITY[qIndex] + ' px per face (auto)'); }
+  slowSecs = fps < 54 ? slowSecs + 1 : 0;
+  if (slowSecs >= 3 && qIndex > 1) { qIndex--; qManual = true; makeCube(); slowSecs = 0; toast('Detail ' + QUALITY[qIndex] + ' px per face (auto)'); }
 }
 function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (playing) { showT += dt; if (showT >= DURATION) { showT = 0; camSmooth.ready = false; } }
-  const idleT = started ? showT : (G3D.started ? 9 : 40 + (now / 1000) % 30);
+  const idleT = started ? showT : 40 + (now / 1000) % 30;
   U.uTime.value = now / 1000; U.uShow.value = idleT;
   applyTime(idleT, Math.max(dt, 1 / 120));
   post.material.uniforms.uIntro.value = started ? showT : 99;
   post.material.uniforms.uPrev.value.set(look.yaw, look.pitch, Math.tan(40 * Math.PI / 180));
-  if (needsWorld()) { updateTiles(); skyLUT.update(); renderCube(); }
+  if (needsWorld()) { skyLUT.update(); renderCube(); }
   renderer.setRenderTarget(null);
   renderer.render(post.scene, post.cam);
   const cap = CAPTIONS.findIndex((c) => idleT >= c.t0 && idleT <= c.t1);
@@ -3589,7 +3343,7 @@ function frame(now) {
     });
   }
   fpsAcc += dt; fpsN++;
-  if (fpsAcc > 1) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; adaptQuality(fpsShown); refreshAttribution(); $('stat').textContent = `${fpsShown} fps · ${canvas.width}×${canvas.height} · ${QUALITY[qIndex]} px/face${ctrl.autoDetail ? '' : ' locked'} · ${IMAGERY_NOTE || FIELD_SOURCE}${G3D.status ? ' · ' + G3D.status : ''} · Q to change`; }
+  if (fpsAcc > 1) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; adaptQuality(fpsShown); $('stat').textContent = `${fpsShown} fps · ${canvas.width}×${canvas.height} · ${QUALITY[qIndex]} px/face${ctrl.autoDetail ? '' : ' locked'} · ${IMAGERY_NOTE || FIELD_SOURCE} · Q to change`; }
   requestAnimationFrame(frame);
 }
 window.__ireland = { seek: (t) => { started = true; seek(t); camSmooth.ready = false; }, pause: () => setPlaying(false), mode: setMode, media: loadMedia,
@@ -3660,13 +3414,6 @@ keepAwake();
       PU.uImage.value = imageryTex || BLANK; PU.uHasImage.value = imageryTex ? 1 : 0; PU.uSettle.value = lightsTex;
 
       buildWorld();
-      // Real 3D cities, if a key (or a venue tileset) was given.
-      const qs = new URLSearchParams(location.search);
-      let gkey = qs.get('gkey') || '';
-      try { gkey = gkey || localStorage.getItem('ire2036-gkey') || ''; } catch (e) {}
-      $('g-key').value = gkey;
-      const tilesetURL = qs.get('tileset');
-      if (gkey || tilesetURL) startTiles({ key: gkey, url: tilesetURL });
 
       say(`Ready. Real terrain, real bathymetry and satellite imagery — ${IMAGERY_NOTE}.`);
       startBtn.disabled = false;
@@ -3697,12 +3444,6 @@ keepAwake();
   try { const sq = localStorage.getItem('ire2036-quality-v2'); if (sq && QUALITY_TIERS[sq]) QUALITY_KEY = sq; } catch (e) {}
   labelTiers();
 
-  $('g-key').addEventListener('change', () => {
-    const k = $('g-key').value.trim();
-    try { if (k) localStorage.setItem('ire2036-gkey', k); else localStorage.removeItem('ire2036-gkey'); } catch (e) {}
-    if (G3D.started) { toast('Reloading with the new key'); setTimeout(() => location.reload(), 600); }
-    else if (k && FIELD) startTiles({ key: k });
-  });
   retry.addEventListener('click', load);
   load();
 })();
