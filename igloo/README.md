@@ -61,6 +61,7 @@ A rework of the original live 3D show (kept unchanged as `7.html`; `6.html` hold
 - **Floor to walls**: beyond the ring the floor shows the live world under the aircraft, so it meets the walls without a break. A cove line of light runs along the join. Each year sends a line of light from its mark on the ring out across the floor and straight up the wall. Each caption is preceded by a stem of light from the ring to where its words appear. The 2036 wave leaves Dublin on the map, crosses the floor and climbs the walls.
 - **Opening**: the ring draws itself, lines of light run to the walls, and the world rises up the walls from the floor.
 - **Finale**: the map turns to the aircraft's heading, locks onto the real island 200 km below at the same scale, and dissolves into it, with the whole coast drawn in light under the aurora.
+- **Music**: one piece and no sound effects. It is an original slow air in the Irish style, in D, for low whistle over harp with a soft string drone, and runs the full three minutes. It is rendered in the browser while the page loads and follows the show clock through seeks and pauses. `A` switches it on and off, and **Controls → Sound → Music level** sets its volume.
 
 Operator controls (`C`): **Look → Light lines** sets the cove line, year lines and caption stems together; the **Floor** tab fits the dial. Enter the real room size on the start screen so the light lines meet the walls.
 

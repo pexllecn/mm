@@ -179,7 +179,7 @@
       <span><kbd>R</kbd>Restart</span>
       <span><kbd>V</kbd>Output format</span>
       <span><kbd>F</kbd>Full screen</span>
-      <span><kbd>A</kbd>Sound on / off</span>
+      <span><kbd>A</kbd>Music on / off</span>
       <span><kbd>H</kbd>Hide controls</span>
       <span><kbd>B</kbd>Blackout</span>
       <span><kbd>O</kbd>Rotate floor panel</span>
@@ -249,11 +249,8 @@
   </div>
 
   <div class="tabpane" data-pane="sound" hidden>
-    <div class="sl"><label for="c-vol">Overall level</label><input id="c-vol" type="range" min="0" max="1.4" step="0.02"><output></output></div>
-    <div class="sl"><label for="c-harp">Music pad</label><input id="c-harp" type="range" min="0" max="2" step="0.02"><output></output></div>
-    <div class="sl"><label for="c-arp">Chimes</label><input id="c-arp" type="range" min="0" max="1.6" step="0.02"><output></output></div>
-    <div class="sl"><label for="c-sea">Sea</label><input id="c-sea" type="range" min="0" max="2" step="0.02"><output></output></div>
-    <p class="hint">The pad moves through one chord per act. Chimes mark each caption, each year the dial reaches, and the map's heartbeat.</p>
+    <div class="sl"><label for="c-vol">Music level</label><input id="c-vol" type="range" min="0" max="1.4" step="0.02"><output></output></div>
+    <p class="hint">One piece of music plays through the show: an original slow air in the Irish style for low whistle, harp and strings. There are no sound effects.</p>
   </div>
 
   <div class="tabpane" data-pane="content" hidden>
@@ -2814,139 +2811,173 @@ async function removeSlot(id) {
   }, () => note('Footage library is offline. Scenes without footage show the live 3D world.', true));
 })();
 
-// ---------------------------------------------------------------- generative sound
-// The original score, restored: a warm detuned pad moving through one chord per act,
-// a filtered noise bed for the sea, a synthesised convolution reverb, and pentatonic
-// chimes on each caption. The only additions are the operator level controls and the
-// heartbeat chime, which lands on the same pulse the island on the floor beats to.
+// ---------------------------------------------------------------- music
+// One piece of music and nothing else: an original slow air in the Irish style, in D, for
+// low whistle over harp, with a soft string drone underneath. There are no sound effects.
+// The whole three minutes is written out below and rendered once, offline, into a single
+// track while the page loads (it needs no user gesture); after that it simply plays in step
+// with the show clock, so seeking, pausing and skipping between acts keep it in time.
 const audio = (() => {
-  let ctx = null, master, padF, padG, voices = [], ocean, oceanG, rev, on = false;
-  let lastCap = -1, lastScan = false, lastChord = -1, lastBeat = -1, lastYear = -1, lastT = 0;
-  const settings = { master: .9, pad: 1, ocean: 1, chime: 1 };
-
-  const CH = [
-    [146.83, 220, 329.63, 369.99, 440],
-    [123.47, 185, 293.66, 440, 554.37],
-    [98, 196, 293.66, 369.99, 493.88],
-    [146.83, 220, 369.99, 440, 659.25],
+  let ctx = null, master = null, buf = null, src = null, srcT0 = 0, srcOff = 0, on = false, rendering = null;
+  const settings = { master: .9 };
+  const BEAT = 60 / 64, BAR = 3 * BEAT;                 // 3/4 at 64 to the minute
+  const mf = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  // Chords (root, third, fifth as MIDI notes) for each bar of an eight-bar phrase.
+  const I = [50, 54, 57], IV = [43, 47, 50], V = [45, 49, 52], vi = [47, 50, 54], ii = [52, 55, 59];
+  const CH_A = [I, IV, I, V, vi, IV, I, I], CH_A2 = [I, IV, I, V, vi, IV, V, V], CH_B = [IV, I, ii, V, IV, I, vi, I];
+  // Melodies as [MIDI note, beats]; each phrase fills eight bars (24 beats).
+  const MEL_A = [[69, 1], [74, 1.5], [76, .5], [78, 2], [76, 1], [74, 1], [71, 1], [69, 1], [74, 1], [76, 2],
+    [78, 1.5], [81, .5], [78, 1], [76, 1], [74, 1], [71, 1], [69, 1], [74, 1], [76, 1], [74, 3]];
+  const MEL_A2 = [[69, 1], [74, 1.5], [76, .5], [78, 2], [76, 1], [74, 1], [71, 1], [69, 1], [74, 1], [76, 2],
+    [78, 1.5], [81, .5], [78, 1], [76, 1], [74, 1], [71, 1], [74, 1], [73, 1], [71, 1], [76, 3]];
+  const MEL_B = [[79, 1.5], [78, .5], [76, 1], [78, 2], [74, 1], [76, 1], [79, 1], [81, 1], [81, 2], [78, 1],
+    [83, 2], [81, 1], [78, 1], [76, 1], [74, 1], [71, 1.5], [74, .5], [73, 1], [74, 3]];
+  // The running order: harp alone, the air, its answer, the rise, the air again softly at
+  // dusk, the rise, the air in full, and the air once more, ending on a long D.
+  const FORM = [
+    { ch: CH_A, mel: null, lead: 0, pad: .4 },
+    { ch: CH_A, mel: MEL_A, lead: 1, pad: .6 },
+    { ch: CH_A2, mel: MEL_A2, lead: 1, pad: .7 },
+    { ch: CH_B, mel: MEL_B, lead: 1, pad: .9 },
+    { ch: CH_A, mel: MEL_A, lead: .7, pad: .6, low: true },
+    { ch: CH_B, mel: MEL_B, lead: 1, pad: 1 },
+    { ch: CH_A2, mel: MEL_A2, lead: 1.1, pad: 1.1 },
+    { ch: CH_A, mel: MEL_A, lead: 1, pad: 1, last: true },
   ];
 
-  function impulse(sec) {
-    const n = ctx.sampleRate * sec, b = ctx.createBuffer(2, n, ctx.sampleRate);
-    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6); }
+  function impulse(c, sec) {
+    const n = Math.floor(c.sampleRate * sec), b = c.createBuffer(2, n, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+    return b;
+  }
+  // Harp: a plucked string, bright at the attack and mellowing as it rings.
+  // One oscillator per note, its upper partials fading faster through a closing filter.
+  function harp(c, out, wave, t, m, v) {
+    const f = mf(m), d = m < 55 ? 4.5 : 3;
+    const o = c.createOscillator(), lp = c.createBiquadFilter(), g = c.createGain();
+    o.setPeriodicWave(wave); o.frequency.value = f;
+    lp.type = 'lowpass'; lp.Q.value = .3;
+    lp.frequency.setValueAtTime(f * 6, t); lp.frequency.exponentialRampToValueAtTime(f * 1.2, t + .6);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .004);
+    g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(lp); lp.connect(g); g.connect(out); o.start(t); o.stop(t + d + .05);
+  }
+  // Low whistle: a soft, breathy tone with a slow vibrato that grows into each long note.
+  function whistle(c, out, noise, t, dur, m, v) {
+    const f = mf(m), end = t + dur, rel = .18;
+    const o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), g2 = c.createGain();
+    o.frequency.value = f; o2.frequency.value = f * 2; g2.gain.value = .12;
+    const vib = c.createOscillator(), vg = c.createGain();
+    vib.frequency.value = 5.2; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(dur > .8 ? f * .006 : f * .002, t + Math.min(dur, 1.2));
+    vib.connect(vg); vg.connect(o.frequency); vg.connect(o2.frequency);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .07);
+    g.gain.setValueAtTime(v, Math.max(t + .07, end - .05)); g.gain.linearRampToValueAtTime(0, end + rel);
+    o.connect(g); o2.connect(g2); g2.connect(g); g.connect(out);
+    // breath: filtered noise riding the note, strongest at the start
+    const n = c.createBufferSource(), nf = c.createBiquadFilter(), ng = c.createGain();
+    n.buffer = noise; nf.type = 'bandpass'; nf.frequency.value = f * 2; nf.Q.value = 2.5;
+    ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(v * .5, t + .03); ng.gain.linearRampToValueAtTime(v * .08, t + .3);
+    ng.gain.setValueAtTime(v * .08, Math.max(t + .3, end - .05)); ng.gain.linearRampToValueAtTime(0, end + rel);
+    n.connect(nf); nf.connect(ng); ng.connect(out);
+    [o, o2, vib, n].forEach((s) => { s.start(t); s.stop(end + rel + .05); });
+  }
+  // Strings: a slow-breathing chord, low and quiet, following the harmony.
+  function strings(c, out, t, dur, notes, v) {
+    const g = c.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * 2, t + dur * .35);
+    g.gain.linearRampToValueAtTime(v * 1.6, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + .8);
+    g.connect(out);
+    notes.forEach((m, i) => {
+      const o = c.createOscillator();
+      o.type = 'triangle'; o.frequency.value = mf(m + 12); o.detune.value = (i - 1) * 6;
+      o.connect(g); o.start(t); o.stop(t + dur + .9);
+    });
+  }
+
+  async function render() {
+    const SR = 44100, c = new OfflineAudioContext(2, Math.ceil(SR * DURATION), SR);
+    const dry = c.createGain(), rev = c.createConvolver(), wet = c.createGain(), out = c.createGain();
+    rev.buffer = impulse(c, 4.2); wet.gain.value = .45; dry.gain.value = .8;
+    dry.connect(out); dry.connect(rev); rev.connect(wet); wet.connect(out); out.connect(c.destination);
+    const padF = c.createBiquadFilter(); padF.type = 'lowpass'; padF.frequency.value = 900; padF.connect(dry);
+    const noise = c.createBuffer(1, SR * 2, SR); { const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    const lead = c.createGain(); lead.gain.value = .9;
+    const pan = c.createStereoPanner ? c.createStereoPanner() : null;
+    if (pan) { pan.pan.value = .12; lead.connect(pan); pan.connect(dry); } else lead.connect(dry);
+    const wave = c.createPeriodicWave(new Float32Array([0, 0, 0, 0, 0, 0]), new Float32Array([0, 1, .42, .18, .08, .03]));
+    const t0 = 1.2;                                     // a breath of silence before the first note
+    FORM.forEach((sec, p) => {
+      const ps = t0 + p * 8 * BAR;
+      sec.ch.forEach((chd, b) => {
+        const bs = ps + b * BAR, lastBar = sec.last && b === 7;
+        // harp: root below, then up through the chord and back, six quavers to the bar
+        const arp = [chd[0] - 12, chd[0], chd[2], chd[1] + 12, chd[2], chd[0]];
+        if (lastBar) [chd[0] - 12, chd[0], chd[2], chd[1] + 12, chd[2] + 12].forEach((m, i) => harp(c, dry, wave, bs + i * .11, m, .13));
+        else arp.forEach((m, i) => harp(c, dry, wave, bs + i * BEAT / 2, m + (sec.low && i > 1 ? -12 : 0), i === 0 ? .15 : .09));
+        strings(c, padF, bs, lastBar ? 7 : BAR, chd, .012 * sec.pad);
+      });
+      if (sec.mel) {
+        let bt = 0;
+        sec.mel.forEach(([m, d]) => {
+          const final = sec.last && bt + d >= 24;
+          whistle(c, lead, noise, ps + bt * BEAT, (final ? 6 : d) * BEAT * .96, m - (sec.low ? 12 : 0), .07 * sec.lead);
+          bt += d;
+        });
+      }
+    });
+    const b = await c.startRendering();
+    // gentle limiter by hand: normalise to a comfortable peak
+    let peak = 0; for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i])); }
+    const k = peak > 0 ? .7 / peak : 1;
+    for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] *= k; }
     return b;
   }
 
-  function init() {
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
-    rev = ctx.createConvolver(); rev.buffer = impulse(4.5);
-    const rg = ctx.createGain(); rg.gain.value = .55; rev.connect(rg); rg.connect(master);
-    padF = ctx.createBiquadFilter(); padF.type = 'lowpass'; padF.frequency.value = 700; padF.Q.value = .4;
-    padG = ctx.createGain(); padG.gain.value = .05;
-    padF.connect(padG); padG.connect(master); padG.connect(rev);
-    CH[0].forEach((f) => {
-      for (const det of [-5, 5]) {
-        const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
-        o.connect(padF); o.start(); voices.push(o);
-      }
-    });
-    const nb = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate);
-    const nd = nb.getChannelData(0); let lastS = 0;
-    for (let i = 0; i < nd.length; i++) { lastS = (lastS + .02 * (Math.random() * 2 - 1)) / 1.02; nd[i] = lastS * 3.5; }
-    ocean = ctx.createBufferSource(); ocean.buffer = nb; ocean.loop = true;
-    const of = ctx.createBiquadFilter(); of.type = 'lowpass'; of.frequency.value = 900;
-    oceanG = ctx.createGain(); oceanG.gain.value = 0;
-    ocean.connect(of); of.connect(oceanG); oceanG.connect(master); ocean.start();
+  function stopSrc() { if (src) { try { src.stop(); } catch (e) {} src.disconnect(); src = null; } }
+  function playFrom(t) {
+    stopSrc();
+    if (!buf || t >= DURATION - .05) return;
+    src = ctx.createBufferSource(); src.buffer = buf; src.connect(master);
+    srcT0 = ctx.currentTime; srcOff = t; src.start(0, t);
   }
 
-  function chime(freq, when = 0, vol = .08) {
-    const t = ctx.currentTime + when;
-    [1, 2.01, 3.02].forEach((m, i) => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = 'sine'; o.frequency.value = freq * m;
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(vol * settings.chime / (i + 1), t + .01);
-      g.gain.exponentialRampToValueAtTime(.0001, t + 3.5 / (i + 1));
-      o.connect(g); g.connect(rev); g.connect(master); o.start(t); o.stop(t + 4);
-    });
-  }
-
-  function whoosh() {
-    const t = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = ocean.buffer;
-    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
-    f.frequency.setValueAtTime(120, t); f.frequency.exponentialRampToValueAtTime(3200, t + 3.5);
-    const g = ctx.createGain(); g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(.9, t + 1.5); g.gain.exponentialRampToValueAtTime(.001, t + 6);
-    src.connect(f); f.connect(g); g.connect(master); g.connect(rev); src.start(t); src.stop(t + 6.5);
-    const o = ctx.createOscillator(), og = ctx.createGain();
-    o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(34, t + 3);
-    og.gain.setValueAtTime(.35, t); og.gain.exponentialRampToValueAtTime(.001, t + 4);
-    o.connect(og); og.connect(master); o.start(t); o.stop(t + 4.2);
+  // Offline rendering needs no sound device, so it starts as soon as the page does.
+  function prepare() {
+    if (!rendering && window.OfflineAudioContext) rendering = render().then((b) => { buf = b; }).catch(() => { rendering = null; });
+    return rendering;
   }
 
   return {
+    prepare,
     get on() { return on; },
     settings,
-    setLevel(k, v) {
-      settings[k] = v;
-      if (!ctx) return;
-      if (k === 'pad') padG.gain.setTargetAtTime(.05 * v, ctx.currentTime, .2);
-    },
+    setLevel(k, v) { settings[k] = v; },
     toggle(v) {
       on = v === undefined ? !on : v;
-      if (on && !ctx) { try { init(); } catch (e) { on = false; return false; } }
-      if (ctx) { if (on) ctx.resume(); master.gain.setTargetAtTime(on ? settings.master : 0, ctx.currentTime, .4); }
+      if (on && !ctx) {
+        try {
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+          master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+          prepare();
+        } catch (e) { on = false; return false; }
+      }
+      if (ctx) { if (on) ctx.resume(); else { master.gain.setTargetAtTime(0, ctx.currentTime, .3); } }
       return on;
     },
-    // `beat` is the island's heartbeat phase, so the low chime lands with the pulse.
-    update(t, playing, cap, beat) {
-      if (!ctx || !on) return;
+    // Keep the track where the show clock is; fade in and out with play and pause.
+    update(t, playing) {
+      if (!ctx || !buf) return;
       const now = ctx.currentTime;
-      master.gain.setTargetAtTime(playing ? settings.master * Math.min(1, (DURATION - t) / 2.5) : settings.master * .28, now, .5);
-
-      const act = t < ACTS[1].t ? 0 : t < ACTS[2].t ? 1 : t < ACTS[3].t ? 2 : 3;
-      if (act !== lastChord) {
-        lastChord = act;
-        CH[act].forEach((f, i) => {
-          voices[i * 2].frequency.setTargetAtTime(f, now, 1.8);
-          voices[i * 2 + 1].frequency.setTargetAtTime(f, now, 1.8);
-        });
-      }
-      padF.frequency.setTargetAtTime(500 + 1600 * smooth(74, 100, t) + 600 * smooth(150, 170, t), now, 1.5);
-      oceanG.gain.setTargetAtTime(settings.ocean * (.5 * (1 - smooth(30, 50, t))
-        + .18 * smooth(90, 100, t) * (1 - smooth(106, 115, t)) + .3 * smooth(160, 168, t)), now, 1.2);
-
-      if (cap !== lastCap && cap >= 0 && playing) {
-        const pent = [587.33, 659.25, 739.99, 880, 987.77];
-        chime(pent[cap % 5], 0, .06);
-      }
-      lastCap = cap;
-
-      // The map's heartbeat, kept from the previous build: a low chime on the same
-      // pulse the island's cities beat to, quiet enough to sit under the pad.
-      if (playing && beat !== undefined && settings.chime > .01) {
-        const b = Math.floor(beat);
-        if (b !== lastBeat) { lastBeat = b; chime(CH[act][0], 0, .022); }
-      }
-
-      // The dial: the opening's lines of light, a bell for each year it reaches, and 2036.
-      const yk = Math.min(10, Math.floor(t / (YEAR_END / 10) + 1e-6));
-      if (playing && t >= lastT) {
-        if (lastT < 1.9 && t >= 1.9) [293.66, 369.99, 440, 587.33, 739.99].forEach((f, i) => chime(f, i * .09, .035));
-        if (yk !== lastYear && yk >= 1 && t - yk * YEAR_END / 10 < .5) {
-          const pent = [587.33, 659.25, 739.99, 880, 987.77];
-          if (yk < 10) chime(pent[yk % 5], 0, .045);
-          else [293.66, 440, 587.33, 739.99, 880].forEach((f, i) => chime(f, i * .14, .05));
-        }
-      }
-      lastYear = yk; lastT = t;
-      const sc = t > SCAN_T0 && t < SCAN_T0 + 1;
-      if (sc && !lastScan && playing) { whoosh(); [293.66, 440, 587.33, 739.99].forEach((f, i) => chime(f, .9 + i * .18, .05)); }
-      lastScan = sc;
+      const live = on && playing;
+      master.gain.setTargetAtTime(live ? settings.master * Math.min(1, (DURATION - t) / 2.5) : 0, now, live ? .25 : .15);
+      if (!live) { if (src && now - srcT0 > .5 && !playing) stopSrc(); return; }
+      const pos = srcOff + (now - srcT0);
+      if (!src || Math.abs(pos - t) > .25) playFrom(t);
     },
   };
 })();
+
+audio.prepare();
 
 // ---------------------------------------------------------------- operator state + controls
 let showT = 0, playing = false, started = false, blackout = false, mode = 0, last = performance.now();
@@ -3054,7 +3085,7 @@ addEventListener('resize', resize);
 const CTRL_DEFAULTS = {
   fmapb: 1, lines: 1, grade: .45, warm: .35, nlight: .55, land: 1,
   inset: 0, fscale: 1, tiltx: 0, tilty: 0, dscale: 1, dx: 0, dy: 0,
-  vol: .9, harp: 1, arp: 1, sea: 1,
+  vol: .9,
 };
 const ctrl = Object.assign({}, CTRL_DEFAULTS);
 try { Object.assign(ctrl, JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}')); } catch (e) {}
@@ -3073,9 +3104,6 @@ function applyCtrl() {
   U.uNightLights.value = ctrl.nlight;
   U.uLandLift.value = ctrl.land;
   audio.setLevel('master', ctrl.vol);
-  audio.setLevel('pad', ctrl.harp);
-  audio.setLevel('chime', ctrl.arp);
-  audio.setLevel('ocean', ctrl.sea);
   try { localStorage.setItem('ire2036-ctrl', JSON.stringify(ctrl)); } catch (e) {}
 }
 
@@ -3084,7 +3112,7 @@ const SLIDERS = [
   ['c-nlight', 'nlight'], ['c-land', 'land'],
   ['c-inset', 'inset'], ['c-fscale', 'fscale'], ['c-tiltx', 'tiltx'], ['c-tilty', 'tilty'],
   ['c-dscale', 'dscale'], ['c-dx', 'dx'], ['c-dy', 'dy'],
-  ['c-vol', 'vol'], ['c-harp', 'harp'], ['c-arp', 'arp'], ['c-sea', 'sea'],
+  ['c-vol', 'vol'],
 ];
 const outFor = (el) => (el && el.parentElement) ? el.parentElement.querySelector('output') : null;
 function syncSliders() {
@@ -3227,10 +3255,7 @@ function frame(now) {
   if (needsWorld()) { skyLUT.update(); renderCube(); }
   renderer.setRenderTarget(null);
   renderer.render(post.scene, post.cam);
-  const cap = CAPTIONS.findIndex((c) => idleT >= c.t0 && idleT <= c.t1);
-  // The island's cities pulse on sin(t * 1.5); hand the harp the same phase so the
-  // low string lands exactly on the beat the map is beating to.
-  audio.update(idleT, playing, cap, U.uTime.value * 1.5 / (Math.PI * 2));
+  audio.update(showT, playing && started);
   if (started) {
     $('clock').firstChild.nodeValue = fmt(showT) + ' ';
     const ai = currentAct();
