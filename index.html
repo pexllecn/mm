@@ -1,16 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ireland 2036</title>
+<title>Ireland 2036 | An island of possibility</title>
+<meta name="description" content="A continuous three-minute journey across Ireland, from Atlantic dawn to a possible 2036. Built for four walls and a floor.">
+<meta name="theme-color" content="#050b10">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
 <style>
   /* The same faces bundled with the package, so the lettering holds when the venue is offline. */
-  @font-face { font-family: "Serif Local"; src: url("assets/fonts/instrument-serif-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
-  @font-face { font-family: "Serif Local"; src: url("assets/fonts/instrument-serif-latin-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
-  @font-face { font-family: "Plex Local"; src: url("assets/fonts/ibm-plex-sans-condensed-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
-  @font-face { font-family: "Plex Local"; src: url("assets/fonts/ibm-plex-sans-condensed-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
-  @font-face { font-family: "Plex Local"; src: url("assets/fonts/ibm-plex-sans-condensed-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: "Serif Local"; src: url("igloo/assets/fonts/instrument-serif-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Serif Local"; src: url("igloo/assets/fonts/instrument-serif-latin-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+  @font-face { font-family: "Plex Local"; src: url("igloo/assets/fonts/ibm-plex-sans-condensed-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Plex Local"; src: url("igloo/assets/fonts/ibm-plex-sans-condensed-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+  @font-face { font-family: "Plex Local"; src: url("igloo/assets/fonts/ibm-plex-sans-condensed-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
   /* Single-look design: this page drives a projection room, so it stays dark in every theme. */
   :root {
     color-scheme: dark;
@@ -137,43 +142,47 @@
   }
   @media (prefers-reduced-motion: reduce) { #hud, #toast { transition: none; } }
 </style>
+<link rel="stylesheet" href="igloo/assets/experience.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23050b10'/%3E%3Cpath d='M8 23V9h3v14m5-14h8v3h-5v3h4v3h-4v5h-3' fill='%23ffe600'/%3E%3C/svg%3E">
+</head>
+<body>
 
 <canvas id="stage" aria-label="Ireland 2036 immersive scene"></canvas>
 
+<header id="brandbar"><div class="brand">IRELAND <span>/ 2036</span></div><div class="brand-context"><b>EY</b> · AN IMMERSIVE PERSPECTIVE</div></header>
 <section id="gate" aria-labelledby="gate-title">
   <div class="gate-card">
-    <div class="eyebrow">Igloo immersive · four walls + floor</div>
-    <h1 id="gate-title">Ireland <em>2036</em></h1>
-    <p>The real island. Terrain and sea-floor depth from satellite survey data, satellite imagery draped over it, and every place — the Cliffs of Moher, the Liffey, Arklow Bank — at its true longitude and latitude. Underfoot, the same island as a lit relief map inside a ring that counts 2026 to 2036, and lines of light that run from the floor straight up the walls. The flight is slow and always forward. A wave of light leaves Dublin, and Ireland 2036 takes shape around you; in the last seconds the map settles onto the real island below.</p>
-    <div class="spec"><span><b>3:00</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> live render</span><span id="gpu-note">Checking graphics…</span></div>
-    <div class="note" id="load-note" role="status">Starting up…</div>
-    <div class="row" role="group" aria-label="Output format">
+    <div class="gate-story">
+      <div class="eyebrow">An island of possibility</div>
+      <h1 id="gate-title">Ireland <em>2036</em></h1>
+      <p class="intro">From the Atlantic at first light to the next decade of possibility. One continuous journey, all around you.</p>
+      <div class="spec"><span><b>3 minutes</b></span><span><b>4 acts</b></span><span><b>360°</b> walls + floor</span></div>
+      <div class="row"><button type="button" class="go" id="start" disabled>Enter the experience <span class="arrow" aria-hidden="true">↗</span></button><button type="button" class="ghost" id="retry" hidden>Try loading again</button></div>
+      <div class="loading"><progress id="load-progress" max="100" value="0" aria-label="Preparing the experience"></progress><div class="note" id="load-note" role="status">Preparing the island…</div></div>
+    </div>
+    <details class="gate-settings"><summary>Set up the room</summary><div class="setup-content">
+    <div><span class="setup-label">Output</span><div class="row" role="group" aria-label="Output format">
       <div class="seg" id="mode-seg">
         <button type="button" data-mode="0" aria-pressed="true">360° Igloo</button>
         <button type="button" data-mode="1" aria-pressed="false">Walls + floor</button>
         <button type="button" data-mode="2" aria-pressed="false">Desk preview</button>
       </div>
     </div>
-    <div class="row" role="group" aria-label="Map detail">
+</div><div><span class="setup-label">Satellite detail</span><div class="row" role="group" aria-label="Map detail">
       <div class="seg" id="quality-seg">
-        <button type="button" data-q="standard" aria-pressed="false">Standard map</button>
+        <button type="button" data-q="standard" aria-pressed="false">Standard</button>
         <button type="button" data-q="high" aria-pressed="true">High</button>
         <button type="button" data-q="ultra" aria-pressed="false">Ultra</button>
       </div>
       <span class="stat" id="quality-note"></span>
     </div>
-    <div class="room" role="group" aria-label="Room size in metres">
+</div><div><span class="setup-label">Room dimensions · metres</span><div class="room" role="group" aria-label="Room size in metres">
       <label for="r-w">Front wall <input id="r-w" type="number" min="2" max="30" step="0.1" value="6"> m</label>
       <label for="r-d">Side wall <input id="r-d" type="number" min="2" max="30" step="0.1" value="6"> m</label>
       <label for="r-h">Height <input id="r-h" type="number" min="1.5" max="10" step="0.1" value="3"> m</label>
       <label for="r-e">Eye <input id="r-e" type="number" min="1" max="2.2" step="0.05" value="1.6"> m</label>
     </div>
-    <div class="row">
-      <button type="button" class="go" id="start" disabled>▶ Start the show</button>
-      <button type="button" class="ghost" id="retry" hidden>Try loading again</button>
-      <button type="button" class="ghost" id="open-media">Footage library</button>
-    </div>
-    <div class="keys" aria-label="Operator keys">
+</div><span id="gpu-note">Checking graphics…</span><button type="button" class="ghost" id="open-media">Choose your footage</button>    <div class="keys" aria-label="Operator keys">
       <span><kbd>Space</kbd>Pause / play</span>
       <span><kbd>→</kbd><kbd>←</kbd>Next / previous act</span>
       <span><kbd>R</kbd>Restart</span>
@@ -186,17 +195,20 @@
       <span><kbd>C</kbd>Room controls</span>
     </div>
     <p class="credit">Elevation and bathymetry: Terrain Tiles on AWS (SRTM, NED, GEBCO). Imagery: Esri World Imagery. Place, route and offshore-site coordinates: public geographic data. Floor map: Natural Earth 1:10m (public domain), Ireland and Northern Ireland distinguished; illustrative, not a boundary survey. Swap either service at the top of the script if the venue holds a licensed source.</p>
+</div></details>
+    <div class="gate-chapters" aria-label="The journey"><div><small>01</small><b>Today</b><span>The island we call home</span></div><div><small>02</small><b>Momentum</b><span>Connected to possibility</span></div><div><small>03</small><b>Ireland 2036</b><span>A possible next decade</span></div><div><small>04</small><b>Together</b><span>Ambition, delivered</span></div></div>
   </div>
 </section>
-
+<div id="scene-meta" class="scene-meta" hidden><small id="scene-act">THE JOURNEY</small><strong id="scene-name">Atlantic dawn</strong><span>Drag to look around · scroll to explore your view</span></div>
 <div id="hud" hidden>
+  <div class="transport-top"><span class="clock" id="clock">0:00 <small>/ 3:00</small></span><div class="timeline-wrap"><input id="timeline" class="timeline" type="range" min="0" max="179.99" step="0.01" value="0" aria-label="Journey position" aria-valuetext="0:00 of 3:00"></div><span id="perf-pill" class="perf-pill">Preparing</span></div>
   <div class="acts" id="acts"></div>
   <div class="ctl">
-    <span class="clock" id="clock">0:00 <small>/ 3:00</small></span>
     <button type="button" class="primary" id="b-play">Pause</button>
     <button type="button" id="b-restart">Restart</button>
     <button type="button" id="b-mode">360° Igloo</button>
     <button type="button" id="b-audio">Sound on</button>
+    <button type="button" id="b-chapters">Chapters</button>
     <button type="button" id="b-media">Footage</button>
     <button type="button" id="b-control">Controls</button>
     <button type="button" id="b-full">Full screen</button>
@@ -205,12 +217,13 @@
   </div>
 </div>
 
+<aside id="chapters" hidden aria-labelledby="chapters-title"><div class="row" style="justify-content:space-between"><h2 id="chapters-title">Explore the journey</h2><button type="button" id="close-chapters" class="ghost">Close</button></div><div id="chapter-list" class="chapter-list"></div></aside>
 <aside id="media" hidden aria-labelledby="media-title">
   <div class="row" style="justify-content:space-between">
     <h2 id="media-title">Footage library</h2>
     <button type="button" class="ghost" id="close-media" style="padding:8px 14px">Close</button>
   </div>
-  <p>One clip per scene. Each clip wraps around all four walls as a seamless panorama and pools across the floor as a moving reflection. Clips save with the show, so the Igloo PC picks them up live. Scenes without a clip show the live 3D world.</p>
+  <p>Use your original-resolution clips or images. Ordinary footage is fitted to each wall without stretching. Select 360° only for an equirectangular source. Local files stay on this device for this session; scenes without a clip show the live island.</p>
   <div id="slots"></div>
   <div class="note" id="media-note" role="status"></div>
 </aside>
@@ -225,6 +238,7 @@
     <button type="button" data-tab="floor" aria-pressed="false">Floor</button>
     <button type="button" data-tab="sound" aria-pressed="false">Sound</button>
     <button type="button" data-tab="content" aria-pressed="false">Content</button>
+    <button type="button" data-tab="performance" aria-pressed="false">Render</button>
   </div>
 
   <div class="tabpane" data-pane="look">
@@ -248,6 +262,13 @@
     <p class="hint">Margin masks a projector that overshoots the floor. Keystone corrects an off-axis mount. <kbd>O</kbd> still rotates the world; the dial stays put. The light lines follow the room, so enter its real size on the start screen and they meet the walls exactly.</p>
   </div>
 
+  <div class="tabpane" data-pane="performance" hidden>
+    <div class="seg" id="render-seg" role="group" aria-label="Rendering policy"><button type="button" data-render="adaptive" aria-pressed="true">Adaptive 60</button><button type="button" data-render="locked" aria-pressed="false">Maximum detail</button></div>
+    <div class="performance-readout" aria-live="off"><strong id="render-summary">Waiting for the scene</strong><p id="render-output"></p><p id="render-timing"></p><p id="render-draws"></p></div>
+    <p class="hint">Adaptive 60 balances scene detail against the measured frame budget. The floor, lettering and controls retain native output resolution. Maximum detail locks the scene to the highest supported tier. Frame rate depends on the venue GPU and output size.</p>
+    <div class="control-actions"><button type="button" class="ghost" id="b-calibrate">Check seams</button><button type="button" class="ghost" id="b-report">Save performance report</button></div>
+    <p class="hint"><kbd>G</kbd>Room calibration · <kbd>Q</kbd>Scene detail · <kbd>J</kbd>Chapters</p>
+  </div>
   <div class="tabpane" data-pane="sound" hidden>
     <div class="sl"><label for="c-vol">Music level</label><input id="c-vol" type="range" min="0" max="1.4" step="0.02"><output></output></div>
     <p class="hint">One piece of music plays through the show: an original slow air in the Irish style for low whistle, harp and strings. There are no sound effects.</p>
@@ -269,16 +290,21 @@
 </aside>
 <div id="toast" class="off" role="status"></div>
 
+<script src="igloo/assets/runtime.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 <script>
-if (!window.THREE) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+if (!window.THREE) document.write('<script src="https://unpkg.com/three@0.158.0/build/three.min.js"><\/script>');
 </script>
 <script>
 (() => {
 'use strict';
 const T = window.THREE;
+const Runtime = window.IrelandRuntime;
+let sceneDirty = true, worldDirty = true, contextLost = false, lastSkyTime = -Infinity;
+const shaderErrors = [];
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (id) => document.getElementById(id);
-if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the network and reload.'; return; }
+if (!T || !Runtime) { $('load-note').textContent = 'The rendering engine could not load. Check the connection and reload.'; $('load-note').classList.add('err'); $('retry').hidden = false; $('retry').onclick = () => location.reload(); return; }
 
 
 // ---------------------------------------------------------------- show data
@@ -469,8 +495,9 @@ function heightAt(x, z) {
 function loadImage(url) {
   return new Promise((res, rej) => {
     const im = new Image(); im.crossOrigin = 'anonymous';
-    im.onload = () => res(im);
-    im.onerror = () => rej(new Error('tile failed: ' + url));
+    const timer = setTimeout(() => { im.onload = im.onerror = null; im.src = ''; rej(new Error('map service timed out')); }, 18000);
+    im.onload = () => { clearTimeout(timer); res(im); };
+    im.onerror = () => { clearTimeout(timer); rej(new Error('map tile could not load')); };
     im.src = url;
   });
 }
@@ -534,7 +561,7 @@ async function imageryLayer(z, box, IW, onProgress) {
   const wm = Math.abs(gx(box.lon1) - gx(box.lon0)), hm = Math.abs(gz(box.lat1) - gz(box.lat0));
   // Stay inside the browser's canvas limits: 16384 on either side and about 268 Mpx
   // of area. Exceeding either silently yields a blank canvas, so clamp instead.
-  const MAXDIM = 16384, MAXAREA = 240e6;
+  const MAXDIM = Math.min(16384, renderer.capabilities.maxTextureSize), MAXAREA = 80e6;
   const x0 = Math.floor(tileX(box.lon0, z)), x1 = Math.floor(tileX(box.lon1, z));
   const y0 = Math.floor(tileY(box.lat0, z)), y1 = Math.floor(tileY(box.lat1, z));
   // Never draw a canvas larger than the tiles can actually fill: upscaling invents
@@ -570,7 +597,7 @@ async function imageryLayer(z, box, IW, onProgress) {
   tex.flipY = false;
   if ('SRGBColorSpace' in T) tex.colorSpace = T.SRGBColorSpace;
   tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping;
-  tex.anisotropy = 16; tex.minFilter = T.LinearMipmapLinearFilter; tex.generateMipmaps = true;
+  tex.anisotropy = maxAniso; tex.minFilter = T.LinearMipmapLinearFilter; tex.generateMipmaps = true;
   return tex;
 }
 const baseBox = { lon0: LON_W, lon1: LON_E, lat0: LAT_N, lat1: LAT_S };
@@ -728,6 +755,7 @@ function buildYears() {
 }
 const floorTex = { mask: null, track: null, text: null, years: null };
 function buildFloorText() {
+  sceneDirty = true;
   if (floorTex.text) floorTex.text.dispose();
   if (floorTex.years) floorTex.years.dispose();
   floorTex.text = buildText(); floorTex.years = buildYears();
@@ -787,6 +815,8 @@ try {
 } catch (e) { $('gpu-note').textContent = 'WebGL is not available on this machine.'; return; }
 renderer.setPixelRatio(1);
 renderer.autoClear = true;
+renderer.info.autoReset = false;
+renderer.debug.onShaderError = (ctx, program, vs, fs) => { shaderErrors.push(ctx.getProgramInfoLog(program) || ctx.getShaderInfoLog(fs) || 'Shader compilation failed'); console.error(shaderErrors[shaderErrors.length - 1]); };
 if ('outputColorSpace' in renderer) renderer.outputColorSpace = T.LinearSRGBColorSpace || 'srgb-linear';
 const gl = renderer.getContext();
 const isGL2 = renderer.capabilities.isWebGL2;
@@ -795,49 +825,66 @@ const halfOK = gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT
 const floatLinear = !!gl.getExtension('OES_texture_float_linear');
 $('gpu-note').textContent = halfOK ? 'HDR render ready' : 'Standard render';
 
-const QUALITY = [512, 768, 1024, 1536, 2048];
-// Default to the sharpest cube the GPU allows: 2048 px per face matches an 8K
-// equirectangular output pixel for pixel. The loop steps down on its own if the
-// machine cannot hold frame rate (see adaptQuality).
+const QUALITY = [384, 512, 768, 1024, 1536, 2048].filter(n => n <= gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE));
 const softGPU = /swiftshader|llvmpipe|software/i.test((() => { try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''; } catch (x) { return ''; } })());
-let qIndex = softGPU ? 2 : (gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE) >= 2048 ? 4 : 3);
-const maxAniso = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
-// The world is drawn into a cube around the camera one face at a time, each through a 4x
-// multisampled target, so coastlines, cliff edges, turbine blades and city lights are
-// antialiased before the projection pass filters them for the room's own pixel size.
-// A quarter-size bright-pass cube is written alongside, and bloom is read from it.
-const MSAA = Math.min(4, (renderer.capabilities.maxSamples | 0) || 0);
-let cubeRT, cubeCam, faceRT, brightRT;
+let qIndex = Math.min(QUALITY.length - 1, softGPU ? 1 : 3), renderPolicy = 'adaptive';
+const governor = new Runtime.QualityGovernor(QUALITY.length - 1, qIndex);
+const frameMeter = new Runtime.FrameMeter();
+const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+const MSAA = Math.min(2, renderer.capabilities.maxSamples || 0);
+let cubeRT, cubeCam, faceRT, brightRT, cloudRT;
+// Clouds have no terrain behind them at their altitude in this dataset. Their premultiplied
+// radiance can be resolved independently, then composited before tone mapping and bloom.
+const gpuTimer = (() => {
+  const ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
+  const pending = []; let current = null, ms = null, serial = 0;
+  return {
+    get ms() { return ms; },
+    begin() {
+      if (!ext || ++serial % 8 || pending.length >= 4) return;
+      current = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, current);
+    },
+    end() { if (current) { gl.endQuery(ext.TIME_ELAPSED_EXT); pending.push(current); current = null; } },
+    poll() {
+      if (!ext) return;
+      if (gl.getParameter(ext.GPU_DISJOINT_EXT)) { pending.splice(0).forEach(q => gl.deleteQuery(q)); ms = null; return; }
+      while (pending.length && gl.getQueryParameter(pending[0], gl.QUERY_RESULT_AVAILABLE)) {
+        const q = pending.shift(), sample = gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6;
+        gl.deleteQuery(q); ms = ms == null ? sample : ms * .75 + sample * .25;
+      }
+    }
+  };
+})();
 const copyPass = (() => {
   const m = new T.ShaderMaterial({
-    uniforms: { uSrc: { value: null }, uBright: { value: 0 } },
+    uniforms: { uSrc: { value: null }, uCloud: { value: null }, uBright: { value: 0 }, uSize: { value: 1024 } },
     vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
-    fragmentShader: `uniform sampler2D uSrc; uniform float uBright;
+    fragmentShader: `uniform sampler2D uSrc; uniform sampler2D uCloud; uniform float uBright; uniform float uSize;
+    vec3 composite(vec2 uv){ vec4 c=texture2D(uCloud,uv); return texture2D(uSrc,uv).rgb*(1.-c.a)+c.rgb; }
+    vec3 bright(vec3 c){ float l=max(c.r,max(c.g,c.b)); float w=clamp((l-.95)/1.8,0.,1.); return c*w*w; }
     void main(){
-      if(uBright<.5){ gl_FragColor=vec4(texelFetch(uSrc,ivec2(gl_FragCoord.xy),0).rgb,1.); return; }
-      // Bright pass at quarter size: threshold every source pixel first, then average, so a
-      // small bright light blooms as much as a large one.
-      ivec2 b=ivec2(gl_FragCoord.xy)*4; vec3 s=vec3(0.);
-      for(int j=0;j<4;j++) for(int i=0;i<4;i++){
-        vec3 c=texelFetch(uSrc,b+ivec2(i,j),0).rgb; float l=max(c.r,max(c.g,c.b));
-        float w=clamp((l-.85)/1.6,0.,1.); s+=c*w*w;
-      }
-      gl_FragColor=vec4(min(s/16.,vec3(60.)),1.);
-    }`,
-    depthTest: false, depthWrite: false,
+      if(uBright<.5){ gl_FragColor=vec4(composite(gl_FragCoord.xy/uSize),1.); return; }
+      vec2 uv=gl_FragCoord.xy/(uSize*.25), d=vec2(1.)/uSize;
+      vec3 c=bright(composite(uv+d))+bright(composite(uv-d))+bright(composite(uv+vec2(d.x,-d.y)))+bright(composite(uv+vec2(-d.x,d.y)));
+      gl_FragColor=vec4(min(c*.25,vec3(60.)),1.);
+    }`, depthTest: false, depthWrite: false,
   });
-  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
-  const mesh = new T.Mesh(geo, m); mesh.frustumCulled = false;
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute([-1,-1,0,3,-1,0,-1,3,0],3));
+  const mesh = new T.Mesh(geo,m); mesh.frustumCulled=false;
   const sc = new T.Scene(); sc.add(mesh);
-  return { scene: sc, cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), uniforms: m.uniforms };
+  return { scene: sc, cam: new T.OrthographicCamera(-1,1,1,-1,0,1), uniforms: m.uniforms };
 })();
 function makeCube() {
-  [cubeRT, faceRT, brightRT].forEach((r) => r && r.dispose());
+  [cubeRT, faceRT, brightRT, cloudRT].forEach((r) => r && r.dispose());
   const size = QUALITY[qIndex], type = halfOK ? T.HalfFloatType : T.UnsignedByteType;
-  cubeRT = new T.WebGLCubeRenderTarget(size, { type, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter });
+  cubeRT = new T.WebGLCubeRenderTarget(size, { type, depthBuffer:false, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter });
   cubeRT.texture.anisotropy = maxAniso;
+  const cloudSize = Math.max(192, Math.min(768, size / 2));
+  cloudRT = new T.WebGLRenderTarget(cloudSize, cloudSize, { type, depthBuffer: false, minFilter: T.LinearFilter, magFilter: T.LinearFilter, generateMipmaps: false });
+  copyPass.uniforms.uCloud.value = cloudRT.texture; copyPass.uniforms.uSize.value = size;
+  sceneDirty = true; worldDirty=true; lastSkyTime = -Infinity;
   faceRT = new T.WebGLRenderTarget(size, size, { type, samples: MSAA, depthBuffer: true, generateMipmaps: false, minFilter: T.NearestFilter, magFilter: T.NearestFilter });
-  brightRT = new T.WebGLCubeRenderTarget(size / 4, { type, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter });
+  brightRT = new T.WebGLCubeRenderTarget(size / 4, { type, depthBuffer:false, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter });
   if (cubeCam) { cubeCam.renderTarget = cubeRT; } else { cubeCam = new T.CubeCamera(20, 2200000, cubeRT); }
   U.uPx.value = size / 2;
   if (post) { const P = post.material.uniforms; P.uCube.value = cubeRT.texture; P.uBright.value = brightRT.texture; P.uBrightPx.value = size / 4; }
@@ -847,9 +894,11 @@ function renderCube() {
     cubeCam.coordinateSystem = renderer.coordinateSystem; cubeCam.updateCoordinateSystem();
   }
   cubeCam.updateMatrixWorld(true);
+  const clearAlpha = renderer.getClearAlpha();
   const cams = cubeCam.children;
   for (let f = 0; f < 6; f++) {
     renderer.setRenderTarget(faceRT); renderer.render(scene, cams[f]);
+    renderer.setClearAlpha(0); renderer.setRenderTarget(cloudRT); renderer.render(cloudLayer.scene, cams[f]); renderer.setClearAlpha(clearAlpha);
     copyPass.uniforms.uSrc.value = faceRT.texture;
     copyPass.uniforms.uBright.value = 0; cubeRT.texture.generateMipmaps = f === 5;
     renderer.setRenderTarget(cubeRT, f); renderer.render(copyPass.scene, copyPass.cam);
@@ -1013,7 +1062,7 @@ U.uCell.value = (() => {
 // Earth, seen from the camera's real altitude. Rendered each frame into a small
 // panorama that concentrates its rows at the horizon, where the colour changes fastest.
 const skyLUT = (() => {
-  const rt = new T.WebGLRenderTarget(512, 256, { type: halfOK ? T.HalfFloatType : T.UnsignedByteType, depthBuffer: false, magFilter: T.LinearFilter, minFilter: T.LinearFilter, generateMipmaps: false });
+  const rt = new T.WebGLRenderTarget(384, 192, { type: halfOK ? T.HalfFloatType : T.UnsignedByteType, depthBuffer: false, magFilter: T.LinearFilter, minFilter: T.LinearFilter, generateMipmaps: false });
   rt.texture.wrapS = T.RepeatWrapping;
   const m = new T.ShaderMaterial({
     uniforms: U,
@@ -1147,7 +1196,7 @@ const cloudLayer = (() => {
     float t0=max(min(tA,tB),0.), t1=max(tA,tB);
     t0=max(t0,tp-16000.); t1=min(t1,tp+16000.);
     if(t1<=t0) discard;
-    const int NC=30;
+    const int NC=24;
     float stp=(t1-t0)/float(NC);
     vec3 L=normalize(uLightDir); float mu=dot(d,L);
     float ph=hg(mu,.62)*.72+hg(mu,-.22)*.28;
@@ -1157,7 +1206,7 @@ const cloudLayer = (() => {
     float under=(1.-smoothstep(-.005,.06,uSunDir.y))*smoothstep(-.11,-.035,uSunDir.y);
     vec3 underC=uSunCol*vec3(1.,.62,.55)*1.3;
     // A fixed dither per pixel: no crawling grain from frame to frame.
-    float jit=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(.06711056,.00583715))));
+    float jit=.5; // stable midpoint integration: no grain amplified by cloud reconstruction
     float Tr=1.; vec3 Ls=vec3(0.); float tHit=-1.;
     for(int i=0;i<NC;i++){
       float tt=t0+stp*(float(i)+jit);
@@ -1183,8 +1232,9 @@ const cloudLayer = (() => {
     gl_FragColor=vec4(C*A,A);
   }`, {}, { transparent: true, depthWrite: false, side: T.DoubleSide, blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor });
   const g = new T.PlaneGeometry(560000, 560000, 1, 1); g.rotateX(-Math.PI / 2); g.translate(0, 3550, 0);
-  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 4; scene.add(mesh);
-  return m;
+  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 4;
+  const cloudScene = new T.Scene(); cloudScene.add(mesh);
+  return { material: m, scene: cloudScene };
 })();
 
 
@@ -1492,87 +1542,8 @@ function buildWorld() {
     const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; scene.add(mesh);
   }
 
-  // ------------------------------------------------ towns and cities
-  {
-    seedN = 7;
-    const inst = [];
-    const dockCentre = [gx(PLACES.docklands[0]), gz(PLACES.docklands[1])];
-    // Today's towns are in the imagery and the street light; only what 2036 adds is built
-    // here: towers in the Docklands and new neighbourhoods round Dublin, rising after the sweep.
-    for (let i = 0; i < 90; i++) {
-      const a = rnd() * 6.2832, r = 400 + rnd() * 2600;
-      const x = dockCentre[0] + Math.cos(a) * r, z = dockCentre[1] + Math.sin(a) * r * .55;
-      if (heightAt(x, z) < 3) continue;
-      const w = 20 + rnd() * 16;
-      inst.push([x, z, w, w * (.7 + rnd() * .5), 55 + rnd() * 95, 2, 1]);
-    }
-    for (let c = 0; c < 5; c++) {
-      const a = 2.4 + c * .42, r = 11000 + rnd() * 5000;
-      const nx = gx(PLACES.dublin[0]) + Math.cos(a) * r, nz = gz(PLACES.dublin[1]) + Math.sin(a) * r;
-      for (let row = 0; row < 8; row++) for (let k = 0; k < 7; k++) {
-        const x = nx + k * 32 + (row % 2) * 10, z = nz + row * 26;
-        if (heightAt(x, z) < 4) continue;
-        inst.push([x, z, 22, 12, 9 + rnd() * 7, 3, 1]);
-      }
-    }
-
-    const geo = new T.BoxGeometry(1, 1, 1); geo.translate(0, .5, 0);
-    const seeds = new Float32Array(Math.max(1, inst.length) * 4);
-    const m = mat(`attribute vec4 aSeed; varying vec3 vW; varying vec3 vN; varying vec4 vS; varying float vBase; varying float vTop; varying float vRise;
-    void main(){
-      vec4 o=modelMatrix*instanceMatrix*vec4(0.,0.,0.,1.);
-      float rise=1.;
-      if(aSeed.w>.5){ float d=length(o.xz-uScanC); rise=smoothstep(0.,1.,clamp((uScanR-d-1200.)/9000.,0.,1.)); }
-      vec3 p=position; p.y*=max(rise,.0001);
-      vec4 w=modelMatrix*instanceMatrix*vec4(p,1.);
-      vW=w.xyz; vN=normalize(mat3(modelMatrix*instanceMatrix)*normal); vS=aSeed; vBase=o.y;
-      vTop=(modelMatrix*instanceMatrix*vec4(0.,1.,0.,1.)).y; vRise=rise;
-      gl_Position=projectionMatrix*viewMatrix*w; }`, `
-    varying vec3 vW; varying vec3 vN; varying vec4 vS; varying float vBase; varying float vTop; varying float vRise;
-    void main(){
-      if(vRise<.002) discard;
-      vec3 N=normalize(vN); vec3 P=vW; vec3 V=normalize(P-uCam);
-      float type=vS.y; bool fut=vS.w>.5;
-      vec3 fac = type<.5? vec3(.42,.22,.15) : (type<1.5? vec3(.62,.6,.55) : (type<2.5? vec3(.16,.22,.26) : vec3(.7,.68,.63)));
-      fac*=.85+.3*vS.x;
-      bool roof=N.y>.5;
-      float along=abs(N.x)>.5?P.z:P.x;
-      vec2 wc=vec2(along/(type>1.5&&type<2.5?2.4:3.2),(P.y-vBase)/3.3);
-      vec2 wf=fract(wc); vec2 wid=floor(wc);
-      float win=roof?0.:step(.16,wf.x)*step(wf.x,.84)*step(.22,wf.y)*step(wf.y,.82)*step(1.,wid.y);
-      vec3 col=fac;
-      if(type>1.5&&type<2.5){ col=mix(fac,skyCol(reflect(V,N))*.7,.55*(1.-float(roof))); win=roof?0.:step(.08,wf.x)*step(.3,wf.y); }
-      // Glass reflects the sky with a Fresnel term rather than reading as flat black.
-      float fr=.04+.96*pow(1.-max(dot(-V,N),0.),5.);
-      col=mix(col,mix(vec3(.04,.05,.06),skyCol(reflect(V,N))*.8,.25+.75*fr),win*.8);
-      // Contact darkening where walls meet the ground, and a little weathering.
-      col*=.62+.38*smoothstep(0.,14.,P.y-vBase);
-      col*=.92+.16*texture2D(uNoise,vec2(along,P.y)*.02).a;
-      float inside=scanInside(P.xz);
-      if(roof){ col=vec3(.1,.1,.11); if(inside>.5){ col=vS.z<.5?vec3(.16,.34,.13):vec3(.04,.06,.13); } }
-      vec3 lit=col*(uLightCol*max(dot(N,uLightDir),0.)+uAmb*(.55+.45*N.y));
-      float lh=hash12(wid+vS.x*91.+N.xz*13.);
-      float litFrac=mix(.04,fut?.75:.55,uNight);
-      vec3 wcol=fut?vec3(.75,.9,1.):mix(vec3(1.,.72,.4),vec3(1.,.85,.6),lh);
-      lit+=win*step(lh,litFrac)*wcol*(1.2+uNight*1.6)*(.4+.6*uNight);
-      if(fut){ lit+=GOLD*smoothstep(vTop-2.5,vTop-.3,P.y)*(1.-float(roof))*2.5*uNight; }
-      if(roof&&inside>.5&&vS.z>=.5){ lit+=uLightCol*pow(max(dot(reflect(V,N),uLightDir),0.),30.)*.8+vec3(.15,.3,.7)*.12*uNight; }
-      lit+=scanRing(P.xz)*GOLD*2.;
-      gl_FragColor=vec4(applyFog(lit,P),1.);
-    }`);
-    const im = new T.InstancedMesh(geo, m, Math.max(1, inst.length));
-    const M = new T.Matrix4();
-    inst.forEach((b, i) => {
-      const y = heightAt(b[0], b[1]) - 1.5;
-      M.makeScale(b[2], b[4] + 1.5, b[3]); M.setPosition(b[0], y, b[1]);
-      im.setMatrixAt(i, M);
-      seeds.set([rnd(), b[5], rnd(), b[6]], i * 4);
-      if (b[6] && b[5] === 2 && b[4] > 90) BEACONS.push([b[0], y + b[4] + 3, b[1], 0, 1]);
-    });
-    im.count = inst.length;
-    geo.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
-    im.frustumCulled = false; scene.add(im);
-  }
+  // City texture and night-light settlement masks carry the real urban pattern.
+  // Speculative randomly positioned box towers have been removed from the geographic view.
 
   // ------------------------------------------------ landmarks, at their true coordinates
   {
@@ -1632,15 +1603,11 @@ function buildWorld() {
         spots.push([x, z]);
       }
     }
-    // A 15 MW turbine is 150 m to the hub with a 118 m blade and a chord of about
-    // six metres. At the altitude this show flies over the wind farms, that blade
-    // renders 0.14 px wide -- mathematically invisible, which is why they could not
-    // be seen. These are drawn at roughly twice real scale so they read as turbines
-    // in the room. Positions, spacing and site boundaries remain the real ones.
-    const HUB = 300, ROT = 210, T_TOP = 26, T_BOT = 40, CHORD = 20;
+    // Representative modern turbine proportions. Site layouts remain illustrative.
+    const HUB = 150, ROT = 118, T_TOP = 4, T_BOT = 7, CHORD = 6;
     const tower = new T.CylinderGeometry(T_TOP, T_BOT, HUB, 18); tower.translate(0, HUB / 2, 0);
-    const nac = new T.BoxGeometry(60, 26, 26); nac.translate(6, HUB + 4, 0);
-    const blade = new T.BoxGeometry(CHORD, ROT, 11); blade.translate(0, ROT / 2, 0);
+    const nac = new T.BoxGeometry(18, 8, 8); nac.translate(3, HUB + 2, 0);
+    const blade = new T.BoxGeometry(CHORD, ROT, 1.8); blade.translate(0, ROT / 2, 0);
     // Taper the blade toward the tip so it still reads as an aerofoil, not a plank.
     const bp = blade.attributes.position;
     for (let i = 0; i < bp.count; i++) {
@@ -1866,7 +1833,7 @@ function captionTexture(c) {
   const t = new T.CanvasTexture(cv); t.anisotropy = 8; t.generateMipmaps = true; return t;
 }
 let capTextures = [];
-function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures = CAPTIONS.map(captionTexture); }
+function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures = CAPTIONS.map(captionTexture); sceneDirty = true; }
 
 // ---------------------------------------------------------------- final projection pass
 // Every output pixel is resolved to a point in the physical room (a wall at perimeter P and
@@ -1887,7 +1854,9 @@ const post = (() => {
       uCube: { value: null }, uBright: { value: null }, uBrightPx: { value: 256 },
       uYaw: { value: 0 }, uHead: { value: 0 }, uMode: { value: 0 }, uRect: { value: new T.Vector4(0, 0, 1, 1) },
       uRoom: { value: new T.Vector3(6, 6, 3) }, uEye: { value: 1.6 }, uPrev: { value: new T.Vector3(0, 0, Math.tan(40 * Math.PI / 180)) },
+      uCalibrate: { value: 0 },
       uFade: { value: 1 }, uExp: { value: 1 }, uBloom: { value: halfOK ? 1 : 0 }, uTime: U.uTime, uFloorRot: { value: 0 },
+      u360A: {value:0},u360B:{value:0},
       uA: { value: BLANK }, uB: { value: BLANK }, uHasA: { value: 0 }, uHasB: { value: 0 }, uAspA: { value: 1.7778 }, uAspB: { value: 1.7778 },
       uMix: { value: 0 }, uDrift: { value: 0 }, uZoomA: { value: 1 }, uZoomB: { value: 1 }, uSwirl: { value: 0 },
       uFuture: { value: 0 },
@@ -1919,7 +1888,9 @@ const post = (() => {
     fragmentShader: `
     uniform samplerCube uCube; uniform samplerCube uBright; uniform float uBrightPx;
     uniform float uYaw; uniform float uHead; uniform int uMode; uniform vec4 uRect; uniform vec3 uRoom; uniform float uEye; uniform vec3 uPrev;
+    uniform float uCalibrate;
     uniform float uFade; uniform float uExp; uniform float uBloom; uniform float uTime; uniform int uFloorRot;
+    uniform float u360A;uniform float u360B;
     uniform sampler2D uA; uniform sampler2D uB; uniform float uHasA; uniform float uHasB; uniform float uAspA; uniform float uAspB;
     uniform float uMix; uniform float uDrift; uniform float uZoomA; uniform float uZoomB; uniform float uSwirl;
     uniform float uFuture;
@@ -1965,29 +1936,23 @@ const post = (() => {
       return n.x>0.? W+(xz.y+D*.5) : 2.*W+D+(D*.5-xz.y);
     }
     float wrapP(float a){ return a-PER*floor(a/PER+.5); }
-    vec3 foot(sampler2D tex, float asp, float P, float v, float zoom){
-      float n=max(2.,floor(PER/(H*asp)*.5+.5)*2.);
-      float x=P/PER*n+uDrift;
-      float u=1.-abs(fract(x*.5)*2.-1.);
-      vec2 uv=(vec2(u,v)-.5)/zoom+.5;
-      uv.y=clamp(uv.y,.002,.998);
-      return textureLod(tex,uv,0.).rgb;
+    vec3 foot(sampler2D tex,float asp,float P,float v,float zoom,float spherical,vec3 dir){
+      if(spherical>.5){vec2 uv=vec2(atan(dir.x,-dir.z)/6.2831853+.5,asin(clamp(dir.y,-1.,1.))/3.14159265+.5);return texture2D(tex,uv).rgb;}
+      float p=mod(P+PER,PER),w=W,u=p;
+      if(p>=2.*W+D){w=D;u=p-2.*W-D;}else if(p>=W+D){u=p-W-D;}else if(p>=W){w=D;u=p-W;}
+      vec2 uv=vec2(u/w,v)-.5;float target=w/H;
+      // Cover crop; never distort source pixels. A normal clip repeats once per wall.
+      if(target>asp)uv.y*=asp/target;else uv.x*=target/asp;
+      return texture2D(tex,clamp(uv/zoom+.5,vec2(.001),vec2(.999))).rgb;
     }
-    // Bloom from the bright-pass cube: six octaves. The fine ones are read straight; the
-    // wide ones are smoothed with a hexagon of taps in direction space, so glow stays round
-    // (no cross-shaped glare) and has no seams at the cube's edges.
+    // Mip-filtered radiance at three scales: eight reads instead of thirty per output pixel.
+    // The directional halo is circular and continuous at cubemap boundaries.
     vec3 bloomAt(vec3 d){
-      vec3 t1=normalize(cross(d,abs(d.y)<.95?vec3(0.,1.,0.):vec3(1.,0.,0.))); vec3 t2=cross(d,t1);
-      float px=1.5708/uBrightPx;
-      vec3 acc=textureLod(uBright,d,0.).rgb*.30+textureLod(uBright,d,1.).rgb*.24;
-      const float BW[4]=float[4](.18,.13,.09,.06);
-      for(int i=0;i<4;i++){
-        float L=float(i+2), a=px*exp2(L)*.8;
-        vec3 s=textureLod(uBright,d,L).rgb;
-        for(int k=0;k<6;k++){ float an=float(k)*1.0472+float(i)*.5; s+=textureLod(uBright,normalize(d+(t1*cos(an)+t2*sin(an))*a),L).rgb; }
-        acc+=s/7.*BW[i];
-      }
-      return acc;
+      vec3 t1=normalize(cross(d,abs(d.y)<.95?vec3(0.,1.,0.):vec3(1.,0.,0.))), t2=cross(d,t1);
+      float a=1.5708/uBrightPx*16.;
+      vec3 c=textureLod(uBright,d,1.).rgb*.44+textureLod(uBright,d,2.5).rgb*.30;
+      for(int k=0;k<6;k++){ float an=float(k)*1.04719755; c+=textureLod(uBright,normalize(d+(t1*cos(an)+t2*sin(an))*a),4.).rgb*.0433333; }
+      return c;
     }
     // A line of light: an antialiased core of width w (never thinner than a pixel, with its
     // energy kept) and an exponential glow of radius gw.
@@ -2163,6 +2128,14 @@ const post = (() => {
       float pxQ=clamp(length(fwidth(q)),1e-4,.03), pxH=clamp(max(fwidth(P),fwidth(hW)),1e-4,.03);
       float pxR=onFloor?pxQ:pxH;                     // metres per pixel on this surface
 
+      if(uCalibrate>.5){
+        // Perimeter coordinate and distance from the floor-wall seam are shared on both surfaces.
+        float dist=onFloor?length(q-wb):hW;
+        float grid=(1.-smoothstep(pxR,pxR*2.,abs(fract(P+.5)-.5)))+(1.-smoothstep(pxR,pxR*2.,abs(fract(dist+.5)-.5)));
+        vec3 sector=.35+.3*cos(vec3(0.,2.094,4.189)+P/PER*6.2831853);
+        vec3 c=sector*.32+vec3(min(grid,1.))*.5+vec3(1.,.9,.15)*exp(-abs(dist)/max(pxR*2.,.014));
+        gl_FragColor=vec4(black?vec3(0.):c*uFade,1.); return;
+      }
       // ---- the world (or footage) on this surface
       float rr=0.,fv=0.;
       if(onFloor){
@@ -2184,8 +2157,8 @@ const post = (() => {
       float n=fbm(nc+vec2(uTime*.05,0.));
       float edgeP=uMix*1.25-.12;
       float warp=(1.-abs(uMix*2.-1.))*.05*(n-.5);
-      vec3 ca=uHasA>.5?foot(uA,uAspA,PF+warp*PER*.3,v+warp,uZoomA):cub;
-      vec3 cb=uHasB>.5?foot(uB,uAspB,PF-warp*PER*.3,v-warp,uZoomB):cub;
+      vec3 ca=uHasA>.5?foot(uA,uAspA,PF+warp*PER*.3,v+warp,uZoomA,u360A,d):cub;
+      vec3 cb=uHasB>.5?foot(uB,uAspB,PF-warp*PER*.3,v-warp,uZoomB,u360B,d):cub;
       float mm=smoothstep(n-.06,n+.06,edgeP);
       vec3 col=mix(cb,ca,mm);
       // The liquid edge belongs to footage crossfades; over the live world a scene change is seamless.
@@ -2401,7 +2374,7 @@ const post = (() => {
           col+=GOLD*exp(-abs(rr2-dd)*60.)*step(rr2,1.1)*smoothstep(.3,.45,cu.y)*(1.-smoothstep(.6,.75,cu.y))*.14*uCapA;
         }
       }
-      col+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)/255.;
+      col+=(hash12(gl_FragCoord.xy)-.5)/510.; // static sub-LSB dither, no crawling film grain
       gl_FragColor=black?vec4(0.,0.,0.,1.):vec4(clamp(col,0.,1.)*uFade,1.);
     }`,
     depthTest: false, depthWrite: false,
@@ -2647,6 +2620,7 @@ function applyTime(t, dt) {
   const ma = media[A.id], mb = media[B.id];
   P.uHasA.value = ma && ma.tex ? 1 : 0; P.uA.value = ma && ma.tex ? ma.tex : BLANK; P.uAspA.value = ma && ma.asp || 1.7778;
   P.uHasB.value = mb && mb.tex ? 1 : 0; P.uB.value = mb && mb.tex ? mb.tex : BLANK; P.uAspB.value = mb && mb.asp || 1.7778;
+  P.u360A.value=ma?.equirectangular?1:0;P.u360B.value=mb?.equirectangular?1:0;
   P.uMix.value = mix;
   P.uZoomA.value = 1 + .09 * (t - A.t0) / (A.t1 - A.t0 + XFADE);
   P.uZoomB.value = 1 + .09 * (t - B.t0) / (B.t1 - B.t0 + XFADE);
@@ -2730,27 +2704,28 @@ function syncVideos(t, live) {
         const target = want % v.duration;
         if (Math.abs(v.currentTime - target) > 1.2) { try { v.currentTime = target; } catch (e) {} }
       }
-      v.playbackRate = playing ? 1 : 0.0001;
+      v.playbackRate = 1;
       if (v.paused && playing) v.play().catch(() => {});
       if (!playing && !v.paused) v.pause();
     } else if (!v.paused) v.pause();
   });
 }
 function loadMedia(id, row) {
+  sceneDirty=true;
   const old = media[id];
-  if (old) { if (old.tex) old.tex.dispose(); if (old.video) { old.video.pause(); old.video.removeAttribute('src'); old.video.load(); } delete media[id]; }
+  if (old) { if(old.url?.startsWith('blob:'))URL.revokeObjectURL(old.url); if (old.tex) old.tex.dispose(); if (old.video) { old.video.pause(); old.video.removeAttribute('src'); old.video.load(); } delete media[id]; }
   if (!row || !(row.asset || row.url)) { renderSlots(); return; }
   const url = row.url || '/_blob/' + row.asset;
-  const entry = { kind: row.kind, url, name: row.name || '', credit: row.credit || '' };
+  const entry = { equirectangular:!!row.equirectangular,kind: row.kind, url, name: row.name || '', credit: row.credit || '' };
   media[id] = entry;
   if (row.kind === 'video') {
     const v = document.createElement('video');
     v.src = url; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
-    v.addEventListener('loadeddata', () => { entry.asp = v.videoWidth / v.videoHeight || 1.7778; entry.tex = new T.VideoTexture(v); entry.tex.minFilter = T.LinearFilter; entry.tex.generateMipmaps = false; renderSlots(); });
+    v.addEventListener('loadeddata', () => { entry.asp = v.videoWidth / v.videoHeight || 1.7778; entry.tex = new T.VideoTexture(v); entry.tex.minFilter = T.LinearFilter; entry.tex.generateMipmaps = false; sceneDirty=true;renderSlots(); });
     v.addEventListener('error', () => { entry.error = true; renderSlots(); });
     entry.video = v;
   } else {
-    new T.TextureLoader().load(url, (tex) => { entry.tex = tex; entry.asp = tex.image.width / tex.image.height; renderSlots(); },
+    new T.TextureLoader().load(url, (tex) => { entry.tex = tex; entry.asp = tex.image.width / tex.image.height;tex.anisotropy=maxAniso;sceneDirty=true;renderSlots(); },
       undefined, () => { entry.error = true; renderSlots(); });
   }
   renderSlots();
@@ -2769,19 +2744,21 @@ function renderSlots() {
     const b = document.createElement('b'); b.textContent = `${fmt(s.t0)} · ${s.name}`;
     const sm = document.createElement('small'); sm.textContent = m ? (m.name + (m.credit ? ' · ' + m.credit : '')) : s.want;
     const acts = document.createElement('div'); acts.className = 'acts-row';
-    if (assetsApi) {
+    { // Local original-resolution files are available without hosted storage.
       const lab = document.createElement('label'); lab.textContent = m ? 'Replace clip' : 'Add clip';
       const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'video/mp4,video/webm,image/jpeg,image/png,image/webp'; inp.id = 'file-' + s.id;
       inp.addEventListener('change', () => inp.files[0] && upload(s.id, inp.files[0]));
       lab.appendChild(inp); acts.appendChild(lab);
       if (m) { const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.addEventListener('click', () => removeSlot(s.id)); acts.appendChild(rm); }
     }
+    if(m){const lab=document.createElement('label');lab.className='view-hint';const ck=document.createElement('input');ck.type='checkbox';ck.checked=!!m.equirectangular;ck.style.cssText='position:static;width:auto;height:auto;opacity:1';ck.addEventListener('change',()=>{m.equirectangular=ck.checked;sceneDirty=true;});lab.append(ck,document.createTextNode(' 360° equirectangular'));acts.append(lab);}
     info.append(b, sm, acts); row.append(th, info); box.appendChild(row);
   });
 }
 function note(msg, err) { const n = $('media-note'); n.textContent = msg; n.classList.toggle('err', !!err); }
 async function upload(id, file) {
-  if (file.size > 20 * 1024 * 1024) { note('That file is over 20 MB. Export 1920 px wide H.264 MP4 (about 15–20 s) and try again.', true); return; }
+  if(!assetsApi||!dbApi){loadMedia(id,{url:URL.createObjectURL(file),kind:file.type.startsWith('video/')?'video':'image',name:file.name});note('Original file loaded for this session. Reselect after reopening.');return;}
+  if (file.size > 20 * 1024 * 1024) { note('Hosted storage accepts files up to 20 MB. Use a local copy for larger original-resolution footage.', true); return; }
   note('Uploading ' + file.name + '…');
   try {
     const old = media[id] && media[id].url;
@@ -2795,13 +2772,14 @@ async function upload(id, file) {
   }
 }
 async function removeSlot(id) {
+  if(!assetsApi||!dbApi){loadMedia(id,null);note('Local clip removed. The live island is restored.');return;}
   const m = media[id]; if (!m) return;
   try { await dbApi.doc('media/' + id).delete(); if (m.url.startsWith('/_blob/')) await assetsApi.delete(m.url.split('/').pop()); note('Removed. This scene now shows the live 3D world.'); }
   catch (e) { note('Could not remove that clip. Try again.', true); }
 }
 (async () => {
   renderSlots();
-  if (!window.claude || !window.claude.use) { note('The footage library loads from the published link.'); return; }
+  if (!window.claude || !window.claude.use) { note('Local files are available at their original resolution.'); return; }
   try { dbApi = await window.claude.use('db'); assetsApi = await window.claude.use('assets'); } catch (e) { /* stays null */ }
   if (!dbApi) { note('Footage library is not available in this view. Scenes without footage show the live 3D world.'); return; }
   note(assetsApi ? '' : 'Only editors can change clips. Saved clips still play here.');
@@ -3000,7 +2978,7 @@ const audio = (() => {
 // ---------------------------------------------------------------- operator state + controls
 let showT = 0, playing = false, started = false, blackout = false, mode = 0, last = performance.now();
 const MODES = ['360° Igloo', 'Walls + floor', 'Desk preview'];
-const look = { yaw: 0, pitch: 0, drag: null };
+const look = { yaw: 0, pitch: .12, targetYaw: 0, targetPitch: .12, zoom: 40, targetZoom: 40, drag: null };
 const actsEl = $('acts');
 ACTS.forEach((a, i) => {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'act'; b.id = 'act-' + i;
@@ -3008,15 +2986,16 @@ ACTS.forEach((a, i) => {
   b.addEventListener('click', () => seek(a.t + .01)); actsEl.appendChild(b);
 });
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('off'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('off'), 1600); }
-function seek(t) { showT = clamp(t, 0, DURATION - .01); camSmooth.ready = false; }
+function seek(t) { showT = clamp(t, 0, DURATION - .01); camSmooth.ready = false; sceneDirty = true; worldDirty=true; lastSkyTime = -Infinity; frameMeter.clear(); governor.reset(); }
 function currentAct() { let i = 0; ACTS.forEach((a, k) => { if (showT >= a.t) i = k; }); return i; }
 function setMode(m) {
-  mode = m; post.material.uniforms.uMode.value = m; resize();
+  mode = clamp(m|0,0,2); m=mode; post.material.uniforms.uMode.value = m; resize();
+  $('scene-meta').hidden = !started || mode !== 2;
   document.querySelectorAll('#mode-seg button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.mode === m)));
   $('b-mode').textContent = MODES[m];
   try { localStorage.setItem('ire2036-mode', String(m)); } catch (e) {}
 }
-function setPlaying(p) { playing = p; $('b-play').textContent = p ? 'Pause' : 'Play'; }
+function setPlaying(p) { playing = !!p; last = performance.now(); sceneDirty = true; frameMeter.clear(); governor.reset(); $('b-play').textContent = p ? 'Pause' : 'Play'; $('b-play').setAttribute('aria-label',p?'Pause the journey':'Play the journey'); }
 function fullscreen() {
   const el = document.documentElement;
   if (!document.fullscreenElement) { (el.requestFullscreen ? el.requestFullscreen() : Promise.reject()).catch(() => toast('Full screen is not available here')); }
@@ -3024,11 +3003,11 @@ function fullscreen() {
 }
 function start() {
   if ($('start').disabled) return;
-  started = true; $('gate').hidden = true; $('hud').hidden = false;
+  started = true; $('gate').hidden = true; $('hud').hidden = false; document.body.classList.add('in-show'); $('scene-meta').hidden = mode !== 2;
   seek(0); setPlaying(true);
   if (!document.fullscreenElement && mode !== 2) fullscreen();
   audio.toggle(true); $('b-audio').textContent = 'Sound off';
-  poke();
+  poke(); $('b-play').focus({preventScroll:true});
 }
 $('start').addEventListener('click', start);
 document.querySelectorAll('#mode-seg button').forEach((b) => b.addEventListener('click', () => setMode(+b.dataset.mode)));
@@ -3043,10 +3022,11 @@ $('open-media').addEventListener('click', openMedia);
 $('close-media').addEventListener('click', () => { $('media').hidden = true; });
 
 let idle;
-function poke() { document.body.classList.remove('show-hidden'); clearTimeout(idle); idle = setTimeout(() => { if (started && $('media').hidden && $('control').hidden) document.body.classList.add('show-hidden'); }, 2800); }
+function poke() { document.body.classList.remove('show-hidden'); clearTimeout(idle); idle = setTimeout(() => { if (started && $('media').hidden && $('control').hidden && $('chapters').hidden && !(document.activeElement.closest('#hud') && document.activeElement.matches(':focus-visible'))) document.body.classList.add('show-hidden'); }, 2800); }
 addEventListener('pointermove', poke);
 addEventListener('keydown', (e) => {
-  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
+  if(e.key==='Escape'){closePanels();poke();return;}
+  if (e.target && (e.target.matches('input,select,textarea,summary') || e.target.isContentEditable || (e.target.matches('button') && [' ','Enter'].includes(e.key)))) return;
   const k = e.key;
   if (!started && (k === 'Enter' || k === ' ')) { e.preventDefault(); if (!$('start').disabled) start(); return; }
   if (k === ' ' || k === 'k') { e.preventDefault(); setPlaying(!playing); toast(playing ? 'Playing' : 'Paused'); }
@@ -3058,16 +3038,21 @@ addEventListener('keydown', (e) => {
   else if (k === 'a' || k === 'A') { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; toast(on ? 'Sound on' : 'Sound off'); }
   else if (k === 'h' || k === 'H') { if (document.body.classList.contains('show-hidden')) poke(); else document.body.classList.add('show-hidden'); return; }
   else if (k === 'b' || k === 'B' || k === '.') { blackout = !blackout; toast(blackout ? 'Blackout' : 'Picture on'); }
-  else if (k === 'q' || k === 'Q') { qIndex = (qIndex + 1) % QUALITY.length; makeCube(); toast('Detail ' + QUALITY[qIndex] + ' px per face'); }
+  else if (k === 'q' || k === 'Q') { qIndex = (qIndex + 1) % QUALITY.length; governor.index=qIndex; governor.reset(); makeCube(); toast('Scene detail '+QUALITY[qIndex]+' px per face'); }
+  else if (k === 'g' || k === 'G') toggleCalibration();
+  else if (k === 'j' || k === 'J') openChapters();
   else if (k === 'c' || k === 'C') { openControl(); }
   else if (k === 'o' || k === 'O') { const u = post.material.uniforms.uFloorRot; u.value = (u.value + 1) % 4; toast('Floor rotated ' + u.value * 90 + '°'); saveRoom(); }
   else if (k >= '1' && k <= '4') { seek(ACTS[+k - 1].t + .01); toast(ACTS[+k - 1].name); }
   else return;
-  poke();
+  sceneDirty = true; poke();
 });
-canvas.addEventListener('pointerdown', (e) => { if (mode === 2) { look.drag = [e.clientX, e.clientY, look.yaw, look.pitch]; canvas.setPointerCapture(e.pointerId); } });
-canvas.addEventListener('pointermove', (e) => { if (look.drag) { look.yaw = look.drag[2] + (e.clientX - look.drag[0]) * .005; look.pitch = clamp(look.drag[3] + (e.clientY - look.drag[1]) * .005, -1.4, 1.4); } });
-canvas.addEventListener('pointerup', () => { look.drag = null; });
+canvas.addEventListener('pointerdown', (e) => { if(mode===2){ look.drag=[e.clientX,e.clientY,look.targetYaw,look.targetPitch]; canvas.setPointerCapture(e.pointerId); } });
+canvas.addEventListener('pointermove', (e) => { if(look.drag){ look.targetYaw=look.drag[2]+(e.clientX-look.drag[0])*.004; look.targetPitch=clamp(look.drag[3]+(e.clientY-look.drag[1])*.004,-1.35,1.35); sceneDirty=true; } });
+['pointerup','pointercancel','lostpointercapture'].forEach(type=>canvas.addEventListener(type,()=>{look.drag=null;}));
+canvas.addEventListener('wheel', e=>{ if(mode===2){e.preventDefault();look.targetZoom=clamp(look.targetZoom+e.deltaY*.025,24,58);sceneDirty=true;} },{passive:false});
+canvas.addEventListener('dblclick',()=>{look.targetYaw=0;look.targetPitch=.12;look.targetZoom=40;sceneDirty=true;});
+canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();contextLost=true;setPlaying(false);audio.update(showT,false);$('gate').hidden=false;document.body.classList.remove('in-show');$('start').disabled=true;$('load-note').textContent='The graphics context was lost. Reload to recover the experience.';$('retry').hidden=false;$('retry').textContent='Reload experience';});
 
 function saveRoom() {
   const R = post.material.uniforms.uRoom.value;
@@ -3085,7 +3070,8 @@ try {
   if (Array.isArray(r) && r.length >= 4) { $('r-w').value = r[0]; $('r-d').value = r[1]; $('r-h').value = r[2]; $('r-e').value = r[3]; post.material.uniforms.uFloorRot.value = (r[4] | 0) % 4; }
 } catch (e) {}
 function resize() {
-  const w = innerWidth, h = innerHeight;
+  const dim = Runtime.outputSize(innerWidth, innerHeight, devicePixelRatio, Math.min(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),gl.getParameter(gl.MAX_TEXTURE_SIZE)));
+  const w = dim.width, h = dim.height;
   renderer.setSize(w, h, false);
   let rx = 0, ry = 0, rw = w, rh = h;
   if (mode === 1) {
@@ -3093,6 +3079,7 @@ function resize() {
     if (w / h > asp) { rw = h * asp; rx = (w - rw) / 2; } else { rh = w / asp; ry = (h - rh) / 2; }
   }
   post.material.uniforms.uRect.value.set(rx, ry, rw, rh);
+  sceneDirty = true;
 }
 addEventListener('resize', resize);
 
@@ -3103,12 +3090,13 @@ addEventListener('resize', resize);
 const CTRL_DEFAULTS = {
   fmapb: 1, lines: 1, grade: .45, warm: .35, nlight: .55, land: 1,
   inset: 0, fscale: 1, tiltx: 0, tilty: 0, dscale: 1, dx: 0, dy: 0,
-  vol: .9,
+  vol: .55,
 };
 const ctrl = Object.assign({}, CTRL_DEFAULTS);
 try { Object.assign(ctrl, JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}')); } catch (e) {}
 
 function applyCtrl() {
+  sceneDirty = true;worldDirty=true;
   const P = post.material.uniforms;
   P.uMapBright.value = ctrl.fmapb;
   P.uLines.value = ctrl.lines;
@@ -3220,7 +3208,7 @@ try { applyContent(JSON.parse(localStorage.getItem(CONTENT_KEY) || 'null'), fals
 function openControl(v) {
   const el = $('control');
   el.hidden = v === undefined ? !el.hidden : !v;
-  if (!el.hidden) { syncSliders(); buildEditor(); poke(); }
+  if (!el.hidden) { $('media').hidden=true; $('chapters').hidden=true; syncSliders(); buildEditor(); poke(); $('close-control').focus(); }
 }
 $('b-control').addEventListener('click', () => openControl());
 $('close-control').addEventListener('click', () => openControl(false));
@@ -3250,47 +3238,92 @@ $('c-import').addEventListener('click', async () => {
 applyCtrl();
 syncSliders();
 
-// ---------------------------------------------------------------- loop
-let fpsAcc = 0, fpsN = 0, fpsShown = 0, wake = null;
-async function keepAwake() { try { if (navigator.wakeLock && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch (e) {} }
-document.addEventListener('visibilitychange', () => { if (!document.hidden && started) keepAwake(); });
-// If the machine cannot hold a smooth frame rate at the current cube size, step down
-// one size after a few slow seconds. Q still overrides it by hand.
-let slowSecs = 0;
-function adaptQuality(fps) {
-  if (!started || !playing || softGPU) { slowSecs = 0; return; }
-  slowSecs = fps < 28 ? slowSecs + 1 : 0;
-  if (slowSecs >= 4 && qIndex > 2) { qIndex--; makeCube(); slowSecs = 0; toast('Detail ' + QUALITY[qIndex] + ' px per face (auto)'); }
-}
-function frame(now) {
-  const dt = Math.min(.1, (now - last) / 1000); last = now;
-  if (playing) { showT += dt; if (showT >= DURATION) { showT = 0; camSmooth.ready = false; } }
-  const idleT = started ? showT : 40 + (now / 1000) % 30;
-  U.uTime.value = now / 1000; U.uShow.value = idleT;
-  applyTime(idleT, Math.max(dt, 1 / 120));
-  post.material.uniforms.uIntro.value = started ? showT : 99;
-  post.material.uniforms.uPrev.value.set(look.yaw, look.pitch, Math.tan(40 * Math.PI / 180));
-  if (needsWorld()) { skyLUT.update(); renderCube(); }
-  renderer.setRenderTarget(null);
-  renderer.render(post.scene, post.cam);
-  audio.update(showT, playing && started);
-  if (started) {
-    $('clock').firstChild.nodeValue = fmt(showT) + ' ';
-    const ai = currentAct();
-    ACTS.forEach((a, i) => {
-      const end = i < ACTS.length - 1 ? ACTS[i + 1].t : DURATION;
-      const el = $('act-' + i); el.classList.toggle('on', i === ai);
-      el.querySelector('i').style.width = (clamp((showT - a.t) / (end - a.t), 0, 1) * 100).toFixed(1) + '%';
-    });
-  }
-  fpsAcc += dt; fpsN++;
-  if (fpsAcc > 1) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; adaptQuality(fpsShown); $('stat').textContent = `${fpsShown} fps · ${QUALITY[qIndex]} px/face · ${IMAGERY_NOTE || FIELD_SOURCE} · Q to change`; }
-  requestAnimationFrame(frame);
-}
-window.__ireland = { seek: (t) => { started = true; seek(t); camSmooth.ready = false; }, pause: () => setPlaying(false), mode: setMode, media: loadMedia,
-  look: (yaw, pitch) => { look.yaw = yaw; look.pitch = pitch; } };
 
-let savedMode = 0; try { savedMode = +(localStorage.getItem('ire2036-mode') || 0) || 0; } catch (e) {}
+const panelIds=['media','control','chapters'];
+function closePanels(){panelIds.forEach(id=>$(id).hidden=true);}
+function openChapters(){const open=$('chapters').hidden;closePanels();$('chapters').hidden=!open;poke();if(open)$('close-chapters').focus();}
+$('b-chapters').addEventListener('click',openChapters);
+$('close-chapters').addEventListener('click',()=>{$('chapters').hidden=true;$('b-chapters').focus();});
+const chapterButtons=SCENES.map((s,i)=>{const b=document.createElement('button');b.type='button';b.className='chapter-button';b.innerHTML='<small></small><span></span><small></small>';b.children[0].textContent=String(i+1).padStart(2,'0');b.children[1].textContent=s.name;b.children[2].textContent=fmt(s.t0);b.addEventListener('click',()=>{seek(s.t0+.01);poke();});$('chapter-list').append(b);return b;});
+const actNodes=ACTS.map((a,i)=>({el:$('act-'+i),bar:$('act-'+i).querySelector('i')}));
+$('timeline').addEventListener('input',e=>{seek(+e.target.value);poke();});
+function toggleCalibration(){post.material.uniforms.uCalibrate.value=1-post.material.uniforms.uCalibrate.value;sceneDirty=true;toast(post.material.uniforms.uCalibrate.value?'Room calibration · G to return':'Journey view');}
+$('b-calibrate').addEventListener('click',toggleCalibration);
+$('render-seg').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  renderPolicy=b.dataset.render;governor.reset();
+  if(renderPolicy==='locked')qIndex=QUALITY.length-1;
+  else qIndex=Math.min(qIndex,softGPU?1:3);
+  governor.index=qIndex;frameMeter.clear();makeCube();
+  $('render-seg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+}));
+let lastMetrics={fps:0,p95:0,missed:0,frames:0}, renderedFrames=0, lastUI=0, lastReport=0;
+function performanceReport(){return {at:new Date().toISOString(),policy:renderPolicy,output:[canvas.width,canvas.height],devicePixelRatio,sceneFace:QUALITY[qIndex],cloudFace:cloudRT.width,softwareRenderer:softGPU,frameWindow:lastMetrics,gpuMs:gpuTimer.ms,renderedFrames,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,view:MODES[mode],showTime:showT,mapDetail:QUALITY_KEY,shaderErrors:[...shaderErrors]};}
+$('b-report').addEventListener('click',()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(performanceReport(),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='ireland-2036-performance.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+function updateUI(now){
+  if(now-lastUI<120)return;lastUI=now;
+  const ai=currentAct(), si=SCENES.findIndex(s=>showT>=s.t0&&showT<s.t1);
+  $('clock').firstChild.nodeValue=fmt(showT)+' ';
+  if(document.activeElement!==$('timeline'))$('timeline').value=showT;
+  $('timeline').style.setProperty('--progress',(showT/DURATION*100).toFixed(2)+'%');
+  $('timeline').setAttribute('aria-valuetext',fmt(showT)+' of 3:00');
+  actNodes.forEach(({el,bar},i)=>{const end=ACTS[i+1]?.t??DURATION;el.classList.toggle('on',i===ai);bar.style.transform='scaleX('+clamp((showT-ACTS[i].t)/Math.max(1,end-ACTS[i].t),0,1)+')';});
+  chapterButtons.forEach((b,i)=>b.setAttribute('aria-current',String(i===si)));
+  $('scene-act').textContent=String(ai+1).padStart(2,'0')+' / '+ACTS[ai].name;
+  $('scene-name').textContent=SCENES[Math.max(si,0)].name;
+}
+
+// ---------------------------------------------------------------- loop
+let wake = null;
+async function keepAwake(){try{if(navigator.wakeLock&&!wake){wake=await navigator.wakeLock.request('screen');wake.addEventListener('release',()=>{wake=null;});}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{
+  last=performance.now();frameMeter.clear();sceneDirty=true;
+  if(document.hidden&&started){setPlaying(false);audio.update(showT,false);}
+  if(!document.hidden&&started)keepAwake();
+});
+function frame(now){
+  requestAnimationFrame(frame);
+  if(contextLost||document.hidden){last=now;return;}
+  const elapsed=Math.max(0,(now-last)/1000), dt=Math.min(.05,elapsed);last=now;
+  if(playing){showT+=elapsed;if(showT>=DURATION){showT%=DURATION;camSmooth.ready=false;}}
+  const k=reduceMotion?1:1-Math.exp(-dt/.09);
+  look.yaw+=(look.targetYaw-look.yaw)*k;look.pitch+=(look.targetPitch-look.pitch)*k;look.zoom+=(look.targetZoom-look.zoom)*k;
+  const movingLook=Math.abs(look.targetYaw-look.yaw)+Math.abs(look.targetPitch-look.pitch)+Math.abs(look.targetZoom-look.zoom)>.0001;
+  // A calm, fixed pre-show view. Pause freezes water, clouds, waves, cameras and shaders.
+  const t=started?showT:48;
+  if(playing||sceneDirty||movingLook){
+    if(playing&&elapsed>0)frameMeter.push(elapsed*1000);
+    U.uTime.value=t;U.uShow.value=t;
+    applyTime(t,playing?dt:0);
+    post.material.uniforms.uIntro.value=started?showT:99;
+    post.material.uniforms.uPrev.value.set(look.yaw,look.pitch,Math.tan(look.zoom*Math.PI/180));
+    renderer.info.reset();gpuTimer.poll();gpuTimer.begin();
+    if(needsWorld()&&post.material.uniforms.uCalibrate.value<.5&&(playing||worldDirty)){
+      if(Math.abs(t-lastSkyTime)>.08){skyLUT.update();lastSkyTime=t;}
+      renderCube();worldDirty=false;
+    }
+    renderer.setRenderTarget(null);renderer.render(post.scene,post.cam);gpuTimer.end();renderedFrames++;sceneDirty=false;
+  }
+  audio.update(showT,playing&&started);updateUI(now);
+  if(now-lastReport>=1000){
+    lastReport=now;lastMetrics=frameMeter.read();
+    if(playing&&started&&renderPolicy==='adaptive'&&lastMetrics.frames>=20){
+      const next=governor.decide({...lastMetrics,gpuMs:gpuTimer.ms});
+      if(next!==qIndex){qIndex=next;makeCube();frameMeter.clear();}
+    }
+    const fps=lastMetrics.frames?lastMetrics.fps.toFixed(1):'—';
+    $('perf-pill').textContent=playing?fps+' fps':(started?'Paused':'Ready');
+    $('perf-pill').dataset.health=playing?(lastMetrics.fps>=57?'good':'slow'):'';
+    $('stat').textContent=canvas.width+' × '+canvas.height+' · '+(renderPolicy==='adaptive'?'Adaptive 60':'Maximum detail');
+    $('render-summary').textContent=playing?fps+' fps · target 60':(started?'Paused · scene held':'Ready to present');
+    $('render-output').textContent='Output '+canvas.width+' × '+canvas.height+' · scene '+QUALITY[qIndex]+' px/face · clouds '+cloudRT.width+' px/face';
+    $('render-timing').textContent='Frame p95 '+lastMetrics.p95.toFixed(1)+' ms · GPU '+(gpuTimer.ms==null?'timer unavailable':gpuTimer.ms.toFixed(1)+' ms');
+    $('render-draws').textContent=renderer.info.render.calls+' draws · '+(renderer.info.render.triangles/1e6).toFixed(2)+'M triangles'+(softGPU?' · software rendering':'');
+  }
+}
+window.__ireland={seek:(t)=>{started=true;seek(t);},pause:()=>setPlaying(false),play:()=>setPlaying(true),mode:setMode,media:loadMedia,metrics:performanceReport,look:(yaw,pitch)=>{look.targetYaw=yaw;look.targetPitch=pitch;sceneDirty=true;}};
+
+let savedMode=2;try{const saved=localStorage.getItem('ire2036-mode');if(saved!==null)savedMode=+saved||0;}catch(e){}
+const requestedView=new URLSearchParams(location.search).get('view');if(requestedView==='igloo')savedMode=0;else if(requestedView==='walls')savedMode=1;else if(requestedView==='desk')savedMode=2;
 setMode(clamp(savedMode, 0, 2));
 applyRoom();
 const fontsReady = document.fonts && document.fonts.load
@@ -3307,14 +3340,17 @@ keepAwake();
 // exactly what failed. Nothing is ever substituted for the real data.
 (async () => {
   const noteEl = $('load-note'), startBtn = $('start'), retry = $('retry');
+  let loading=false, ready=false;
   const say = (msg, err) => { noteEl.textContent = msg; noteEl.classList.toggle('err', !!err); };
+  const progress=p=>$('load-progress').value=p;
   const pct = (p) => Math.round(clamp(p, 0, 1) * 100);
 
   async function load() {
-    startBtn.disabled = true; retry.hidden = true;
+    if(loading)return;if(contextLost){location.reload();return;}
+    loading=true;startBtn.disabled=true;retry.hidden=true;progress(0);labelTiers();
     try {
       say('Loading real elevation and sea-floor depth for Ireland…');
-      const field = await realField((p) => say(`Loading real elevation and sea-floor depth… ${pct(p)}%`));
+      const field = await realField((p) => {progress(p*25);say(`Reading the shape of Ireland… ${pct(p)}%`);});
 
       FIELD = field;
       elevTex.dispose();
@@ -3328,7 +3364,7 @@ keepAwake();
       const q = tier();
       const total = tierTiles(QUALITY_KEY);
       say(`Loading satellite imagery (${q.label}, ${total} tiles)…`);
-      imageryTex = await realImagery((p) => say(`Loading satellite imagery, island-wide… ${pct(p)}%`));
+      imageryTex = await realImagery((p) => {progress(25+p*35);say(`Bringing the island into focus… ${pct(p)}%`);});
       const baseMpp = imageryLayer.lastMpp;
       FIELD_SOURCE = 'satellite + SRTM';
       IMAGERY_NOTE = `${Math.round(baseMpp)} m/px`;
@@ -3337,7 +3373,7 @@ keepAwake();
       for (let i = 0; i < q.insets.length; i++) {
         const ins = q.insets[i];
         try {
-          insetTex[i] = await insetImagery(ins, (p) => say(`Loading ${ins.name} at full detail… ${pct(p)}%`));
+          insetTex[i] = await insetImagery(ins, (p) => {progress(60+(i+p)*15);say(`Adding detail to ${ins.name}… ${pct(p)}%`);});
           IMAGERY_NOTE += ` · ${ins.name} ${imageryLayer.lastMpp.toFixed(1)} m/px`;
         } catch (e) { insetTex[i] = null; }
       }
@@ -3355,12 +3391,19 @@ keepAwake();
       PU.uImage.value = imageryTex || BLANK; PU.uHasImage.value = imageryTex ? 1 : 0; PU.uSettle.value = lightsTex;
 
       buildWorld();
-
-      say(`Ready. Real terrain, real bathymetry and satellite imagery — ${IMAGERY_NOTE}.`);
-      startBtn.disabled = false;
+      say('Preparing light, atmosphere and transitions…');progress(94);
+      await new Promise(r=>requestAnimationFrame(r));
+      applyTime(48,0);U.uTime.value=48;skyLUT.update();lastSkyTime=48;
+      if(renderer.compileAsync){await renderer.compileAsync(scene,cubeCam.children[0]);await renderer.compileAsync(cloudLayer.scene,cubeCam.children[0]);await renderer.compileAsync(post.scene,post.cam);}
+      else{renderer.compile(scene,cubeCam.children[0]);renderer.compile(cloudLayer.scene,cubeCam.children[0]);renderer.compile(post.scene,post.cam);}
+      renderCube();renderer.setRenderTarget(null);renderer.render(post.scene,post.cam);
+      if(shaderErrors.length)throw new Error('This graphics driver could not compile the presentation shaders');
+      progress(100);ready=true;loading=false;labelTiers();
+      say('Your journey is ready. Press Enter to begin.');
+      startBtn.disabled=false;last=performance.now();sceneDirty=true;
       requestAnimationFrame(frame);
     } catch (e) {
-      FIELD = null;
+      FIELD = null;loading=false;labelTiers();
       say(`Could not load the real world: ${e.message}. This build renders measured terrain and sea-floor data, so it will not start without it. Check the network, any proxy or content filter, then try again.`, true);
       retry.hidden = false;
     }
@@ -3372,15 +3415,15 @@ keepAwake();
     seg.querySelectorAll('button').forEach((b) => {
       const k = b.dataset.q;
       b.setAttribute('aria-pressed', String(k === QUALITY_KEY));
-      b.title = `${tierTiles(k)} map tiles`;
+      b.title = `${tierTiles(k)} map tiles`; b.disabled=loading;
     });
-    $('quality-note').textContent = `${tierTiles(QUALITY_KEY)} tiles to download`;
+    $('quality-note').textContent = ready?'Changing satellite detail reloads the experience.':`${tierTiles(QUALITY_KEY)} map tiles · source detail is separate from frame rate`;
   }
   seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
-    if (FIELD && imageryTex) return;            // already loaded; changing now would do nothing
+    if(loading||QUALITY_KEY===b.dataset.q)return;
     QUALITY_KEY = b.dataset.q;
     try { localStorage.setItem('ire2036-quality', QUALITY_KEY); } catch (e) {}
-    labelTiers();
+    labelTiers();if(ready)location.reload();
   }));
   try { const sq = localStorage.getItem('ire2036-quality'); if (sq && QUALITY_TIERS[sq]) QUALITY_KEY = sq; } catch (e) {}
   labelTiers();
@@ -3390,3 +3433,6 @@ keepAwake();
 })();
 })();
 </script>
+
+</body>
+</html>
