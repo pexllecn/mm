@@ -2814,12 +2814,15 @@ async function removeSlot(id) {
 // ---------------------------------------------------------------- music
 // One piece of music and nothing else: an original slow air in the Irish style, in D, for
 // low whistle over harp, with a soft string drone underneath. There are no sound effects.
-// The whole three minutes is written out below and rendered once, offline, into a single
-// track while the page loads (it needs no user gesture); after that it simply plays in step
-// with the show clock, so seeking, pausing and skipping between acts keep it in time.
+// The whole three minutes is written out below as a list of notes, and played live: each
+// note is handed to the audio clock a fraction of a second before it sounds, in step with the
+// show clock. So it starts the moment the show does, and seeking, pausing and skipping between
+// acts keep it in time.
 const audio = (() => {
-  let ctx = null, master = null, buf = null, src = null, srcT0 = 0, srcOff = 0, on = false, rendering = null;
+  let ctx = null, master = null, bus = null, sess = null, on = false;
+  let a0 = 0, s0 = 0, idx = 0, anchored = false;
   const settings = { master: .9 };
+  const LEVEL = 2.2;                                    // brings the mix to a peak of about 0.7
   const BEAT = 60 / 64, BAR = 3 * BEAT;                 // 3/4 at 64 to the minute
   const mf = (m) => 440 * Math.pow(2, (m - 69) / 12);
   // Chords (root, third, fifth as MIDI notes) for each bar of an eight-bar phrase.
@@ -2894,61 +2897,71 @@ const audio = (() => {
     });
   }
 
-  async function render() {
-    const SR = 44100, c = new OfflineAudioContext(2, Math.ceil(SR * DURATION), SR);
-    const dry = c.createGain(), rev = c.createConvolver(), wet = c.createGain(), out = c.createGain();
-    rev.buffer = impulse(c, 4.2); wet.gain.value = .45; dry.gain.value = .8;
-    dry.connect(out); dry.connect(rev); rev.connect(wet); wet.connect(out); out.connect(c.destination);
-    const padF = c.createBiquadFilter(); padF.type = 'lowpass'; padF.frequency.value = 900; padF.connect(dry);
-    const noise = c.createBuffer(1, SR * 2, SR); { const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
-    const lead = c.createGain(); lead.gain.value = .9;
-    const pan = c.createStereoPanner ? c.createStereoPanner() : null;
-    if (pan) { pan.pan.value = .12; lead.connect(pan); pan.connect(dry); } else lead.connect(dry);
-    const wave = c.createPeriodicWave(new Float32Array([0, 0, 0, 0, 0, 0]), new Float32Array([0, 1, .42, .18, .08, .03]));
+  // Every note of the piece, in order: [start in seconds, play(ctx, session, when)].
+  const EVENTS = [];
+  {
     const t0 = 1.2;                                     // a breath of silence before the first note
     FORM.forEach((sec, p) => {
       const ps = t0 + p * 8 * BAR;
       sec.ch.forEach((chd, b) => {
         const bs = ps + b * BAR, lastBar = sec.last && b === 7;
         // harp: root below, then up through the chord and back, six quavers to the bar
-        const arp = [chd[0] - 12, chd[0], chd[2], chd[1] + 12, chd[2], chd[0]];
-        if (lastBar) [chd[0] - 12, chd[0], chd[2], chd[1] + 12, chd[2] + 12].forEach((m, i) => harp(c, dry, wave, bs + i * .11, m, .13));
-        else arp.forEach((m, i) => harp(c, dry, wave, bs + i * BEAT / 2, m + (sec.low && i > 1 ? -12 : 0), i === 0 ? .15 : .09));
-        strings(c, padF, bs, lastBar ? 7 : BAR, chd, .012 * sec.pad);
+        if (lastBar) [chd[0] - 12, chd[0], chd[2], chd[1] + 12, chd[2] + 12].forEach((m, i) =>
+          EVENTS.push([bs + i * .11, (c, S, w) => harp(c, S.dry, S.wave, w, m, .13)]));
+        else [chd[0] - 12, chd[0], chd[2], chd[1] + 12, chd[2], chd[0]].forEach((m, i) =>
+          EVENTS.push([bs + i * BEAT / 2, (c, S, w) => harp(c, S.dry, S.wave, w, m + (sec.low && i > 1 ? -12 : 0), i === 0 ? .15 : .09)]));
+        EVENTS.push([bs, (c, S, w) => strings(c, S.pad, w, lastBar ? 7 : BAR, chd, .012 * sec.pad)]);
       });
       if (sec.mel) {
         let bt = 0;
         sec.mel.forEach(([m, d]) => {
           const final = sec.last && bt + d >= 24;
-          whistle(c, lead, noise, ps + bt * BEAT, (final ? 6 : d) * BEAT * .96, m - (sec.low ? 12 : 0), .07 * sec.lead);
+          EVENTS.push([ps + bt * BEAT, (c, S, w) => whistle(c, S.lead, S.noise, w, (final ? 6 : d) * BEAT * .96, m - (sec.low ? 12 : 0), .07 * sec.lead)]);
           bt += d;
         });
       }
     });
-    const b = await c.startRendering();
-    // gentle limiter by hand: normalise to a comfortable peak
-    let peak = 0; for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i])); }
-    const k = peak > 0 ? .7 / peak : 1;
-    for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] *= k; }
-    return b;
+    EVENTS.sort((a, b) => a[0] - b[0]);
   }
 
-  function stopSrc() { if (src) { try { src.stop(); } catch (e) {} src.disconnect(); src = null; } }
-  function playFrom(t) {
-    stopSrc();
-    if (!buf || t >= DURATION - .05) return;
-    src = ctx.createBufferSource(); src.buffer = buf; src.connect(master);
-    srcT0 = ctx.currentTime; srcOff = t; src.start(0, t);
+  // The fixed part of the chain: reverb, the strings' filter, the whistle's place in the mix.
+  function makeBus(c, dest) {
+    const dry = c.createGain(), rev = c.createConvolver(), wet = c.createGain(), out = c.createGain();
+    rev.buffer = impulse(c, 4.2); wet.gain.value = .45; dry.gain.value = .8; out.gain.value = LEVEL;
+    dry.connect(out); dry.connect(rev); rev.connect(wet); wet.connect(out); out.connect(dest);
+    const pad = c.createBiquadFilter(); pad.type = 'lowpass'; pad.frequency.value = 900; pad.connect(dry);
+    const lead = c.createGain(); lead.gain.value = .9;
+    const pan = c.createStereoPanner ? c.createStereoPanner() : null;
+    if (pan) { pan.pan.value = .12; lead.connect(pan); pan.connect(dry); } else lead.connect(dry);
+    const noise = c.createBuffer(1, c.sampleRate * 2, c.sampleRate);
+    { const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    const wave = c.createPeriodicWave(new Float32Array([0, 0, 0, 0, 0, 0]), new Float32Array([0, 1, .42, .18, .08, .03]));
+    return { dry, pad, lead, noise, wave };
   }
-
-  // Offline rendering needs no sound device, so it starts as soon as the page does.
-  function prepare() {
-    if (!rendering && window.OfflineAudioContext) rendering = render().then((b) => { buf = b; }).catch(() => { rendering = null; });
-    return rendering;
+  // A session is one stretch of uninterrupted playing. Seeking or pausing fades the notes of
+  // the old session out quickly (the reverb tail rings on) and starts a new one.
+  function newSession() {
+    endSession();
+    const S = { gains: [] };
+    ['dry', 'pad', 'lead'].forEach((k) => { const g = ctx.createGain(); g.connect(bus[k]); S[k] = g; S.gains.push(g); });
+    S.noise = bus.noise; S.wave = bus.wave;
+    sess = S;
+  }
+  function endSession() {
+    if (!sess) return;
+    const now = ctx.currentTime, old = sess;
+    old.gains.forEach((g) => { g.gain.setValueAtTime(g.gain.value, now); g.gain.linearRampToValueAtTime(0, now + .12); });
+    setTimeout(() => old.gains.forEach((g) => g.disconnect()), 400);
+    sess = null;
+  }
+  // For testing: the whole piece into any (offline) context.
+  function renderInto(c) {
+    const S = makeBus(c, c.destination);
+    EVENTS.forEach(([t, play]) => play(c, S, t));
   }
 
   return {
-    prepare,
+    renderInto,
     get on() { return on; },
     settings,
     setLevel(k, v) { settings[k] = v; },
@@ -2956,28 +2969,33 @@ const audio = (() => {
       on = v === undefined ? !on : v;
       if (on && !ctx) {
         try {
-          ctx = new (window.AudioContext || window.webkitAudioContext)();
+          ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
           master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
-          prepare();
+          bus = makeBus(ctx, master);
         } catch (e) { on = false; return false; }
       }
       if (ctx) { if (on) ctx.resume(); else { master.gain.setTargetAtTime(0, ctx.currentTime, .3); } }
       return on;
     },
-    // Keep the track where the show clock is; fade in and out with play and pause.
+    // Keep the music where the show clock is; fade in and out with play and pause.
     update(t, playing) {
-      if (!ctx || !buf) return;
-      const now = ctx.currentTime;
-      const live = on && playing;
+      if (!ctx) return;
+      const now = ctx.currentTime, live = on && playing && ctx.state === 'running';
       master.gain.setTargetAtTime(live ? settings.master * Math.min(1, (DURATION - t) / 2.5) : 0, now, live ? .25 : .15);
-      if (!live) { if (src && now - srcT0 > .5 && !playing) stopSrc(); return; }
-      const pos = srcOff + (now - srcT0);
-      if (!src || Math.abs(pos - t) > .25) playFrom(t);
+      if (!live) { if (anchored) { endSession(); anchored = false; } return; }
+      if (!anchored || Math.abs(now - a0 + s0 - t) > .25) {
+        newSession(); anchored = true;
+        a0 = now + .03; s0 = t;
+        idx = 0; while (idx < EVENTS.length && EVENTS[idx][0] < t) idx++;
+      }
+      const horizon = now - a0 + s0 + .6;
+      while (idx < EVENTS.length && EVENTS[idx][0] < horizon) {
+        const [et, play] = EVENTS[idx++];
+        play(ctx, sess, Math.max(now + .005, a0 + et - s0));
+      }
     },
   };
 })();
-
-audio.prepare();
 
 // ---------------------------------------------------------------- operator state + controls
 let showT = 0, playing = false, started = false, blackout = false, mode = 0, last = performance.now();
