@@ -243,7 +243,8 @@
     <div class="sl"><label for="c-nlight">City light at night</label><input id="c-nlight" type="range" min="0" max="2" step="0.02"><output></output></div>
     <div class="sl"><label for="c-land">Land brightness</label><input id="c-land" type="range" min="0.3" max="1.8" step="0.02"><output></output></div>
     <label class="chk"><input type="checkbox" id="c-auto"> Hold a smooth frame rate (steps detail down a notch if needed)</label>
-    <p class="hint">If Dublin looks sandy in the last act, lower <b>Grade warmth</b> and <b>City light at night</b>. <b>Light lines</b> sets the cove line, the year lines and the sweeps of light together. Detail stays at its highest unless the box above is ticked.</p>
+    <label class="chk"><input type="checkbox" id="c-fullres"> Full output resolution (every display pixel, for a 4K venue output; slower)</label>
+    <p class="hint">If Dublin looks sandy in the last act, lower <b>Grade warmth</b> and <b>City light at night</b>. <b>Light lines</b> sets the cove line, the year lines and the sweeps of light together. The picture renders at up to 2560 × 1600 unless full output resolution is ticked; with the frame rate held, detail steps down only if the machine falls behind.</p>
   </div>
 
   <div class="tabpane" data-pane="floor" hidden>
@@ -830,31 +831,36 @@ const halfOK = gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT
 const floatLinear = !!gl.getExtension('OES_texture_float_linear');
 $('gpu-note').textContent = halfOK ? 'HDR render ready' : 'Standard render';
 
-const QUALITY = [1024, 1536, 2048, 2560, 3072, 3584, 4096];
-// The cube is sized to the output: at least 2048 px per face, and half as much again as the
-// output needs, so the world is always supersampled rather than stretched. Q overrides it.
-// If the machine cannot hold its refresh rate the show steps down one size at a time
-// (see holdFrameRate) rather than stutter.
+const QUALITY = [1024, 1536, 2048];
+// The cube is sized to the output: half as much again as the output shows per quarter turn,
+// so the world is supersampled rather than stretched, and never more than 2048 px per face.
+// Past that the room cannot show the difference, and every step up costs the whole frame
+// again. Q overrides it. If the machine cannot hold its refresh rate the show steps down one
+// notch at a time (see holdFrameRate) rather than stutter.
 const softGPU = /swiftshader|llvmpipe|software/i.test((() => { try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''; } catch (x) { return ''; } })());
 const MAX_CUBE = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE) | 0;
-let qIndex = softGPU ? 0 : 2, qManual = false;
+let qIndex = softGPU ? 0 : QUALITY.length - 1, qManual = false;
 function idealCubeIndex(outW, outH) {
   if (softGPU) return 0;
-  const want = Math.max(2048, .375 * Math.max(outW, 2 * outH));
+  // Desk preview looks through an 80 degree lens, so the same screen needs a denser cube.
+  const want = Math.max(.375 * Math.max(outW, 2 * outH), mode === 2 ? 1.2 * outH : 0);
   let i = QUALITY.findIndex((q) => q >= want);
   if (i < 0) i = QUALITY.length - 1;
   while (i > 0 && QUALITY[i] > MAX_CUBE) i--;
   return i;
 }
 const maxAniso = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
-// The world is drawn into a cube around the camera one face at a time, each through a 4x
-// multisampled target, so coastlines, cliff edges, turbine blades and city lights are
-// antialiased before the projection pass filters them for the room's own pixel size.
-// A quarter-size bright-pass cube is written alongside, and bloom is read from it.
-// 4x multisampling: the cube is already supersampled against the output, so 8x added
-// nothing visible and doubled the memory traffic of every face.
-const msaaFor = (size) => Math.min(4, (renderer.capabilities.maxSamples | 0) || 0);
-let cubeRT, cubeCam, faceRT, brightRT, topClear = false;
+// The world is drawn straight into a cube around the camera, one face at a time. The cube is
+// supersampled against the output, so the projection pass's filtered lookup antialiases
+// coastlines, cliff edges and turbine blades for the room's own pixel size without a
+// multisampled copy of every face. A quarter-size bright-pass cube is written alongside, and
+// its wide glow is gathered once per frame into a small cube, so bloom costs the projection
+// pass three lookups per pixel.
+let cubeRT, cubeCam, brightRT, glowRT, cloudRT, topClear = false;
+// Cloud is marched at half the face's resolution: with the cube sized to the output that is
+// about one march sample per output pixel, and a quarter of the work of marching every face
+// pixel (see cloudLayer).
+const cloudDiv = 2;
 // The ceiling is black and the top of every wall fades into it, so the cube's upward face
 // is only ever seen if the room is tall and narrow enough for a wall top to rise above 45
 // degrees in some direction. Otherwise it is not drawn at all.
@@ -863,47 +869,92 @@ function needTopFace() {
   const P = post.material.uniforms, R = P.uRoom.value;
   return (R.z - P.uEye.value) * Math.SQRT2 > Math.min(R.x, R.y) * .5 * .92;
 }
-const copyPass = (() => {
-  const m = new T.ShaderMaterial({
-    uniforms: { uSrc: { value: null }, uBright: { value: 0 } },
-    vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
-    fragmentShader: `uniform sampler2D uSrc; uniform float uBright;
-    void main(){
-      if(uBright<.5){ gl_FragColor=vec4(texelFetch(uSrc,ivec2(gl_FragCoord.xy),0).rgb,1.); return; }
-      // Bright pass at quarter size: threshold every source pixel first, then average, so a
-      // small bright light blooms as much as a large one.
-      ivec2 b=ivec2(gl_FragCoord.xy)*4; vec3 s=vec3(0.);
-      for(int j=0;j<4;j++) for(int i=0;i<4;i++){
-        vec3 c=texelFetch(uSrc,b+ivec2(i,j),0).rgb; float l=max(c.r,max(c.g,c.b));
-        float w=clamp((l-.85)/1.6,0.,1.); s+=c*w*w;
-      }
-      gl_FragColor=vec4(min(s/16.,vec3(60.)),1.);
-    }`,
-    depthTest: false, depthWrite: false,
-  });
+// A full-screen pass: one triangle, its own scene and camera.
+function screenPass(uniforms, fragmentShader) {
+  const m = new T.ShaderMaterial({ uniforms, vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`, fragmentShader, depthTest: false, depthWrite: false });
   const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
   const mesh = new T.Mesh(geo, m); mesh.frustumCulled = false;
   const sc = new T.Scene(); sc.add(mesh);
   return { scene: sc, cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), uniforms: m.uniforms };
-})();
+}
+// The direction through a point of a cube face, for face coordinates st in 0..1 as they are
+// laid out in the face's own pixels (the cube-map convention of GL, faces +x -x +y -y +z -z).
+const FACE_DIR = `
+vec3 faceDir(int f, vec2 st){ vec2 c=st*2.-1.;
+  if(f==0) return vec3(1.,-c.y,-c.x);
+  if(f==1) return vec3(-1.,-c.y,c.x);
+  if(f==2) return vec3(c.x,1.,c.y);
+  if(f==3) return vec3(c.x,-1.,-c.y);
+  if(f==4) return vec3(c.x,-c.y,1.);
+  return vec3(-c.x,-c.y,-1.);
+}`;
+// Bright pass at quarter size, read straight from the face just drawn: threshold every source
+// pixel first, then average, so a small bright light blooms as much as a large one.
+const brightPass = screenPass({ uSrc: { value: null }, uN: { value: 1 }, uFace: { value: 0 } }, `
+  uniform samplerCube uSrc; uniform float uN; uniform int uFace;
+  ${FACE_DIR}
+  void main(){
+    vec2 b=floor(gl_FragCoord.xy)*4.; vec3 s=vec3(0.);
+    for(int j=0;j<4;j++) for(int i=0;i<4;i++){
+      vec3 c=textureLod(uSrc,faceDir(uFace,(b+vec2(float(i),float(j))+.5)/uN),0.).rgb; float l=max(c.r,max(c.g,c.b));
+      float w=clamp((l-.85)/1.6,0.,1.); s+=c*w*w;
+    }
+    gl_FragColor=vec4(min(s/16.,vec3(60.)),1.);
+  }`);
+// The wide glow: four octaves of the bright cube, each smoothed with a hexagon of taps in
+// direction space, so glow stays round (no cross-shaped glare) and has no seams at the cube's
+// edges. Gathered once per frame at an eighth of the cube's size; the projection pass reads it
+// with a single filtered lookup.
+const glowPass = screenPass({ uBright: { value: null }, uBrightPx: { value: 256 }, uG: { value: 64 }, uFace: { value: 0 } }, `
+  uniform samplerCube uBright; uniform float uBrightPx; uniform float uG; uniform int uFace;
+  ${FACE_DIR}
+  void main(){
+    vec3 d=normalize(faceDir(uFace,gl_FragCoord.xy/uG));
+    vec3 t1=normalize(cross(d,abs(d.y)<.95?vec3(0.,1.,0.):vec3(1.,0.,0.))); vec3 t2=cross(d,t1);
+    float px=1.5708/uBrightPx;
+    vec3 acc=vec3(0.);
+    const float BW[4]=float[4](.18,.13,.09,.06);
+    for(int i=0;i<4;i++){
+      float L=float(i+2), a=px*exp2(L)*.8;
+      vec3 s=textureLod(uBright,d,L).rgb;
+      for(int k=0;k<6;k++){ float an=float(k)*1.0472+float(i)*.5; s+=textureLod(uBright,normalize(d+(t1*cos(an)+t2*sin(an))*a),L).rgb; }
+      acc+=s/7.*BW[i];
+    }
+    gl_FragColor=vec4(acc,1.);
+  }`);
 function makeCube() {
-  [cubeRT, faceRT, brightRT].forEach((r) => r && r.dispose());
-  const size = QUALITY[qIndex], type = halfOK ? T.HalfFloatType : T.UnsignedByteType;
+  [cubeRT, brightRT, glowRT, cloudRT, coverRT].forEach((r) => r && r.dispose());
+  const size = QUALITY[qIndex], type = halfOK ? T.HalfFloatType : T.UnsignedByteType, glow = Math.max(64, size / 8);
   cubeRT = new T.WebGLCubeRenderTarget(size, { type, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter });
   cubeRT.texture.anisotropy = maxAniso;
-  faceRT = new T.WebGLRenderTarget(size, size, { type, samples: msaaFor(size), depthBuffer: true, generateMipmaps: false, minFilter: T.NearestFilter, magFilter: T.NearestFilter });
-  brightRT = new T.WebGLCubeRenderTarget(size / 4, { type, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter });
+  brightRT = new T.WebGLCubeRenderTarget(size / 4, { type, depthBuffer: false, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter });
+  glowRT = new T.WebGLCubeRenderTarget(glow, { type, depthBuffer: false, generateMipmaps: false, minFilter: T.LinearFilter, magFilter: T.LinearFilter });
+  // Cloud is marched into a target of its own (see cloudLayer) and composited at full size.
+  cloudRT = new T.WebGLRenderTarget(size / cloudDiv, size / cloudDiv, { type, depthBuffer: false, generateMipmaps: false, minFilter: T.LinearFilter, magFilter: T.LinearFilter });
   topClear = false;
   if (cubeCam) { cubeCam.renderTarget = cubeRT; } else { cubeCam = new T.CubeCamera(20, 2200000, cubeRT); }
   U.uPx.value = size / 2;
-  if (post) { const P = post.material.uniforms; P.uCube.value = cubeRT.texture; P.uBright.value = brightRT.texture; P.uBrightPx.value = size / 4; }
+  brightPass.uniforms.uSrc.value = cubeRT.texture; brightPass.uniforms.uN.value = size;
+  glowPass.uniforms.uBright.value = brightRT.texture; glowPass.uniforms.uBrightPx.value = size / 4; glowPass.uniforms.uG.value = glow;
+  cloudComposite.uniforms.uCloudTex.value = cloudRT.texture; cloudComposite.uniforms.uCloudInv.value.set(1 / size, 1 / size);
+  if (coverBake) {
+    // One texel per cube pixel at the far edge of each level: finer than the march's own
+    // samples, so what it reads is the cover itself, not a coarser copy of it.
+    const n = size;
+    coverRT = new T.WebGLArrayRenderTarget(n, n, COVER_L, { depthBuffer: false });
+    Object.assign(coverRT.texture, { type: T.HalfFloatType, format: T.RedFormat, minFilter: T.LinearFilter, magFilter: T.LinearFilter, generateMipmaps: false });
+    coverBake.uniforms.uCovN.value = n; U.uCov.value = coverRT.texture; U.uCovOn.value = 1;
+  }
+  if (post) { const P = post.material.uniforms; P.uCube.value = cubeRT.texture; P.uBright.value = brightRT.texture; P.uGlow.value = glowRT.texture; }
 }
 function renderCube() {
   if ('updateCoordinateSystem' in cubeCam && cubeCam.coordinateSystem !== renderer.coordinateSystem) {
     cubeCam.coordinateSystem = renderer.coordinateSystem; cubeCam.updateCoordinateSystem();
   }
   cubeCam.updateMatrixWorld(true);
-  const cams = cubeCam.children, skipTop = !needTopFace();
+  const cams = cubeCam.children, skipTop = !needTopFace(), clouds = U.uCloudOn.value > .5;
+  let baked = false;
+  cloudComposite.mesh.visible = clouds;
   for (let f = 0; f < 6; f++) {
     if (f === 2 && skipTop) {
       // three.js orders the faces +x, -x, +y, -y, +z, -z: face 2 looks straight up.
@@ -916,17 +967,29 @@ function renderCube() {
       continue;
     }
     if (f === 2) topClear = false;
-    renderer.setRenderTarget(faceRT); renderer.render(scene, cams[f]);
-    copyPass.uniforms.uSrc.value = faceRT.texture;
-    copyPass.uniforms.uBright.value = 0; cubeRT.texture.generateMipmaps = f === 5;
-    renderer.setRenderTarget(cubeRT, f); renderer.render(copyPass.scene, copyPass.cam);
-    copyPass.uniforms.uBright.value = 1; brightRT.texture.generateMipmaps = f === 5;
-    renderer.setRenderTarget(brightRT, f); renderer.render(copyPass.scene, copyPass.cam);
+    if (clouds && !baked) { bakeCover(); baked = true; }
+    if (clouds) {
+      renderer.setClearColor(0x000000, 0);
+      renderer.setRenderTarget(cloudRT); renderer.render(cloudScene, cams[f]);
+      renderer.setClearColor(0x000000, 1);
+    }
+    cubeRT.texture.generateMipmaps = f === 5;
+    renderer.setRenderTarget(cubeRT, f); renderer.render(scene, cams[f]);
+    brightPass.uniforms.uFace.value = f; brightRT.texture.generateMipmaps = f === 5;
+    renderer.setRenderTarget(brightRT, f); renderer.render(brightPass.scene, brightPass.cam);
+  }
+  for (let f = 0; f < 6; f++) {
+    glowPass.uniforms.uFace.value = f;
+    renderer.setRenderTarget(glowRT, f); renderer.render(glowPass.scene, glowPass.cam);
   }
   renderer.setRenderTarget(null);
 }
 
 const scene = new T.Scene();
+// Cloud cover is baked each frame into COVER_L camera-centred levels; level j spans
+// +-COVER_H0 * 2^j metres (2 km to 512 km). See bakeCover.
+const COVER_L = 9, COVER_H0 = 2000;
+const g0 = (v) => (Number.isInteger(v) ? v.toFixed(1) : String(v));   // a number as a GLSL float
 const U = {
   uTime: { value: 0 }, uShow: { value: 0 }, uCam: { value: new T.Vector3() },
   uSunDir: { value: new T.Vector3(0, .1, 1) }, uLightDir: { value: new T.Vector3(0, 1, 0) }, uLightCol: { value: new T.Vector3(1, 1, 1) },
@@ -939,6 +1002,8 @@ const U = {
   uFRes: { value: new T.Vector2(FW, FH) },
   uSky: { value: null }, uNoise: { value: null }, uRelief: { value: null },
   uCell: { value: null }, uCloudH: { value: new T.Vector2(2800, 4300) }, uHole: { value: new T.Vector2(gx(-9.43), gz(52.944)) },
+  uCloudOn: { value: 1 },
+  uCov: { value: null }, uCovO: { value: Array.from({ length: COVER_L }, () => new T.Vector4()) }, uCovOn: { value: 0 },
 };
 
 const COMMON = /* glsl */`
@@ -974,9 +1039,11 @@ float terrainL(vec2 xz){
   if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.) return -200.;
   return textureLod(uRelief,uv,0.).b;
 }
+// Normals from the same filtered heights: four fetches rather than sixteen. The step is never
+// under 45 m, where half-float heights and filtering are far finer than any slope that shows.
 vec3 terrainNormal(vec2 xz, float step){
-  float l=terrainAt(xz-vec2(step,0.)), r=terrainAt(xz+vec2(step,0.));
-  float d=terrainAt(xz-vec2(0.,step)), u=terrainAt(xz+vec2(0.,step));
+  float l=terrainL(xz-vec2(step,0.)), r=terrainL(xz+vec2(step,0.));
+  float d=terrainL(xz-vec2(0.,step)), u=terrainL(xz+vec2(0.,step));
   return normalize(vec3(l-r, 2.*step, d-u));
 }
 // The sky is physically based: Rayleigh and Mie single scattering through a real
@@ -1012,7 +1079,7 @@ const vec3 GOLD=vec3(1.,.72,.32); const vec3 TEAL=vec3(.35,1.,.86);
 // convective cloud has. Cover is cellular (one cell per cloud, about a kilometre across),
 // gathered into banks and clear spells at the scale of a weather system, with a gap where
 // the camera climbs out so it rises between clouds rather than blind through one.
-uniform sampler2D uCell; uniform vec2 uCloudH; uniform vec2 uHole;
+uniform sampler2D uCell; uniform vec2 uCloudH; uniform vec2 uHole; uniform float uCloudOn;
 float cloudCover(vec2 xz){
   vec2 w=xz/13000.+uTime*vec2(.0016,.0005);
   float c0=texture2D(uCell,w*.41+.53).r, c1=texture2D(uCell,w).r, c2=texture2D(uCell,w*2.71+.37).g;
@@ -1028,9 +1095,25 @@ float cloudCover(vec2 xz){
 float cloudShadow(vec3 P){
   vec3 L=normalize(uLightDir);
   float hm=(uCloudH.x+uCloudH.y)*.5;
-  if(L.y<.03||uCloud<.01||P.y>hm) return 1.;
+  // uCloudOn is 0 when the cover is too thin for any cloud to form anywhere (see CLOUD_MIN).
+  if(L.y<.03||uCloudOn<.5||P.y>hm) return 1.;
   float s=cloudCover(P.xz+L.xz/L.y*(hm-P.y));
   return 1.-.7*smoothstep(0.,.14,s)*smoothstep(.03,.12,L.y);
+}
+// The same cover as the cloud march reads it: baked once per frame (see bakeCover) into nine
+// levels round the camera, each twice the extent of the last and about one cube pixel per
+// texel at any distance, so a sample is one lookup instead of five. Across the outer part of
+// each level it blends into the next, so no ring shows where one hands over to the other.
+uniform highp sampler2DArray uCov; uniform vec4 uCovO[${COVER_L}]; uniform float uCovOn;
+float covLevel(int j, vec2 xz){ vec4 o=uCovO[j]; return textureLod(uCov,vec3((xz-o.xy)*o.z,float(j)),0.).r; }
+float cloudCoverM(vec3 p){
+  if(uCovOn<.5) return cloudCover(p.xz);
+  float lam=log2(max(length(p-uCam),1.)/${g0(COVER_H0)});
+  float jf=clamp(ceil(lam),0.,${g0(COVER_L - 1)}); int j=int(jf);
+  float s=covLevel(j,p.xz);
+  float f=lam-jf+1.;                              // 1 at the outer edge of level j
+  if(j<${COVER_L - 1}&&f>.7) s=mix(s,covLevel(j+1,p.xz),smoothstep(.7,1.,f));
+  return s;
 }
 `;
 
@@ -1041,7 +1124,7 @@ function mat(vs, fs, extra = {}, opts = {}) {
 // ---------------------------------------------------------------- noise
 // One tileable fbm texture feeds clouds, aurora and ground detail. Sampling a texture
 // is far cheaper than hashing noise per pixel, which is what lets the clouds be
-// raymarched in full at 2048 px per cube face.
+// raymarched through their full depth.
 U.uNoise.value = (() => {
   const N = 256, data = new Uint8Array(N * N * 4);
   const lat = (p, seed) => { const g = new Float32Array(p * p); let s2 = seed; for (let i = 0; i < g.length; i++) { s2 = (s2 * 16807) % 2147483647; g[i] = s2 / 2147483647; } return g; };
@@ -1057,6 +1140,16 @@ U.uNoise.value = (() => {
   const t = new T.DataTexture(data, N, N, T.RGBAFormat);
   t.wrapS = t.wrapT = T.RepeatWrapping; t.magFilter = T.LinearFilter; t.minFilter = T.LinearMipmapLinearFilter; t.generateMipmaps = true; t.needsUpdate = true;
   return t;
+})();
+// The thinnest cover at which any cloud can form. cloudCover() adds three cell terms (each at
+// most 1) and the noise's red channel, and subtracts 1.24 less the cover: with every term at
+// its largest (and the densest bank) it is still at or below zero, everywhere, while uCloud is
+// at or below this. Then the cloud pass and every cloud-shadow lookup are skipped outright,
+// with no change to the picture: from 1:53 to the end the sky is clear.
+const CLOUD_MIN = (() => {
+  const d = U.uNoise.value.image.data; let r = 0;
+  for (let k = 0; k < d.length; k += 4) r = Math.max(r, d[k]);
+  return (1.24 - .58 - .22 - .42 * r / 255) / 1.5;
 })();
 
 // Cellular noise for cloud: inverted Worley distance at 6, 12, 24 and 48 cells per tile,
@@ -1208,12 +1301,19 @@ const skyLUT = (() => {
 // grey bases, silver edges against the light, and, just before sunrise, bases lit gold from
 // below by a sun the ground cannot yet see. It is a ceiling on the low passes and a field of
 // cloud with its shadows on the land beneath the high ones.
+// The march is the costliest thing in the world, so it runs at half the cube face's
+// resolution, into a target of its own (cloudScene), for each face just before the face is
+// drawn. Cloud is soft-edged and the cube is supersampled against the room, so at the output
+// that is about one march sample per pixel and the clouds read as before. The world then draws the same sheet at full resolution
+// (cloudComposite), reading the march back: terrain, towers and tiles still occlude it pixel
+// for pixel through the depth test.
+const cloudScene = new T.Scene();
 const cloudLayer = (() => {
   const m = mat(`varying vec3 vW; void main(){ vec3 p=position; p.xz+=uCam.xz; vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
   varying vec3 vW;
   float dens(vec3 p, out float hf){
     hf=0.;
-    float s=cloudCover(p.xz);
+    float s=cloudCoverM(p);
     if(s<=0.) return 0.;
     float th=(uCloudH.y-uCloudH.x)*pow(clamp(s*2.6,0.,1.),.7);
     hf=(p.y-uCloudH.x)/max(th,1.);
@@ -1226,7 +1326,9 @@ const cloudLayer = (() => {
   float hg(float mu,float g){ return (1.-g*g)/(4.*PI*pow(1.+g*g-2.*g*mu,1.5)); }
   void main(){
     vec3 d=normalize(vW-uCam); float tp=length(vW-uCam);
-    if(abs(d.y)<1e-4||uCloud<.005) discard;
+    // beyond 250 km the layer is faded out entirely (see edge below): nothing to march
+    float edge=1.-smoothstep(150000.,250000.,length(vW.xz-uCam.xz));
+    if(abs(d.y)<1e-4||uCloud<.005||edge<=0.) discard;
     float tA=(uCloudH.x-uCam.y)/d.y, tB=(uCloudH.y-uCam.y)/d.y;
     float t0=max(min(tA,tB),0.), t1=max(tA,tB);
     t0=max(t0,tp-16000.); t1=min(t1,tp+16000.);
@@ -1255,7 +1357,7 @@ const cloudLayer = (() => {
       if(!fine){
         // coarse search: switch to fine steps anywhere near a cloud, not only inside one,
         // so a ray that only grazes an edge is still caught (no speckle along the edges)
-        float sc=cloudCover(p.xz)+.07;
+        float sc=cloudCoverM(p)+.07;
         float top=uCloudH.x+(uCloudH.y-uCloudH.x)*pow(clamp(sc*2.6,0.,1.),.7)+80.;
         if(sc>0.&&p.y>uCloudH.x-80.&&p.y<top){ fine=true; empty=0; tt=max(tDone,tt-stC); stp=stC*.2; }
         tt+=stp; continue;
@@ -1277,15 +1379,60 @@ const cloudLayer = (() => {
     }
     float A=1.-Tr;
     if(A<.004) discard;
-    float edge=1.-smoothstep(150000.,250000.,length(vW.xz-uCam.xz));
     vec3 C=applyFog(Ls/max(A,1e-3),uCam+d*max(tHit,t0));
     A*=edge;
     gl_FragColor=vec4(C*A,A);
   }`, {}, { transparent: true, depthWrite: false, side: T.DoubleSide, blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor });
   const g = new T.PlaneGeometry(560000, 560000, 1, 1); g.rotateX(-Math.PI / 2); g.translate(0, 3550, 0);
-  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 4; scene.add(mesh);
+  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; cloudScene.add(mesh);
   return m;
 })();
+const cloudComposite = (() => {
+  const m = mat(`void main(){ vec3 p=position; p.xz+=uCam.xz; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
+  uniform sampler2D uCloudTex; uniform vec2 uCloudInv;
+  void main(){ vec4 c=texture2D(uCloudTex,gl_FragCoord.xy*uCloudInv); if(c.a<.001) discard; gl_FragColor=c; }`,
+  { uCloudTex: { value: null }, uCloudInv: { value: new T.Vector2(1, 1) } },
+  { transparent: true, depthWrite: false, side: T.DoubleSide, blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor });
+  const mesh = new T.Mesh(cloudScene.children[0].geometry, m);   // the same sheet the march draws
+  mesh.frustumCulled = false; mesh.renderOrder = 4; scene.add(mesh);
+  return { mesh, uniforms: m.uniforms };
+})();
+// ---------------------------------------------------------------- cloud cover, baked
+// The march asks for the cloud cover a hundred times per pixel, five texture reads each. The
+// cover is a flat field that drifts with the wind, so it is worked out once per frame instead,
+// into the levels of an array texture sized to the cube (see makeCube), and the march reads it
+// back with one lookup. Needs half-float render targets; without them the march computes the
+// cover itself, as before.
+let coverRT = null;
+const coverBake = !gl.getExtension('EXT_color_buffer_float') ? null : (() => {
+  const m = new T.ShaderMaterial({
+    uniforms: Object.assign({}, U, { uCov: { value: null }, uLayer: { value: 0 }, uCovN: { value: 1 } }),
+    vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
+    fragmentShader: COMMON + `uniform int uLayer; uniform float uCovN;
+    void main(){ vec4 o=uCovO[uLayer]; gl_FragColor=vec4(cloudCover(o.xy+gl_FragCoord.xy/(o.z*uCovN)),0.,0.,1.); }`,
+    depthTest: false, depthWrite: false,
+  });
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
+  const mesh = new T.Mesh(geo, m); mesh.frustumCulled = false;
+  const sc = new T.Scene(); sc.add(mesh);
+  return { scene: sc, cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), uniforms: m.uniforms };
+})();
+function bakeCover() {
+  if (!coverRT) return;
+  const c = U.uCam.value, H = U.uCloudH.value, N = coverBake.uniforms.uCovN.value;
+  // Levels nearer the camera than the layer (less the march's reach toward the sun) are never
+  // read this frame, so they are not baked: from high above only the outer levels are.
+  const gap = Math.max(0, H.x - c.y, c.y - H.y) - 700;
+  const j0 = gap > COVER_H0 ? Math.min(COVER_L - 1, Math.ceil(Math.log2(gap / COVER_H0))) : 0;
+  for (let j = j0; j < COVER_L; j++) {
+    // Each level is centred on the camera but snapped to its own texel grid, so its texels
+    // stay put in the world as the camera moves and the cover never crawls.
+    const ext = 2 * COVER_H0 * 2 ** j, dl = ext / N;
+    U.uCovO.value[j].set(Math.round(c.x / dl) * dl - ext / 2, Math.round(c.z / dl) * dl - ext / 2, 1 / ext, 0);
+    coverBake.uniforms.uLayer.value = j;
+    renderer.setRenderTarget(coverRT, j); renderer.render(coverBake.scene, coverBake.cam);
+  }
+}
 
 
 // ---------------------------------------------------------------- shared lit material
@@ -1997,7 +2144,7 @@ const post = (() => {
   const cityM = floorCities.map((c) => mapXY(c[1], c[2]));
   const m = new T.ShaderMaterial({
     uniforms: {
-      uCube: { value: null }, uBright: { value: null }, uBrightPx: { value: 256 },
+      uCube: { value: null }, uBright: { value: null }, uGlow: { value: null },
       uYaw: { value: 0 }, uHead: { value: 0 }, uMode: { value: 0 }, uRect: { value: new T.Vector4(0, 0, 1, 1) },
       uRoom: { value: new T.Vector3(6, 6, 3) }, uEye: { value: 1.6 }, uPrev: { value: new T.Vector3(0, 0, Math.tan(40 * Math.PI / 180)) },
       uFade: { value: 1 }, uExp: { value: 1 }, uBloom: { value: halfOK ? 1 : 0 }, uTime: U.uTime, uFloorRot: { value: 0 },
@@ -2030,7 +2177,7 @@ const post = (() => {
     },
     vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
     fragmentShader: `
-    uniform samplerCube uCube; uniform samplerCube uBright; uniform float uBrightPx;
+    uniform samplerCube uCube; uniform samplerCube uBright; uniform samplerCube uGlow;
     uniform float uYaw; uniform float uHead; uniform int uMode; uniform vec4 uRect; uniform vec3 uRoom; uniform float uEye; uniform vec3 uPrev;
     uniform float uFade; uniform float uExp; uniform float uBloom; uniform float uTime; uniform int uFloorRot;
     uniform sampler2D uA; uniform sampler2D uB; uniform float uHasA; uniform float uHasB; uniform float uAspA; uniform float uAspB;
@@ -2087,21 +2234,10 @@ const post = (() => {
       uv.y=clamp(uv.y,.002,.998);
       return textureLod(tex,uv,0.).rgb;
     }
-    // Bloom from the bright-pass cube: six octaves. The fine ones are read straight; the
-    // wide ones are smoothed with a hexagon of taps in direction space, so glow stays round
-    // (no cross-shaped glare) and has no seams at the cube's edges.
+    // Bloom from the bright-pass cube: six octaves. The two fine ones are read straight; the
+    // four wide ones were gathered, hexagon by hexagon, into the glow cube (see glowPass).
     vec3 bloomAt(vec3 d){
-      vec3 t1=normalize(cross(d,abs(d.y)<.95?vec3(0.,1.,0.):vec3(1.,0.,0.))); vec3 t2=cross(d,t1);
-      float px=1.5708/uBrightPx;
-      vec3 acc=textureLod(uBright,d,0.).rgb*.30+textureLod(uBright,d,1.).rgb*.24;
-      const float BW[4]=float[4](.18,.13,.09,.06);
-      for(int i=0;i<4;i++){
-        float L=float(i+2), a=px*exp2(L)*.8;
-        vec3 s=textureLod(uBright,d,L).rgb;
-        for(int k=0;k<6;k++){ float an=float(k)*1.0472+float(i)*.5; s+=textureLod(uBright,normalize(d+(t1*cos(an)+t2*sin(an))*a),L).rgb; }
-        acc+=s/7.*BW[i];
-      }
-      return acc;
+      return textureLod(uBright,d,0.).rgb*.30+textureLod(uBright,d,1.).rgb*.24+textureLod(uGlow,d,0.).rgb;
     }
     // A line of light: an antialiased core of width w (never thinner than a pixel, with its
     // energy kept) and an exponential glow of radius gw.
@@ -2313,8 +2449,10 @@ const post = (() => {
         if(uBloom>0.) hdr+=bloomAt(wd)*uBloom;
         cub=srgb(tone(hdr*uExp));
       }
+      // The liquid edge between two clips; over the live world alone it has nothing to do.
+      bool film=uHasA>.5||uHasB>.5;
       vec2 nc=onFloor?q*.9:vec2(P,t*H)*.55;
-      float n=fbm(nc+vec2(uTime*.05,0.));
+      float n=film?fbm(nc+vec2(uTime*.05,0.)):.5;
       float edgeP=uMix*1.25-.12;
       float warp=(1.-abs(uMix*2.-1.))*.05*(n-.5);
       vec3 ca=uHasA>.5?foot(uA,uAspA,PF+warp*PER*.3,v+warp,uZoomA):cub;
@@ -2322,7 +2460,7 @@ const post = (() => {
       float mm=smoothstep(n-.06,n+.06,edgeP);
       vec3 col=mix(cb,ca,mm);
       // The liquid edge belongs to footage crossfades; over the live world a scene change is seamless.
-      if(uHasA>.5||uHasB>.5) col+=mix(GOLD,TEAL,uFuture)*exp(-abs(edgeP-n)*42.)*step(.001,uMix)*step(uMix,.999)*.6;
+      if(film) col+=mix(GOLD,TEAL,uFuture)*exp(-abs(edgeP-n)*42.)*step(.001,uMix)*step(uMix,.999)*.6;
 
       // Ireland 2036: the world keeps its own colour; shadows cool and highlights warm.
       if(uFuture*fut36>0.&&uGradeAmt>0.001){
@@ -2361,6 +2499,9 @@ const post = (() => {
           vec3 lines=vec3(0.);
           for(int i=1;i<7;i++){
             vec2 a=CITY[0], b=CITY[i], c2=(a+b)*.5-vec2(0.,35.);
+            // The curve lies inside the box of its control points; 24 units beyond it the line
+            // and its travelling dot are below a millionth, so the distance is not worked out.
+            if(any(lessThan(cM,min(min(a,b),c2)-24.))||any(greaterThan(cM,max(max(a,b),c2)+24.))) continue;
             vec2 sb=sdBez(cM,a,c2,b);
             float lw=beam(sb.x,.55,pxM,1.4);
             float u=fract(uTime*.03+float(i)*.17);
@@ -2975,6 +3116,7 @@ function applyTime(t, dt) {
   const sun = U.uSunDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).normalize();
   U.uZenith.value.fromArray(a[3]); U.uHorizon.value.fromArray(a[4]); U.uSunCol.value.fromArray(a[5]);
   U.uNight.value = a[6]; U.uCloud.value = a[7]; U.uAurora.value = a[8]; U.uFogD.value = a[9];
+  U.uCloudOn.value = U.uCloud.value > CLOUD_MIN ? 1 : 0;
   P.uExp.value = a[10];
   const sunUp = smooth(-.06, .12, sun.y);
   const moon = tmpV.set(.5, .55, -.65).normalize();
@@ -3390,11 +3532,16 @@ try {
   if (Array.isArray(r) && r.length >= 4) { $('r-w').value = r[0]; $('r-d').value = r[1]; $('r-h').value = r[2]; $('r-e').value = r[3]; post.material.uniforms.uFloorRot.value = (r[4] | 0) % 4; }
 } catch (e) {}
 let resScale = 1;
+// Output size. By default the picture is rendered at the display's own pixels up to about
+// 2560 x 1600 (4 megapixels), and a larger display is scaled up by the browser: a 4K or Retina
+// screen would otherwise cost two to three times the frame for detail the 2048 px cube cannot
+// supply. Full output resolution (Controls > Look) renders every display pixel, up to 40
+// megapixels, for a venue output that needs it.
+const OUT_BUDGET = 2560 * 1600, OUT_FULL = 40e6;
 function resize() {
-  // Render at the display's own pixels (a scaled Windows desktop would otherwise upscale a
-  // smaller image), within a 40-megapixel budget.
   const cw = innerWidth, ch = innerHeight;
-  const dpr = Math.min(window.devicePixelRatio || 1, Math.sqrt(40e6 / Math.max(1, cw * ch))) * resScale;
+  const budget = ctrl.fullres ? OUT_FULL : OUT_BUDGET;
+  const dpr = Math.min(window.devicePixelRatio || 1, Math.sqrt(budget / Math.max(1, cw * ch))) * resScale;
   renderer.setPixelRatio(dpr);
   renderer.setSize(cw, ch, false);
   const w = canvas.width, h = canvas.height;
@@ -3415,14 +3562,16 @@ addEventListener('resize', resize);
 const CTRL_DEFAULTS = {
   fmapb: 1, lines: 1, grade: .45, warm: .35, nlight: .55, land: 1,
   inset: 0, fscale: 1, tiltx: 0, tilty: 0, dscale: 1, dx: 0, dy: 0,
-  vol: .9, harp: 1, arp: 1, sea: 1, hold60: true,
+  vol: .9, harp: 1, arp: 1, sea: 1, hold60: true, fullres: false,
 };
 const ctrl = Object.assign({}, CTRL_DEFAULTS);
 try { Object.assign(ctrl, JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}')); } catch (e) {}
 
 $('c-auto').addEventListener('change', (e) => { ctrl.hold60 = e.target.checked; applyCtrl(); });
+$('c-fullres').addEventListener('change', (e) => { ctrl.fullres = e.target.checked; applyCtrl(); });
 function applyCtrl() {
   $('c-auto').checked = !!ctrl.hold60;
+  $('c-fullres').checked = !!ctrl.fullres;
   const P = post.material.uniforms;
   P.uMapBright.value = ctrl.fmapb;
   P.uLines.value = ctrl.lines;
@@ -3439,6 +3588,12 @@ function applyCtrl() {
   audio.setLevel('pad', ctrl.harp);
   audio.setLevel('chime', ctrl.arp);
   audio.setLevel('ocean', ctrl.sea);
+  // A new output size (from the box, Reset all or pasted settings) starts the frame-rate hold
+  // afresh, with the cube sized to the new output again.
+  if (applyCtrl.fullres !== undefined && applyCtrl.fullres !== !!ctrl.fullres) {
+    resScale = 1; if (holdFrameRate.auto) { qManual = false; holdFrameRate.auto = false; } graceSecs = 3; resize();
+  }
+  applyCtrl.fullres = !!ctrl.fullres;
   try { localStorage.setItem('ire2036-ctrl', JSON.stringify(ctrl)); } catch (e) {}
 }
 

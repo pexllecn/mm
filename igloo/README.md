@@ -73,7 +73,15 @@ With a key, the show streams Google's Photorealistic 3D Tiles: photogrammetry of
 
 ### Picture quality
 
-The show starts at its highest quality: the Ultra imagery set, cube faces sized to the output (2048 to 4096 px each, multisampled), and the canvas at the display's full pixel density. `Q` steps the cube size by hand. **Lower detail automatically** in the control panel's Look tab lets the show drop a size if the GPU cannot hold the frame rate; it is off by default.
+The show is built to hold 60 fps. It uses the Ultra imagery set, and the world cube is sized to the output: 1024, 1536 or 2048 px per face, never more, because the room cannot show more detail than that. The picture renders at the display's own pixels up to about 2560 × 1600 (4 megapixels). A larger display, such as a 4K or Retina screen, is scaled up by the browser. For a venue output that needs every pixel, tick **Full output resolution** under Controls → Look.
+
+What keeps it fast:
+- Each face is drawn straight into the cube, with no multisampled copy. The cube is already supersampled against the output.
+- The clouds are raymarched at half the face's resolution, then composited at full resolution behind terrain and towers. Their cover is worked out once per frame into nine levels round the camera, so each step of the march costs one texture read instead of five.
+- From 1:53, when the cover is too thin for any cloud to form, the cloud pass and all cloud-shadow lookups are skipped. This does not change the picture.
+- The wide bloom is gathered once per frame into a small cube, so each output pixel reads it three times instead of thirty.
+
+**Hold a smooth frame rate** (on by default) measures the display's refresh rate. If the show falls behind for two seconds, it steps down one notch at a time: a smaller cube if the cube is above 1536 px, then 87% and 75% output, then a 1024 px cube. The status line shows where it settled. `Q` steps the cube size by hand.
 
 Operator controls (`C`): **Look → Light lines** sets the cove line, year lines and sweeps together; the **Floor** tab fits the dial. Enter the real room size on the start screen so the light lines meet the walls.
 
