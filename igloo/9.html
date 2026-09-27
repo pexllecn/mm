@@ -62,8 +62,6 @@
   .credit { margin: 0; font-size: 12px; line-height: 1.45; color: var(--mute); max-width: 58ch; }
   .ghost { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 14px 20px; font-size: 15px; cursor: pointer; }
   .ghost:hover { border-color: var(--stone); }
-  .gkey { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--mute); }
-  .gkey input { width: min(340px, 70vw); background: rgba(8,19,26,.7); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; color: var(--stone); font: inherit; }
   .room { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--mute); }
   .room input { width: 4.2em; background: rgba(8,19,26,.7); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; color: var(--stone); font: inherit; font-variant-numeric: tabular-nums; }
   .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 16px; font-size: 13px; color: var(--mute); }
@@ -124,8 +122,6 @@
   .sl label { color: var(--mute); }
   .sl output { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--stone); text-align: right; }
   .sl input[type=range] { width: 100%; accent-color: var(--gold); }
-  .chk { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--mute); }
-  .chk input { accent-color: var(--gold); }
   .ed { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 6px; }
   .ed .t { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
   .ed input { width: 100%; background: rgba(8,19,26,.7); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; color: var(--stone); font: inherit; font-size: 13px; }
@@ -148,7 +144,7 @@
   <div class="gate-card">
     <div class="eyebrow">Igloo immersive · four walls + floor</div>
     <h1 id="gate-title">Ireland <em>2036</em></h1>
-    <p>The real island. Terrain and sea-floor depth from satellite survey data, satellite imagery draped over it, and every place — the Cliffs of Moher, the Liffey, Arklow Bank — at its true longitude and latitude. Underfoot, the same island as a lit relief map inside a ring that counts 2026 to 2036. At every chapter a circle of light spreads across the floor, squares itself to the room and climbs all four walls as one level line, with a shimmer of light in its wake. The flight is slow and always forward. At 1:16 the sweep for 2036 carries the new decade’s light up the walls, and in the last seconds the map settles onto the real island below.</p>
+    <p>The real island. Terrain and sea-floor depth from satellite survey data, satellite imagery draped over it, and every place — the Cliffs of Moher, the Liffey, Arklow Bank — at its true longitude and latitude. Underfoot, the same island as a lit relief map inside a ring that counts 2026 to 2036, and lines of light that run from the floor straight up the walls. The flight is slow and always forward. A wave of light leaves Dublin, and Ireland 2036 takes shape around you; in the last seconds the map settles onto the real island below.</p>
     <div class="spec"><span><b>3:00</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> live render</span><span id="gpu-note">Checking graphics…</span></div>
     <div class="note" id="load-note" role="status">Starting up…</div>
     <div class="row" role="group" aria-label="Output format">
@@ -161,14 +157,10 @@
     <div class="row" role="group" aria-label="Map detail">
       <div class="seg" id="quality-seg">
         <button type="button" data-q="standard" aria-pressed="false">Standard map</button>
-        <button type="button" data-q="high" aria-pressed="false">High</button>
-        <button type="button" data-q="ultra" aria-pressed="true">Ultra</button>
+        <button type="button" data-q="high" aria-pressed="true">High</button>
+        <button type="button" data-q="ultra" aria-pressed="false">Ultra</button>
       </div>
       <span class="stat" id="quality-note"></span>
-    </div>
-    <div class="row" role="group" aria-label="Photorealistic 3D cities">
-      <label class="gkey" for="g-key">Real 3D cities <input id="g-key" type="password" autocomplete="off" spellcheck="false" placeholder="Google Maps Platform key, or a Cesium ion token"></label>
-      <span class="stat" id="g-note">Optional: photorealistic buildings and sharper ground from Google.</span>
     </div>
     <div class="room" role="group" aria-label="Room size in metres">
       <label for="r-w">Front wall <input id="r-w" type="number" min="2" max="30" step="0.1" value="6"> m</label>
@@ -242,9 +234,7 @@
     <div class="sl"><label for="c-warm">Grade warmth</label><input id="c-warm" type="range" min="0" max="1" step="0.02"><output></output></div>
     <div class="sl"><label for="c-nlight">City light at night</label><input id="c-nlight" type="range" min="0" max="2" step="0.02"><output></output></div>
     <div class="sl"><label for="c-land">Land brightness</label><input id="c-land" type="range" min="0.3" max="1.8" step="0.02"><output></output></div>
-    <label class="chk"><input type="checkbox" id="c-auto"> Hold a smooth frame rate (steps detail down a notch if needed)</label>
-    <label class="chk"><input type="checkbox" id="c-fullres"> Full output resolution (every display pixel, for a 4K venue output; slower)</label>
-    <p class="hint">If Dublin looks sandy in the last act, lower <b>Grade warmth</b> and <b>City light at night</b>. <b>Light lines</b> sets the cove line, the year lines and the sweeps of light together. The picture renders at up to 2560 × 1600 unless full output resolution is ticked; with the frame rate held, detail steps down only if the machine falls behind.</p>
+    <p class="hint">If Dublin looks sandy in the last act, lower <b>Grade warmth</b> and <b>City light at night</b>. <b>Light lines</b> sets the cove line, the year lines and the caption stems together.</p>
   </div>
 
   <div class="tabpane" data-pane="floor" hidden>
@@ -282,26 +272,16 @@
 </aside>
 <div id="toast" class="off" role="status"></div>
 
-<!-- three.js and the 3D Tiles renderer are ES modules; the map below resolves their imports. -->
-<script type="importmap">
-{ "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
-  "3d-tiles-renderer": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer@0.5.3/build/index.js",
-  "3d-tiles-renderer/plugins": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer@0.5.3/build/index.plugins.js"
-} }
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script>
+if (!window.THREE) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
 </script>
 <script>
-// A module that cannot load never runs, so say so if it has not started after a while.
-setTimeout(() => { if (!window.__ire2036Boot) { const n = document.getElementById('gpu-note'); if (n) n.textContent = '3D engine could not load. Check the network and reload.'; } }, 20000);
-</script>
-<script type="module">
-import * as THREE from 'three';
-window.__ire2036Boot = true;
 (() => {
 'use strict';
-const T = THREE;
+const T = window.THREE;
 const $ = (id) => document.getElementById(id);
+if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the network and reload.'; return; }
 
 
 // ---------------------------------------------------------------- show data
@@ -449,7 +429,7 @@ const QUALITY_TIERS = {
     ],
   },
 };
-let QUALITY_KEY = 'ultra';               // the sharpest imagery unless the operator picks otherwise
+let QUALITY_KEY = 'high';
 const tier = () => QUALITY_TIERS[QUALITY_KEY];
 
 const tileX = (lon, z) => (lon + 180) / 360 * Math.pow(2, z);
@@ -642,7 +622,7 @@ function buildLights() {
   c.putImageData(img, 0, 0);
   const tex = new T.CanvasTexture(cv);
   tex.flipY = false;
-  tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping; tex.anisotropy = 16;
+  tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping; tex.anisotropy = 4;
   return tex;
 }
 
@@ -669,7 +649,7 @@ function canvasTex(cv, mips = true) {
   const t = new T.CanvasTexture(cv);
   t.flipY = false;                       // row 0 is north / the front wall, as everywhere else
   t.wrapS = t.wrapT = T.ClampToEdgeWrapping;
-  t.anisotropy = 16; t.generateMipmaps = mips;
+  t.anisotropy = 8; t.generateMipmaps = mips;
   t.minFilter = mips ? T.LinearMipmapLinearFilter : T.LinearFilter; t.magFilter = T.LinearFilter;
   return t;
 }
@@ -759,7 +739,7 @@ function buildFloorText() {
 
 // ---------------------------------------------------------------- relief
 // The elevation field as the floor map reads it: slope east, slope south, height, and local
-// relief (height above its surroundings, for valley shading), at the field's full grid and
+// relief (height above its surroundings, for valley shading), at half the field's grid and
 // stored as half floats so it filters smoothly at any floor size.
 function toHalf(v) {
   toHalf.f[0] = v; const x = toHalf.u[0];
@@ -770,9 +750,13 @@ function toHalf(v) {
 }
 toHalf.f = new Float32Array(1); toHalf.u = new Uint32Array(toHalf.f.buffer);
 function buildRelief() {
-  const RW = FW, RH = FH;
-  const h = new Float32Array(FIELD);
-  // Box blur, radius 10 texels (about 1.7 km), two passes: the surroundings each point sits in.
+  const RW = Math.floor(FW / 2), RH = Math.floor(FH / 2);
+  const h = new Float32Array(RW * RH);
+  for (let j = 0; j < RH; j++) for (let i = 0; i < RW; i++) {
+    const a = (2 * j) * FW + 2 * i;
+    h[j * RW + i] = (FIELD[a] + FIELD[a + 1] + FIELD[a + FW] + FIELD[a + FW + 1]) * .25;
+  }
+  // Box blur, radius 5 texels (about 1.7 km), two passes: the surroundings each point sits in.
   const blur = (src, R) => {
     const tmp = new Float32Array(src.length), out = new Float32Array(src.length);
     for (let j = 0; j < RH; j++) { let s = 0; const o = j * RW;
@@ -783,34 +767,17 @@ function buildRelief() {
       for (let j = 0; j < RH; j++) { out[j * RW + i] = s / (2 * R + 1); s += tmp[Math.min(RH - 1, j + R + 1) * RW + i] - tmp[Math.max(0, j - R) * RW + i]; } }
     return out;
   };
-  const hb = blur(blur(h, 10), 10);
+  const hb = blur(blur(h, 5), 5);
   const dx = (FX1 - FX0) / (RW - 1), dz = (FZ1 - FZ0) / (RH - 1);
-  let f = new Float32Array(RW * RH * 4);
+  const data = new Uint16Array(RW * RH * 4);
   for (let j = 0; j < RH; j++) for (let i = 0; i < RW; i++) {
     const k = j * RW + i;
-    f[k * 4] = (h[j * RW + Math.min(RW - 1, i + 1)] - h[j * RW + Math.max(0, i - 1)]) / (2 * dx);
-    f[k * 4 + 1] = (h[Math.min(RH - 1, j + 1) * RW + i] - h[Math.max(0, j - 1) * RW + i]) / (2 * dz);
-    f[k * 4 + 2] = h[k]; f[k * 4 + 3] = h[k] - hb[k];
+    const gxv = (h[j * RW + Math.min(RW - 1, i + 1)] - h[j * RW + Math.max(0, i - 1)]) / (2 * dx);
+    const gzv = (h[Math.min(RH - 1, j + 1) * RW + i] - h[Math.max(0, j - 1) * RW + i]) / (2 * dz);
+    data[k * 4] = toHalf(gxv); data[k * 4 + 1] = toHalf(gzv); data[k * 4 + 2] = toHalf(h[k]); data[k * 4 + 3] = toHalf(h[k] - hb[k]);
   }
-  // A full mip chain, averaged here in full precision, so the relief is filtered rather than
-  // aliased wherever the floor shows the field smaller than its own grid.
-  const mipmaps = [];
-  let w = RW, hh = RH;
-  for (;;) {
-    const data = new Uint16Array(w * hh * 4);
-    for (let k = 0; k < data.length; k++) data[k] = toHalf(f[k]);
-    mipmaps.push({ data, width: w, height: hh });
-    if (w === 1 && hh === 1) break;
-    const w2 = Math.max(1, w >> 1), h2 = Math.max(1, hh >> 1), g = new Float32Array(w2 * h2 * 4);
-    for (let j = 0; j < h2; j++) for (let i = 0; i < w2; i++) {
-      const i0 = Math.min(w - 1, i * 2), i1 = Math.min(w - 1, i * 2 + 1), j0 = Math.min(hh - 1, j * 2), j1 = Math.min(hh - 1, j * 2 + 1);
-      for (let c = 0; c < 4; c++) g[(j * w2 + i) * 4 + c] = .25 * (f[(j0 * w + i0) * 4 + c] + f[(j0 * w + i1) * 4 + c] + f[(j1 * w + i0) * 4 + c] + f[(j1 * w + i1) * 4 + c]);
-    }
-    f = g; w = w2; hh = h2;
-  }
-  const tex = new T.DataTexture(mipmaps[0].data, RW, RH, T.RGBAFormat, T.HalfFloatType);
-  tex.mipmaps = mipmaps;
-  tex.magFilter = T.LinearFilter; tex.minFilter = T.LinearMipmapLinearFilter; tex.generateMipmaps = false;
+  const tex = new T.DataTexture(data, RW, RH, T.RGBAFormat, T.HalfFloatType);
+  tex.magFilter = tex.minFilter = T.LinearFilter; tex.generateMipmaps = false;
   tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping; tex.needsUpdate = true;
   return tex;
 }
@@ -831,165 +798,71 @@ const halfOK = gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT
 const floatLinear = !!gl.getExtension('OES_texture_float_linear');
 $('gpu-note').textContent = halfOK ? 'HDR render ready' : 'Standard render';
 
-const QUALITY = [1024, 1536, 2048];
-// The cube is sized to the output: half as much again as the output shows per quarter turn,
-// so the world is supersampled rather than stretched, and never more than 2048 px per face.
-// Past that the room cannot show the difference, and every step up costs the whole frame
-// again. Q overrides it. If the machine cannot hold its refresh rate the show steps down one
-// notch at a time (see holdFrameRate) rather than stutter.
+const QUALITY = [512, 768, 1024, 1536, 2048];
+// Default to the sharpest cube the GPU allows: 2048 px per face matches an 8K
+// equirectangular output pixel for pixel. The loop steps down on its own if the
+// machine cannot hold frame rate (see adaptQuality).
 const softGPU = /swiftshader|llvmpipe|software/i.test((() => { try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''; } catch (x) { return ''; } })());
-const MAX_CUBE = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE) | 0;
-let qIndex = softGPU ? 0 : QUALITY.length - 1, qManual = false;
-function idealCubeIndex(outW, outH) {
-  if (softGPU) return 0;
-  // Desk preview looks through an 80 degree lens, so the same screen needs a denser cube.
-  const want = Math.max(.375 * Math.max(outW, 2 * outH), mode === 2 ? 1.2 * outH : 0);
-  let i = QUALITY.findIndex((q) => q >= want);
-  if (i < 0) i = QUALITY.length - 1;
-  while (i > 0 && QUALITY[i] > MAX_CUBE) i--;
-  return i;
-}
+let qIndex = softGPU ? 2 : (gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE) >= 2048 ? 4 : 3);
 const maxAniso = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1;
-// The world is drawn straight into a cube around the camera, one face at a time. The cube is
-// supersampled against the output, so the projection pass's filtered lookup antialiases
-// coastlines, cliff edges and turbine blades for the room's own pixel size without a
-// multisampled copy of every face. A quarter-size bright-pass cube is written alongside, and
-// its wide glow is gathered once per frame into a small cube, so bloom costs the projection
-// pass three lookups per pixel.
-let cubeRT, cubeCam, brightRT, glowRT, cloudRT, topClear = false;
-// Cloud is marched at half the face's resolution: with the cube sized to the output that is
-// about one march sample per output pixel, and a quarter of the work of marching every face
-// pixel (see cloudLayer).
-const cloudDiv = 2;
-// The ceiling is black and the top of every wall fades into it, so the cube's upward face
-// is only ever seen if the room is tall and narrow enough for a wall top to rise above 45
-// degrees in some direction. Otherwise it is not drawn at all.
-function needTopFace() {
-  if (!post) return true;
-  const P = post.material.uniforms, R = P.uRoom.value;
-  return (R.z - P.uEye.value) * Math.SQRT2 > Math.min(R.x, R.y) * .5 * .92;
-}
-// A full-screen pass: one triangle, its own scene and camera.
-function screenPass(uniforms, fragmentShader) {
-  const m = new T.ShaderMaterial({ uniforms, vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`, fragmentShader, depthTest: false, depthWrite: false });
+// The world is drawn into a cube around the camera one face at a time, each through a 4x
+// multisampled target, so coastlines, cliff edges, turbine blades and city lights are
+// antialiased before the projection pass filters them for the room's own pixel size.
+// A quarter-size bright-pass cube is written alongside, and bloom is read from it.
+const MSAA = Math.min(4, (renderer.capabilities.maxSamples | 0) || 0);
+let cubeRT, cubeCam, faceRT, brightRT;
+const copyPass = (() => {
+  const m = new T.ShaderMaterial({
+    uniforms: { uSrc: { value: null }, uBright: { value: 0 } },
+    vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
+    fragmentShader: `uniform sampler2D uSrc; uniform float uBright;
+    void main(){
+      if(uBright<.5){ gl_FragColor=vec4(texelFetch(uSrc,ivec2(gl_FragCoord.xy),0).rgb,1.); return; }
+      // Bright pass at quarter size: threshold every source pixel first, then average, so a
+      // small bright light blooms as much as a large one.
+      ivec2 b=ivec2(gl_FragCoord.xy)*4; vec3 s=vec3(0.);
+      for(int j=0;j<4;j++) for(int i=0;i<4;i++){
+        vec3 c=texelFetch(uSrc,b+ivec2(i,j),0).rgb; float l=max(c.r,max(c.g,c.b));
+        float w=clamp((l-.85)/1.6,0.,1.); s+=c*w*w;
+      }
+      gl_FragColor=vec4(min(s/16.,vec3(60.)),1.);
+    }`,
+    depthTest: false, depthWrite: false,
+  });
   const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
   const mesh = new T.Mesh(geo, m); mesh.frustumCulled = false;
   const sc = new T.Scene(); sc.add(mesh);
   return { scene: sc, cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), uniforms: m.uniforms };
-}
-// The direction through a point of a cube face, for face coordinates st in 0..1 as they are
-// laid out in the face's own pixels (the cube-map convention of GL, faces +x -x +y -y +z -z).
-const FACE_DIR = `
-vec3 faceDir(int f, vec2 st){ vec2 c=st*2.-1.;
-  if(f==0) return vec3(1.,-c.y,-c.x);
-  if(f==1) return vec3(-1.,-c.y,c.x);
-  if(f==2) return vec3(c.x,1.,c.y);
-  if(f==3) return vec3(c.x,-1.,-c.y);
-  if(f==4) return vec3(c.x,-c.y,1.);
-  return vec3(-c.x,-c.y,-1.);
-}`;
-// Bright pass at quarter size, read straight from the face just drawn: threshold every source
-// pixel first, then average, so a small bright light blooms as much as a large one.
-const brightPass = screenPass({ uSrc: { value: null }, uN: { value: 1 }, uFace: { value: 0 } }, `
-  uniform samplerCube uSrc; uniform float uN; uniform int uFace;
-  ${FACE_DIR}
-  void main(){
-    vec2 b=floor(gl_FragCoord.xy)*4.; vec3 s=vec3(0.);
-    for(int j=0;j<4;j++) for(int i=0;i<4;i++){
-      vec3 c=textureLod(uSrc,faceDir(uFace,(b+vec2(float(i),float(j))+.5)/uN),0.).rgb; float l=max(c.r,max(c.g,c.b));
-      float w=clamp((l-.85)/1.6,0.,1.); s+=c*w*w;
-    }
-    gl_FragColor=vec4(min(s/16.,vec3(60.)),1.);
-  }`);
-// The wide glow: four octaves of the bright cube, each smoothed with a hexagon of taps in
-// direction space, so glow stays round (no cross-shaped glare) and has no seams at the cube's
-// edges. Gathered once per frame at an eighth of the cube's size; the projection pass reads it
-// with a single filtered lookup.
-const glowPass = screenPass({ uBright: { value: null }, uBrightPx: { value: 256 }, uG: { value: 64 }, uFace: { value: 0 } }, `
-  uniform samplerCube uBright; uniform float uBrightPx; uniform float uG; uniform int uFace;
-  ${FACE_DIR}
-  void main(){
-    vec3 d=normalize(faceDir(uFace,gl_FragCoord.xy/uG));
-    vec3 t1=normalize(cross(d,abs(d.y)<.95?vec3(0.,1.,0.):vec3(1.,0.,0.))); vec3 t2=cross(d,t1);
-    float px=1.5708/uBrightPx;
-    vec3 acc=vec3(0.);
-    const float BW[4]=float[4](.18,.13,.09,.06);
-    for(int i=0;i<4;i++){
-      float L=float(i+2), a=px*exp2(L)*.8;
-      vec3 s=textureLod(uBright,d,L).rgb;
-      for(int k=0;k<6;k++){ float an=float(k)*1.0472+float(i)*.5; s+=textureLod(uBright,normalize(d+(t1*cos(an)+t2*sin(an))*a),L).rgb; }
-      acc+=s/7.*BW[i];
-    }
-    gl_FragColor=vec4(acc,1.);
-  }`);
+})();
 function makeCube() {
-  [cubeRT, brightRT, glowRT, cloudRT, coverRT].forEach((r) => r && r.dispose());
-  const size = QUALITY[qIndex], type = halfOK ? T.HalfFloatType : T.UnsignedByteType, glow = Math.max(64, size / 8);
+  [cubeRT, faceRT, brightRT].forEach((r) => r && r.dispose());
+  const size = QUALITY[qIndex], type = halfOK ? T.HalfFloatType : T.UnsignedByteType;
   cubeRT = new T.WebGLCubeRenderTarget(size, { type, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter });
   cubeRT.texture.anisotropy = maxAniso;
-  brightRT = new T.WebGLCubeRenderTarget(size / 4, { type, depthBuffer: false, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter });
-  glowRT = new T.WebGLCubeRenderTarget(glow, { type, depthBuffer: false, generateMipmaps: false, minFilter: T.LinearFilter, magFilter: T.LinearFilter });
-  // Cloud is marched into a target of its own (see cloudLayer) and composited at full size.
-  cloudRT = new T.WebGLRenderTarget(size / cloudDiv, size / cloudDiv, { type, depthBuffer: false, generateMipmaps: false, minFilter: T.LinearFilter, magFilter: T.LinearFilter });
-  topClear = false;
+  faceRT = new T.WebGLRenderTarget(size, size, { type, samples: MSAA, depthBuffer: true, generateMipmaps: false, minFilter: T.NearestFilter, magFilter: T.NearestFilter });
+  brightRT = new T.WebGLCubeRenderTarget(size / 4, { type, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter });
   if (cubeCam) { cubeCam.renderTarget = cubeRT; } else { cubeCam = new T.CubeCamera(20, 2200000, cubeRT); }
   U.uPx.value = size / 2;
-  brightPass.uniforms.uSrc.value = cubeRT.texture; brightPass.uniforms.uN.value = size;
-  glowPass.uniforms.uBright.value = brightRT.texture; glowPass.uniforms.uBrightPx.value = size / 4; glowPass.uniforms.uG.value = glow;
-  cloudComposite.uniforms.uCloudTex.value = cloudRT.texture; cloudComposite.uniforms.uCloudInv.value.set(1 / size, 1 / size);
-  if (coverBake) {
-    // One texel per cube pixel at the far edge of each level: finer than the march's own
-    // samples, so what it reads is the cover itself, not a coarser copy of it.
-    const n = size;
-    coverRT = new T.WebGLArrayRenderTarget(n, n, COVER_L, { depthBuffer: false });
-    Object.assign(coverRT.texture, { type: T.HalfFloatType, format: T.RedFormat, minFilter: T.LinearFilter, magFilter: T.LinearFilter, generateMipmaps: false });
-    coverBake.uniforms.uCovN.value = n; U.uCov.value = coverRT.texture; U.uCovOn.value = 1;
-  }
-  if (post) { const P = post.material.uniforms; P.uCube.value = cubeRT.texture; P.uBright.value = brightRT.texture; P.uGlow.value = glowRT.texture; }
+  if (post) { const P = post.material.uniforms; P.uCube.value = cubeRT.texture; P.uBright.value = brightRT.texture; P.uBrightPx.value = size / 4; }
 }
 function renderCube() {
   if ('updateCoordinateSystem' in cubeCam && cubeCam.coordinateSystem !== renderer.coordinateSystem) {
     cubeCam.coordinateSystem = renderer.coordinateSystem; cubeCam.updateCoordinateSystem();
   }
   cubeCam.updateMatrixWorld(true);
-  const cams = cubeCam.children, skipTop = !needTopFace(), clouds = U.uCloudOn.value > .5;
-  let baked = false;
-  cloudComposite.mesh.visible = clouds;
+  const cams = cubeCam.children;
   for (let f = 0; f < 6; f++) {
-    if (f === 2 && skipTop) {
-      // three.js orders the faces +x, -x, +y, -y, +z, -z: face 2 looks straight up.
-      if (!topClear) {
-        renderer.setClearColor(0x000000, 1);
-        renderer.setRenderTarget(cubeRT, 2); renderer.clear(true, false, false);
-        renderer.setRenderTarget(brightRT, 2); renderer.clear(true, false, false);
-        topClear = true;
-      }
-      continue;
-    }
-    if (f === 2) topClear = false;
-    if (clouds && !baked) { bakeCover(); baked = true; }
-    if (clouds) {
-      renderer.setClearColor(0x000000, 0);
-      renderer.setRenderTarget(cloudRT); renderer.render(cloudScene, cams[f]);
-      renderer.setClearColor(0x000000, 1);
-    }
-    cubeRT.texture.generateMipmaps = f === 5;
-    renderer.setRenderTarget(cubeRT, f); renderer.render(scene, cams[f]);
-    brightPass.uniforms.uFace.value = f; brightRT.texture.generateMipmaps = f === 5;
-    renderer.setRenderTarget(brightRT, f); renderer.render(brightPass.scene, brightPass.cam);
-  }
-  for (let f = 0; f < 6; f++) {
-    glowPass.uniforms.uFace.value = f;
-    renderer.setRenderTarget(glowRT, f); renderer.render(glowPass.scene, glowPass.cam);
+    renderer.setRenderTarget(faceRT); renderer.render(scene, cams[f]);
+    copyPass.uniforms.uSrc.value = faceRT.texture;
+    copyPass.uniforms.uBright.value = 0; cubeRT.texture.generateMipmaps = f === 5;
+    renderer.setRenderTarget(cubeRT, f); renderer.render(copyPass.scene, copyPass.cam);
+    copyPass.uniforms.uBright.value = 1; brightRT.texture.generateMipmaps = f === 5;
+    renderer.setRenderTarget(brightRT, f); renderer.render(copyPass.scene, copyPass.cam);
   }
   renderer.setRenderTarget(null);
 }
 
 const scene = new T.Scene();
-// Cloud cover is baked each frame into COVER_L camera-centred levels; level j spans
-// +-COVER_H0 * 2^j metres (2 km to 512 km). See bakeCover.
-const COVER_L = 9, COVER_H0 = 2000;
-const g0 = (v) => (Number.isInteger(v) ? v.toFixed(1) : String(v));   // a number as a GLSL float
 const U = {
   uTime: { value: 0 }, uShow: { value: 0 }, uCam: { value: new T.Vector3() },
   uSunDir: { value: new T.Vector3(0, .1, 1) }, uLightDir: { value: new T.Vector3(0, 1, 0) }, uLightCol: { value: new T.Vector3(1, 1, 1) },
@@ -997,13 +870,11 @@ const U = {
   uNight: { value: 0 }, uCloud: { value: .5 }, uAurora: { value: 0 }, uFogD: { value: .000006 },
   uScanR: { value: 0 }, uScanC: { value: new T.Vector2(gx(PLACES.dublin[0]), gz(PLACES.dublin[1])) }, uPx: { value: 512 },
   uElev: { value: elevTex }, uLights: { value: elevTex },
-  uNightLights: { value: 1 }, uLandLift: { value: 1 }, uCoast: { value: 0 }, uG3D: { value: 0 },
+  uNightLights: { value: 1 }, uLandLift: { value: 1 }, uCoast: { value: 0 },
   uFB: { value: new T.Vector4(FX0, FZ0, 1 / (FX1 - FX0), 1 / (FZ1 - FZ0)) },
   uFRes: { value: new T.Vector2(FW, FH) },
   uSky: { value: null }, uNoise: { value: null }, uRelief: { value: null },
   uCell: { value: null }, uCloudH: { value: new T.Vector2(2800, 4300) }, uHole: { value: new T.Vector2(gx(-9.43), gz(52.944)) },
-  uCloudOn: { value: 1 },
-  uCov: { value: null }, uCovO: { value: Array.from({ length: COVER_L }, () => new T.Vector4()) }, uCovOn: { value: 0 },
 };
 
 const COMMON = /* glsl */`
@@ -1011,7 +882,7 @@ uniform float uTime; uniform float uShow; uniform vec3 uCam; uniform vec3 uSunDi
 uniform vec3 uZenith; uniform vec3 uHorizon; uniform vec3 uSunCol; uniform float uNight; uniform float uCloud; uniform float uAurora; uniform float uFogD;
 uniform float uScanR; uniform vec2 uScanC; uniform float uPx;
 uniform sampler2D uElev; uniform sampler2D uLights; uniform vec4 uFB; uniform vec2 uFRes;
-uniform float uNightLights; uniform float uLandLift; uniform float uCoast; uniform float uG3D;
+uniform float uNightLights; uniform float uLandLift; uniform float uCoast;
 float hash12(vec2 p){ vec3 p3=fract(vec3(p.xyx)*.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
 float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
   return mix(mix(hash12(i),hash12(i+vec2(1,0)),u.x), mix(hash12(i+vec2(0,1)),hash12(i+vec2(1,1)),u.x), u.y); }
@@ -1031,19 +902,9 @@ float terrainAt(vec2 xz){
   float d=texture2D(uElev,(i+vec2(1.5,1.5))*px).r;
   return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
 }
-// The same heights through the half-float relief texture, filtered in hardware: one fetch
-// instead of four, for the shadow and occlusion marches where a few centimetres don't show.
-uniform sampler2D uRelief;
-float terrainL(vec2 xz){
-  vec2 uv=fieldUV(xz);
-  if(uv.x<0.||uv.y<0.||uv.x>1.||uv.y>1.) return -200.;
-  return textureLod(uRelief,uv,0.).b;
-}
-// Normals from the same filtered heights: four fetches rather than sixteen. The step is never
-// under 45 m, where half-float heights and filtering are far finer than any slope that shows.
 vec3 terrainNormal(vec2 xz, float step){
-  float l=terrainL(xz-vec2(step,0.)), r=terrainL(xz+vec2(step,0.));
-  float d=terrainL(xz-vec2(0.,step)), u=terrainL(xz+vec2(0.,step));
+  float l=terrainAt(xz-vec2(step,0.)), r=terrainAt(xz+vec2(step,0.));
+  float d=terrainAt(xz-vec2(0.,step)), u=terrainAt(xz+vec2(0.,step));
   return normalize(vec3(l-r, 2.*step, d-u));
 }
 // The sky is physically based: Rayleigh and Mie single scattering through a real
@@ -1079,7 +940,7 @@ const vec3 GOLD=vec3(1.,.72,.32); const vec3 TEAL=vec3(.35,1.,.86);
 // convective cloud has. Cover is cellular (one cell per cloud, about a kilometre across),
 // gathered into banks and clear spells at the scale of a weather system, with a gap where
 // the camera climbs out so it rises between clouds rather than blind through one.
-uniform sampler2D uCell; uniform vec2 uCloudH; uniform vec2 uHole; uniform float uCloudOn;
+uniform sampler2D uCell; uniform vec2 uCloudH; uniform vec2 uHole;
 float cloudCover(vec2 xz){
   vec2 w=xz/13000.+uTime*vec2(.0016,.0005);
   float c0=texture2D(uCell,w*.41+.53).r, c1=texture2D(uCell,w).r, c2=texture2D(uCell,w*2.71+.37).g;
@@ -1095,25 +956,9 @@ float cloudCover(vec2 xz){
 float cloudShadow(vec3 P){
   vec3 L=normalize(uLightDir);
   float hm=(uCloudH.x+uCloudH.y)*.5;
-  // uCloudOn is 0 when the cover is too thin for any cloud to form anywhere (see CLOUD_MIN).
-  if(L.y<.03||uCloudOn<.5||P.y>hm) return 1.;
+  if(L.y<.03||uCloud<.01||P.y>hm) return 1.;
   float s=cloudCover(P.xz+L.xz/L.y*(hm-P.y));
   return 1.-.7*smoothstep(0.,.14,s)*smoothstep(.03,.12,L.y);
-}
-// The same cover as the cloud march reads it: baked once per frame (see bakeCover) into nine
-// levels round the camera, each twice the extent of the last and about one cube pixel per
-// texel at any distance, so a sample is one lookup instead of five. Across the outer part of
-// each level it blends into the next, so no ring shows where one hands over to the other.
-uniform highp sampler2DArray uCov; uniform vec4 uCovO[${COVER_L}]; uniform float uCovOn;
-float covLevel(int j, vec2 xz){ vec4 o=uCovO[j]; return textureLod(uCov,vec3((xz-o.xy)*o.z,float(j)),0.).r; }
-float cloudCoverM(vec3 p){
-  if(uCovOn<.5) return cloudCover(p.xz);
-  float lam=log2(max(length(p-uCam),1.)/${g0(COVER_H0)});
-  float jf=clamp(ceil(lam),0.,${g0(COVER_L - 1)}); int j=int(jf);
-  float s=covLevel(j,p.xz);
-  float f=lam-jf+1.;                              // 1 at the outer edge of level j
-  if(j<${COVER_L - 1}&&f>.7) s=mix(s,covLevel(j+1,p.xz),smoothstep(.7,1.,f));
-  return s;
 }
 `;
 
@@ -1124,7 +969,7 @@ function mat(vs, fs, extra = {}, opts = {}) {
 // ---------------------------------------------------------------- noise
 // One tileable fbm texture feeds clouds, aurora and ground detail. Sampling a texture
 // is far cheaper than hashing noise per pixel, which is what lets the clouds be
-// raymarched through their full depth.
+// raymarched in full at 2048 px per cube face.
 U.uNoise.value = (() => {
   const N = 256, data = new Uint8Array(N * N * 4);
   const lat = (p, seed) => { const g = new Float32Array(p * p); let s2 = seed; for (let i = 0; i < g.length; i++) { s2 = (s2 * 16807) % 2147483647; g[i] = s2 / 2147483647; } return g; };
@@ -1141,46 +986,28 @@ U.uNoise.value = (() => {
   t.wrapS = t.wrapT = T.RepeatWrapping; t.magFilter = T.LinearFilter; t.minFilter = T.LinearMipmapLinearFilter; t.generateMipmaps = true; t.needsUpdate = true;
   return t;
 })();
-// The thinnest cover at which any cloud can form. cloudCover() adds three cell terms (each at
-// most 1) and the noise's red channel, and subtracts 1.24 less the cover: with every term at
-// its largest (and the densest bank) it is still at or below zero, everywhere, while uCloud is
-// at or below this. Then the cloud pass and every cloud-shadow lookup are skipped outright,
-// with no change to the picture: from 1:53 to the end the sky is clear.
-const CLOUD_MIN = (() => {
-  const d = U.uNoise.value.image.data; let r = 0;
-  for (let k = 0; k < d.length; k += 4) r = Math.max(r, d[k]);
-  return (1.24 - .58 - .22 - .42 * r / 255) / 1.5;
-})();
 
 // Cellular noise for cloud: inverted Worley distance at 6, 12, 24 and 48 cells per tile,
-// tileable, so each cloud is a cell with a rounded top and gaps between. Generated on the
-// GPU at 1024 px, fine enough that cloud edges stay smooth even close overhead.
+// tileable, so each cloud is a cell with a rounded top and gaps between.
 U.uCell.value = (() => {
-  const N = 1024;
-  const rt = new T.WebGLRenderTarget(N, N, { type: T.UnsignedByteType, depthBuffer: false, generateMipmaps: true,
-    minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter, wrapS: T.RepeatWrapping, wrapT: T.RepeatWrapping });
-  const m = new T.ShaderMaterial({
-    vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
-    fragmentShader: `
-    vec2 h22(vec2 p,float s){ vec3 p3=fract(vec3(p.xyx)*vec3(.1031,.1030,.0973)+s); p3+=dot(p3,p3.yzx+33.33); return fract((p3.xx+p3.yz)*p3.zy); }
-    float cells(vec2 uv,float f,float s){
-      vec2 p=uv*f, i=floor(p); float best=9.;
-      for(int y=-1;y<=1;y++) for(int x=-1;x<=1;x++){
-        vec2 c=i+vec2(float(x),float(y));
-        vec2 d=c+h22(mod(c,f),s)-p; best=min(best,dot(d,d));
+  const N = 256, data = new Uint8Array(N * N * 4);
+  const chan = (f, seed, c) => {
+    let s2 = seed; const r = () => { s2 = (s2 * 16807) % 2147483647; return s2 / 2147483647; };
+    const pts = new Float32Array(f * f * 2); for (let i = 0; i < pts.length; i++) pts[i] = r();
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const px = x / N * f, py = y / N * f, ix = Math.floor(px), iy = Math.floor(py);
+      let best = 9;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const cx = ix + dx, cy = iy + dy, k = ((((cy % f) + f) % f) * f + (((cx % f) + f) % f)) * 2;
+        const dd = (cx + pts[k] - px) ** 2 + (cy + pts[k + 1] - py) ** 2; if (dd < best) best = dd;
       }
-      return clamp(1.-sqrt(best)*1.05,0.,1.);
+      data[(y * N + x) * 4 + c] = Math.round(clamp(1 - Math.sqrt(best) * 1.05, 0, 1) * 255);
     }
-    void main(){ vec2 uv=gl_FragCoord.xy/${N}.;
-      gl_FragColor=vec4(cells(uv,6.,.11),cells(uv,12.,.23),cells(uv,24.,.37),cells(uv,48.,.51)); }`,
-    depthTest: false, depthWrite: false,
-  });
-  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
-  const mesh = new T.Mesh(geo, m); mesh.frustumCulled = false;
-  const sc = new T.Scene(); sc.add(mesh);
-  renderer.setRenderTarget(rt); renderer.render(sc, new T.OrthographicCamera(-1, 1, 1, -1, 0, 1)); renderer.setRenderTarget(null);
-  m.dispose(); geo.dispose();
-  return rt.texture;
+  };
+  chan(6, 11, 0); chan(12, 23, 1); chan(24, 37, 2); chan(48, 51, 3);
+  const t = new T.DataTexture(data, N, N, T.RGBAFormat);
+  t.wrapS = t.wrapT = T.RepeatWrapping; t.magFilter = T.LinearFilter; t.minFilter = T.LinearMipmapLinearFilter; t.generateMipmaps = true; t.needsUpdate = true;
+  return t;
 })();
 
 // ---------------------------------------------------------------- physical sky lookup
@@ -1257,8 +1084,7 @@ const skyLUT = (() => {
       vec3 sp=d*420.; vec3 id=floor(sp); vec3 f=fract(sp)-.5;
       float h=hash12(id.xy+id.z*7.13);
       float mag=pow(fract(h*91.7),10.);
-      float r0=.09+mag*.12, rr=max(r0,length(fwidth(sp))*.55);
-      float st=step(.992,h)*exp(-dot(f,f)/(rr*rr))*(r0*r0)/(rr*rr)*2.2*smoothstep(-.02,.2,d.y);
+      float st=step(.992,h)*smoothstep(.22+mag*.2,.0,length(f))*smoothstep(-.02,.2,d.y);
       vec3 sc=mix(vec3(1.,.82,.66),vec3(.72,.84,1.),fract(h*37.1));
       float tw=1.-(.5*(1.-d.y))*(.5+.5*sin(uTime*(3.+h*9.)+h*90.));
       c+=sc*st*(.25+mag*5.)*tw*uNight*2.2;
@@ -1301,19 +1127,12 @@ const skyLUT = (() => {
 // grey bases, silver edges against the light, and, just before sunrise, bases lit gold from
 // below by a sun the ground cannot yet see. It is a ceiling on the low passes and a field of
 // cloud with its shadows on the land beneath the high ones.
-// The march is the costliest thing in the world, so it runs at half the cube face's
-// resolution, into a target of its own (cloudScene), for each face just before the face is
-// drawn. Cloud is soft-edged and the cube is supersampled against the room, so at the output
-// that is about one march sample per pixel and the clouds read as before. The world then draws the same sheet at full resolution
-// (cloudComposite), reading the march back: terrain, towers and tiles still occlude it pixel
-// for pixel through the depth test.
-const cloudScene = new T.Scene();
 const cloudLayer = (() => {
   const m = mat(`varying vec3 vW; void main(){ vec3 p=position; p.xz+=uCam.xz; vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
   varying vec3 vW;
   float dens(vec3 p, out float hf){
     hf=0.;
-    float s=cloudCoverM(p);
+    float s=cloudCover(p.xz);
     if(s<=0.) return 0.;
     float th=(uCloudH.y-uCloudH.x)*pow(clamp(s*2.6,0.,1.),.7);
     hf=(p.y-uCloudH.x)/max(th,1.);
@@ -1326,20 +1145,13 @@ const cloudLayer = (() => {
   float hg(float mu,float g){ return (1.-g*g)/(4.*PI*pow(1.+g*g-2.*g*mu,1.5)); }
   void main(){
     vec3 d=normalize(vW-uCam); float tp=length(vW-uCam);
-    // beyond 250 km the layer is faded out entirely (see edge below): nothing to march
-    float edge=1.-smoothstep(150000.,250000.,length(vW.xz-uCam.xz));
-    if(abs(d.y)<1e-4||uCloud<.005||edge<=0.) discard;
+    if(abs(d.y)<1e-4||uCloud<.005) discard;
     float tA=(uCloudH.x-uCam.y)/d.y, tB=(uCloudH.y-uCam.y)/d.y;
     float t0=max(min(tA,tB),0.), t1=max(tA,tB);
     t0=max(t0,tp-16000.); t1=min(t1,tp+16000.);
     if(t1<=t0) discard;
-    // March coarsely until the ray meets cloud, then step back and walk in at a fifth of the
-    // stride, so edges are sampled finely even on long grazing paths near the horizon.
-    const int NC=110;
-    // Steep rays cross the layer in a kilometre or two: 40 steps there would be finer than
-    // any cloud cell, so the search stride never drops below 150 m (fine steps stay a fifth).
-    float stC=max((t1-t0)/40.,150.), stp=stC;
-    bool fine=false; int empty=0; float tDone=t0;
+    const int NC=30;
+    float stp=(t1-t0)/float(NC);
     vec3 L=normalize(uLightDir); float mu=dot(d,L);
     float ph=hg(mu,.62)*.72+hg(mu,-.22)*.28;
     vec3 ambTop=skyCol(vec3(0.,1.,0.))*1.25+uAmb*.25;
@@ -1350,21 +1162,11 @@ const cloudLayer = (() => {
     // A fixed dither per pixel: no crawling grain from frame to frame.
     float jit=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(.06711056,.00583715))));
     float Tr=1.; vec3 Ls=vec3(0.); float tHit=-1.;
-    float tt=t0+stC*jit;
     for(int i=0;i<NC;i++){
-      if(tt>t1) break;
+      float tt=t0+stp*(float(i)+jit);
       vec3 p=uCam+d*tt;
-      if(!fine){
-        // coarse search: switch to fine steps anywhere near a cloud, not only inside one,
-        // so a ray that only grazes an edge is still caught (no speckle along the edges)
-        float sc=cloudCoverM(p)+.07;
-        float top=uCloudH.x+(uCloudH.y-uCloudH.x)*pow(clamp(sc*2.6,0.,1.),.7)+80.;
-        if(sc>0.&&p.y>uCloudH.x-80.&&p.y<top){ fine=true; empty=0; tt=max(tDone,tt-stC); stp=stC*.2; }
-        tt+=stp; continue;
-      }
       float hf; float den=dens(p,hf);
       if(den>.002){
-        empty=0;
         if(tHit<0.) tHit=tt;
         float dl=densL(p+L*150.)*.55+densL(p+L*520.)*.45;
         float sunT=exp(-dl*4.6), ms=exp(-dl*1.1);
@@ -1374,65 +1176,19 @@ const cloudLayer = (() => {
         float a=1.-exp(-den*stp*.0065);
         Ls+=Tr*a*S; Tr*=1.-a;
         if(Tr<.02) break;
-      } else if(++empty>8){ fine=false; stp=stC; tDone=tt; }
-      tt+=stp;
+      }
     }
     float A=1.-Tr;
     if(A<.004) discard;
+    float edge=1.-smoothstep(150000.,250000.,length(vW.xz-uCam.xz));
     vec3 C=applyFog(Ls/max(A,1e-3),uCam+d*max(tHit,t0));
     A*=edge;
     gl_FragColor=vec4(C*A,A);
   }`, {}, { transparent: true, depthWrite: false, side: T.DoubleSide, blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor });
   const g = new T.PlaneGeometry(560000, 560000, 1, 1); g.rotateX(-Math.PI / 2); g.translate(0, 3550, 0);
-  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; cloudScene.add(mesh);
+  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 4; scene.add(mesh);
   return m;
 })();
-const cloudComposite = (() => {
-  const m = mat(`void main(){ vec3 p=position; p.xz+=uCam.xz; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
-  uniform sampler2D uCloudTex; uniform vec2 uCloudInv;
-  void main(){ vec4 c=texture2D(uCloudTex,gl_FragCoord.xy*uCloudInv); if(c.a<.001) discard; gl_FragColor=c; }`,
-  { uCloudTex: { value: null }, uCloudInv: { value: new T.Vector2(1, 1) } },
-  { transparent: true, depthWrite: false, side: T.DoubleSide, blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor });
-  const mesh = new T.Mesh(cloudScene.children[0].geometry, m);   // the same sheet the march draws
-  mesh.frustumCulled = false; mesh.renderOrder = 4; scene.add(mesh);
-  return { mesh, uniforms: m.uniforms };
-})();
-// ---------------------------------------------------------------- cloud cover, baked
-// The march asks for the cloud cover a hundred times per pixel, five texture reads each. The
-// cover is a flat field that drifts with the wind, so it is worked out once per frame instead,
-// into the levels of an array texture sized to the cube (see makeCube), and the march reads it
-// back with one lookup. Needs half-float render targets; without them the march computes the
-// cover itself, as before.
-let coverRT = null;
-const coverBake = !gl.getExtension('EXT_color_buffer_float') ? null : (() => {
-  const m = new T.ShaderMaterial({
-    uniforms: Object.assign({}, U, { uCov: { value: null }, uLayer: { value: 0 }, uCovN: { value: 1 } }),
-    vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
-    fragmentShader: COMMON + `uniform int uLayer; uniform float uCovN;
-    void main(){ vec4 o=uCovO[uLayer]; gl_FragColor=vec4(cloudCover(o.xy+gl_FragCoord.xy/(o.z*uCovN)),0.,0.,1.); }`,
-    depthTest: false, depthWrite: false,
-  });
-  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
-  const mesh = new T.Mesh(geo, m); mesh.frustumCulled = false;
-  const sc = new T.Scene(); sc.add(mesh);
-  return { scene: sc, cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), uniforms: m.uniforms };
-})();
-function bakeCover() {
-  if (!coverRT) return;
-  const c = U.uCam.value, H = U.uCloudH.value, N = coverBake.uniforms.uCovN.value;
-  // Levels nearer the camera than the layer (less the march's reach toward the sun) are never
-  // read this frame, so they are not baked: from high above only the outer levels are.
-  const gap = Math.max(0, H.x - c.y, c.y - H.y) - 700;
-  const j0 = gap > COVER_H0 ? Math.min(COVER_L - 1, Math.ceil(Math.log2(gap / COVER_H0))) : 0;
-  for (let j = j0; j < COVER_L; j++) {
-    // Each level is centred on the camera but snapped to its own texel grid, so its texels
-    // stay put in the world as the camera moves and the cover never crawls.
-    const ext = 2 * COVER_H0 * 2 ** j, dl = ext / N;
-    U.uCovO.value[j].set(Math.round(c.x / dl) * dl - ext / 2, Math.round(c.z / dl) * dl - ext / 2, 1 / ext, 0);
-    coverBake.uniforms.uLayer.value = j;
-    renderer.setRenderTarget(coverRT, j); renderer.render(coverBake.scene, coverBake.cam);
-  }
-}
 
 
 // ---------------------------------------------------------------- shared lit material
@@ -1455,7 +1211,6 @@ function litMat(color, opts = {}) {
 let imageryTex = null, lightsTex = null;
 const insetTex = [null, null];        // high-zoom layers, blended over the base
 const BEACONS = [];
-const LANDMARKS = [];
 
 function buildWorld() {
   U.uLights.value = lightsTex;
@@ -1478,11 +1233,7 @@ function buildWorld() {
     g.setIndex(idx);
     const m = mat(`varying vec3 vW; varying float vR;
     void main(){ vec3 p=position+vec3(uCam.x,0.,uCam.z); vR=length(position.xz);
-      p.y=terrainAt(p.xz);
-      // Under streamed photorealistic tiles this surface only fills gaps: it sits a little
-      // below them (more with distance), so the real meshes always win the depth test.
-      p.y-=uG3D*(4.+.0025*length(p-uCam));
-      vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
+      p.y=terrainAt(p.xz); vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
     uniform sampler2D uImage; uniform float uHasImage;
     uniform sampler2D uDetail;  uniform float uHasDetail;  uniform vec4 uDetailBox;
     uniform sampler2D uDetail2; uniform float uHasDetail2; uniform vec4 uDetailBox2;
@@ -1559,7 +1310,7 @@ function buildWorld() {
         for(int i=0;i<16;i++){
           vec3 q=P+uLightDir*tt;
           if(q.y>1100.) break;
-          float hq=terrainL(q.xz);
+          float hq=terrainAt(q.xz);
           sh=min(sh,clamp((q.y-hq)/(tt*.018)+.5,0.,1.));
           tt*=1.5;
         }
@@ -1567,7 +1318,7 @@ function buildWorld() {
       sh*=cloudShadow(P);
       // Sky occlusion from the surrounding relief: valley floors and coves go darker.
       float ao=0.;
-      for(int i=0;i<6;i++){ float an=float(i)*1.0472+.3; float rr=st*3.+180.; ao+=max(terrainL(P.xz+vec2(cos(an),sin(an))*rr)-P.y,0.)/rr; }
+      for(int i=0;i<6;i++){ float an=float(i)*1.0472+.3; float rr=st*3.+180.; ao+=max(terrainAt(P.xz+vec2(cos(an),sin(an))*rr)-P.y,0.)/rr; }
       ao=clamp(1.-ao*.28,.35,1.);
       vec3 lit=col*(uLightCol*dif*sh*1.08+uAmb*(.55+.45*N.y)*ao);
       // Soft specular sheen off wet grass and rock toward a low sun.
@@ -1607,10 +1358,7 @@ function buildWorld() {
       // The finale: the whole coast of the island drawn in light.
       if(uCoast>0.){
         float cpx=max(hP,0.)/max(hPw,.05);
-        // a thin line where the ground is seen closely; none on the far, foreshortened land
-        // at the foot of the walls, where the height step per pixel stops tracing the shore
-        float nearC=1.-smoothstep(250.,700.,max(fwP.x,fwP.y));
-        lit+=mix(vec3(1.,.86,.6),vec3(.8,1.,.95),inside*.5)*(exp(-cpx/1.2)*1.4+exp(-cpx/5.)*.25)*(1.-smoothstep(3.,18.,hP))*uCoast*nearC;
+        lit+=mix(vec3(1.,.86,.6),vec3(.8,1.,.95),inside*.5)*(exp(-cpx/1.2)*1.4+exp(-cpx/5.)*.25)*(1.-smoothstep(3.,18.,hP))*uCoast;
       }
       gl_FragColor=vec4(applyFog(lit,P),1.);
     }`, (() => {
@@ -1689,13 +1437,11 @@ function buildWorld() {
     varying vec3 vW; varying float vDepth; varying float vA; varying float vDist;
     void main(){ initW();
       vec3 P=vW; vec3 V=normalize(P-uCam); float dist=length(P-uCam);
-      float foot=length(fwidth(P.xz));             // ground metres per pixel, taken before any discard
       if(terrainAt(P.xz)>1.5) discard;
       vec3 wh=waveH(P.xz,max(vA,.0001));
 
       // Surface normal: swell close in, statistical roughness further out.
-      // Ripples a few metres long fade out before a pixel is large enough to alias them.
-      float near=(1.-smoothstep(300.,5000.,dist))*(1.-smoothstep(1.2,5.,foot));
+      float near=1.-smoothstep(300.,5000.,dist);
       vec2 np=P.xz*.20+uTime*vec2(.30,.11);
       float ripple=(vnoise(np)-.5)+(vnoise(np*2.7-uTime*.21)-.5)*.55;
       vec3 N=normalize(vec3(-wh.y+ripple*.30*near, 1., -wh.z+(vnoise(np+9.)-.5)*.30*near));
@@ -1833,7 +1579,6 @@ function buildWorld() {
 
   // ------------------------------------------------ landmarks, at their true coordinates
   {
-    const lmStart = scene.children.length;
     const put = (p) => [gx(p[0]), gz(p[1])];
     {
       const [sx, sz] = put(PLACES.spire), sy = heightAt(sx, sz);
@@ -1875,8 +1620,6 @@ function buildWorld() {
       const crown = new T.Mesh(new T.CylinderGeometry(4.6, 4.6, 1.6, 16), litMat(0x77716a));
       crown.position.set(tx, ty + 13, tz); scene.add(crown);
     }
-    // Kept aside so real 3D city meshes, when streamed, can take their place.
-    LANDMARKS.push(...scene.children.slice(lmStart));
   }
 
   // ------------------------------------------------ offshore wind, on the real sites
@@ -1982,7 +1725,7 @@ function buildWorld() {
         if(aK.y>.5&&aK.y<1.5){ float d=length(p.xz-uScanC); a=step(d,uScanR-6000.); }
         float blink=aK.x<.5? step(.55,fract(uTime*.5)) : 1.;
         vC=aK.x<.5?vec3(1.,.08,.04)*6.:vec3(1.,.95,.85)*5.; vA=a*blink*max(uNight,.25);
-        vec4 mv=viewMatrix*vec4(p,1.); gl_PointSize=clamp(320.*uPx/-mv.z,2.5,20.); gl_Position=projectionMatrix*mv; }`,
+        vec4 mv=viewMatrix*vec4(p,1.); gl_PointSize=clamp(320.*uPx/-mv.z,1.5,20.); gl_Position=projectionMatrix*mv; }`,
       `varying vec3 vC; varying float vA; void main(){ vec2 c=gl_PointCoord-.5; float d=length(c); float a=smoothstep(.5,.0,d); if(vA<.01) discard; gl_FragColor=vec4(vC*a*a*vA,1.); }`,
       {}, { transparent: true, blending: T.AdditiveBlending, depthWrite: false });
       const pts = new T.Points(g, m); pts.frustumCulled = false; pts.renderOrder = 5; scene.add(pts);
@@ -2032,7 +1775,7 @@ function buildWorld() {
       vC=aP.w<.5?vec3(1.,.93,.8)*3.:(aP.w<1.5?vec3(1.,.12,.06)*2.6:vec3(1.,.7,.35)*2.);
       float inside=scanInside(p.xz); if(aP.w>1.5) vC=mix(vC,TEAL*2.2,inside*step(.5,fract(aP.z*.37)));
       vA=smoothstep(.15,.7,uNight)*step(2.,g);   // real land only
-      vec4 mv=viewMatrix*vec4(p,1.); gl_PointSize=clamp(30.*uPx/-mv.z,2.,6.); gl_Position=projectionMatrix*mv; }`,
+      vec4 mv=viewMatrix*vec4(p,1.); gl_PointSize=clamp(30.*uPx/-mv.z,1.,6.); gl_Position=projectionMatrix*mv; }`,
     `varying vec3 vC; varying float vA; void main(){ if(vA<.01) discard; float d=length(gl_PointCoord-.5); gl_FragColor=vec4(vC*smoothstep(.5,.1,d)*vA,1.); }`,
     {}, { transparent: true, blending: T.AdditiveBlending, depthWrite: false });
     const pts = new T.Points(g, m); pts.frustumCulled = false; pts.renderOrder = 4; scene.add(pts);
@@ -2106,7 +1849,7 @@ function buildWorld() {
 
 // ---------------------------------------------------------------- captions on four walls
 // Words sit straight on the world with only a soft shadow round the letters: no panel
-// behind them. Each caption arrives just after its chapter's sweep of light has climbed the walls.
+// behind them. The gold rule under the eyebrow is where each caption's light stem arrives.
 const CAP_W = 2560, CAP_H = 800, CAP_RULE = 225 / 800;
 function captionTexture(c) {
   const W = CAP_W, H = CAP_H, K = W / 2048, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
@@ -2144,7 +1887,7 @@ const post = (() => {
   const cityM = floorCities.map((c) => mapXY(c[1], c[2]));
   const m = new T.ShaderMaterial({
     uniforms: {
-      uCube: { value: null }, uBright: { value: null }, uGlow: { value: null },
+      uCube: { value: null }, uBright: { value: null }, uBrightPx: { value: 256 },
       uYaw: { value: 0 }, uHead: { value: 0 }, uMode: { value: 0 }, uRect: { value: new T.Vector4(0, 0, 1, 1) },
       uRoom: { value: new T.Vector3(6, 6, 3) }, uEye: { value: 1.6 }, uPrev: { value: new T.Vector3(0, 0, Math.tan(40 * Math.PI / 180)) },
       uFade: { value: 1 }, uExp: { value: 1 }, uBloom: { value: halfOK ? 1 : 0 }, uTime: U.uTime, uFloorRot: { value: 0 },
@@ -2169,15 +1912,15 @@ const post = (() => {
       uCove: { value: new T.Vector3(.6, .55, .45) },
       uMerA: { value: Array.from({ length: 11 }, () => new T.Vector4()) },
       uMerB: { value: Array.from({ length: 11 }, () => new T.Vector4(0, 1, -1, 0)) },
-      // Sweeps: x front position (0 room centre, 1 the walls, 2 the top of the walls),
-      // y strength, z kind (0 chapter, 1 2036, 2 opening, 3 finale), w seed.
-      uSw: { value: Array.from({ length: 3 }, () => new T.Vector4(-9, 0, 0, 0)) },
-      uF36: { value: -1 }, uFI: { value: 99 },
-      uIntro: { value: 99 }, uAttr: { value: BLANK }, uHasAttr: { value: 0 },
+      uStemA: { value: Array.from({ length: 4 }, () => new T.Vector4()) },
+      uStemB: { value: Array.from({ length: 4 }, () => new T.Vector4()) },
+      uStemT: { value: -1 },
+      uWaveO: { value: new T.Vector2(0, 0) }, uWaveR: { value: -1 },
+      uIntro: { value: 99 },
     },
     vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
     fragmentShader: `
-    uniform samplerCube uCube; uniform samplerCube uBright; uniform samplerCube uGlow;
+    uniform samplerCube uCube; uniform samplerCube uBright; uniform float uBrightPx;
     uniform float uYaw; uniform float uHead; uniform int uMode; uniform vec4 uRect; uniform vec3 uRoom; uniform float uEye; uniform vec3 uPrev;
     uniform float uFade; uniform float uExp; uniform float uBloom; uniform float uTime; uniform int uFloorRot;
     uniform sampler2D uA; uniform sampler2D uB; uniform float uHasA; uniform float uHasB; uniform float uAspA; uniform float uAspB;
@@ -2194,9 +1937,8 @@ const post = (() => {
     uniform vec3 uMapL; uniform float uSunEl; uniform vec2 uSunAz; uniform vec2 uCamXZ; uniform vec2 uCamM; uniform float uNight;
     uniform float uShowT; uniform float uProgress; uniform float uYearA; uniform float uYearMix;
     uniform float uLabelA; uniform float uLock; uniform float uCoast; uniform float uAurora;
-    uniform vec3 uCove; uniform vec4 uMerA[11]; uniform vec4 uMerB[11];
-    uniform vec4 uSw[3]; uniform float uF36; uniform float uFI; uniform float uIntro;
-    uniform sampler2D uAttr; uniform float uHasAttr;
+    uniform vec3 uCove; uniform vec4 uMerA[11]; uniform vec4 uMerB[11]; uniform vec4 uStemA[4]; uniform vec4 uStemB[4]; uniform float uStemT;
+    uniform vec2 uWaveO; uniform float uWaveR; uniform float uIntro;
 
     const float PI=3.14159265;
     const vec3 GOLD=vec3(1.,.74,.36); const vec3 TEAL=vec3(.4,1.,.88); const vec3 WARM=vec3(1.,.9,.72);
@@ -2234,10 +1976,21 @@ const post = (() => {
       uv.y=clamp(uv.y,.002,.998);
       return textureLod(tex,uv,0.).rgb;
     }
-    // Bloom from the bright-pass cube: six octaves. The two fine ones are read straight; the
-    // four wide ones were gathered, hexagon by hexagon, into the glow cube (see glowPass).
+    // Bloom from the bright-pass cube: six octaves. The fine ones are read straight; the
+    // wide ones are smoothed with a hexagon of taps in direction space, so glow stays round
+    // (no cross-shaped glare) and has no seams at the cube's edges.
     vec3 bloomAt(vec3 d){
-      return textureLod(uBright,d,0.).rgb*.30+textureLod(uBright,d,1.).rgb*.24+textureLod(uGlow,d,0.).rgb;
+      vec3 t1=normalize(cross(d,abs(d.y)<.95?vec3(0.,1.,0.):vec3(1.,0.,0.))); vec3 t2=cross(d,t1);
+      float px=1.5708/uBrightPx;
+      vec3 acc=textureLod(uBright,d,0.).rgb*.30+textureLod(uBright,d,1.).rgb*.24;
+      const float BW[4]=float[4](.18,.13,.09,.06);
+      for(int i=0;i<4;i++){
+        float L=float(i+2), a=px*exp2(L)*.8;
+        vec3 s=textureLod(uBright,d,L).rgb;
+        for(int k=0;k<6;k++){ float an=float(k)*1.0472+float(i)*.5; s+=textureLod(uBright,normalize(d+(t1*cos(an)+t2*sin(an))*a),L).rgb; }
+        acc+=s/7.*BW[i];
+      }
+      return acc;
     }
     // A line of light: an antialiased core of width w (never thinner than a pixel, with its
     // energy kept) and an exponential glow of radius gw.
@@ -2245,13 +1998,6 @@ const post = (() => {
       float we=max(w,px*1.2);
       return (1.-smoothstep(we*.5-px*.5,we*.5+px*.5,d))*min(1.,w/we)+exp(-d/gw)*.35;
     }
-    // 3D value noise in room metres: the shimmer lives in the room itself, so its filaments
-    // run across the floor-wall corner without a break.
-    float h13(vec3 p){ p=fract(p*.1031); p+=dot(p,p.zyx+31.32); return fract((p.x+p.y)*p.z); }
-    float vn3(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
-      return mix(mix(mix(h13(i),h13(i+vec3(1,0,0)),f.x),mix(h13(i+vec3(0,1,0)),h13(i+vec3(1,1,0)),f.x),f.y),
-                 mix(mix(h13(i+vec3(0,0,1)),h13(i+vec3(1,0,1)),f.x),mix(h13(i+vec3(0,1,1)),h13(i+vec3(1,1,1)),f.x),f.y),f.z); }
-    float fb3(vec3 p){ return vn3(p)*.5+vn3(p*2.03+7.1)*.3+vn3(p*4.07+3.3)*.2; }
     // Distance to a quadratic Bezier (after Inigo Quilez), with the curve parameter.
     vec2 sdBez(vec2 pos,vec2 A,vec2 B,vec2 C){
       vec2 a=B-A, b=A-2.*B+C, c=a*2., d=A-pos;
@@ -2398,18 +2144,6 @@ const post = (() => {
       float hW=t*H;                                  // height on the wall, metres
       float r=max(abs(q.x)/(W*.5),abs(q.y)/(D*.5));  // 0 at the room centre, 1 at the walls
       if(onFloor){ P=perim(q/max(r,1e-4)); wb=q/max(r,1e-4); }
-      // Sweep metric. A front F leaves the middle of the floor as a circle, reaches the walls
-      // as the room's own rectangle (F = 1) and then climbs every wall as one level band
-      // (F = 1 + height/H). Floor and wall values agree along the join, so it never breaks.
-      float R0=min(W,D)*.5;
-      vec2 uR=abs(onFloor?q:wb)/vec2(W*.5,D*.5);
-      // a rounded rectangle on the floor, held at 1 in the last few centimetres of each
-      // corner so the corners light with the walls; exactly 1 all round the foot of the walls
-      float sqM=onFloor?min(pow(pow(uR.x,24.)+pow(uR.y,24.),1./24.),1.):1.;
-      float circM=onFloor?length(q)/R0:1.;
-      float upM=onFloor?0.:hW/H;
-      #define SWV(F) (mix(circM,sqM,smoothstep(.55,1.,(F)))+upM)
-      float fut36=uF36<0.?0.:clamp((uF36-SWV(uF36))*5.,0.,1.);
 
       // ---- everything that needs screen derivatives is taken here, in uniform control flow
       vec3 wd=rotY(d,uYaw); vec3 wdx=dFdx(wd), wdy=dFdy(wd);
@@ -2449,10 +2183,8 @@ const post = (() => {
         if(uBloom>0.) hdr+=bloomAt(wd)*uBloom;
         cub=srgb(tone(hdr*uExp));
       }
-      // The liquid edge between two clips; over the live world alone it has nothing to do.
-      bool film=uHasA>.5||uHasB>.5;
       vec2 nc=onFloor?q*.9:vec2(P,t*H)*.55;
-      float n=film?fbm(nc+vec2(uTime*.05,0.)):.5;
+      float n=fbm(nc+vec2(uTime*.05,0.));
       float edgeP=uMix*1.25-.12;
       float warp=(1.-abs(uMix*2.-1.))*.05*(n-.5);
       vec3 ca=uHasA>.5?foot(uA,uAspA,PF+warp*PER*.3,v+warp,uZoomA):cub;
@@ -2460,23 +2192,26 @@ const post = (() => {
       float mm=smoothstep(n-.06,n+.06,edgeP);
       vec3 col=mix(cb,ca,mm);
       // The liquid edge belongs to footage crossfades; over the live world a scene change is seamless.
-      if(film) col+=mix(GOLD,TEAL,uFuture)*exp(-abs(edgeP-n)*42.)*step(.001,uMix)*step(uMix,.999)*.6;
+      if(uHasA>.5||uHasB>.5) col+=mix(GOLD,TEAL,uFuture)*exp(-abs(edgeP-n)*42.)*step(.001,uMix)*step(uMix,.999)*.6;
+      if(!onFloor&&t>1.) col*=1.-.55*smoothstep(1.,1.8,t);
 
       // Ireland 2036: the world keeps its own colour; shadows cool and highlights warm.
-      if(uFuture*fut36>0.&&uGradeAmt>0.001){
+      if(uFuture>0.&&uGradeAmt>0.001){
         float l=dot(col,vec3(.299,.587,.114));
         vec3 tint=mix(vec3(.06,.13,.20),mix(vec3(1.,.97,.92),vec3(1.,.84,.6),uGradeWarm),smoothstep(.04,.85,l));
-        col=mix(col,tint*(l*1.18+.04)+(col-l)*.85,uGradeAmt*uFuture*fut36);
+        col=mix(col,tint*(l*1.18+.04)+(col-l)*.85,uGradeAmt*uFuture);
       }
 
       // ---- the opening: the room assembles itself out of light
       float it=uIntro;
       float ringDraw=smoothstep(.35,1.9,it), dialA=smoothstep(1.2,2.4,it), mapA=smoothstep(.9,3.4,it);
+      float rev=(it-2.15)*2.6;                       // how far the world has risen up the walls
       float ringM=RING/1024.*S;                      // ring radius in metres
-      // The world appears behind the opening sweep: out from the ring, square at the walls, up.
-      float worldA=uFI>50.?1.:(uFI<0.?0.:smoothstep(-.01,.01,uFI-SWV(uFI)));
+      float revF=ringM+(it-1.9)*2.4;                 // how far it has spread across the floor
+      float worldA=onFloor?step(1.9,it)*smoothstep(-.15,.15,revF-length(qDial-uDialOff)):smoothstep(-.35,0.,rev-hW);
       col*=worldA;
       vec3 add=vec3(0.);                             // light added over everything, display space
+      if(it<7.) add+=GOLD*exp(-abs(onFloor?revF-length(qDial-uDialOff):rev-hW)/.035)*step(0.,it-1.9)*(1.-smoothstep(3.6,5.5,it))*.45*(onFloor?step(ringM,length(qDial-uDialOff)):step(0.,rev))*uLines;
 
       // ---- the floor: live world beyond the ring, the island inside it
       if(onFloor){
@@ -2489,8 +2224,9 @@ const post = (() => {
         // The world beyond the ring comes up to full brightness only at the walls, so the
         // floor never outshines the map yet meets the walls exactly.
         col*=mix(mix(1.,.62,smoothstep(0.,max(min(W,D)*.5-ringM,.2),seamF)),1.,uLock);
-        // behind the 2036 sweep the map is in 2036
-        float in36=uF36<0.?0.:clamp((uF36-SWV(uF36))*8.,0.,1.);
+        // the 2036 wave, in room metres from Dublin on the floor
+        float wd36=length(q-uWaveO);
+        float in36=uWaveR>0.?1.-smoothstep(-.1,.1,wd36-uWaveR):0.;
         float discA=(1.-smoothstep(RING-1.5,RING+1.,rho))*mapA*(1.-uLock);
         if(discA>0.){
           float relief=smoothstep(1.2,4.2,it);
@@ -2499,9 +2235,6 @@ const post = (() => {
           vec3 lines=vec3(0.);
           for(int i=1;i<7;i++){
             vec2 a=CITY[0], b=CITY[i], c2=(a+b)*.5-vec2(0.,35.);
-            // The curve lies inside the box of its control points; 24 units beyond it the line
-            // and its travelling dot are below a millionth, so the distance is not worked out.
-            if(any(lessThan(cM,min(min(a,b),c2)-24.))||any(greaterThan(cM,max(max(a,b),c2)+24.))) continue;
             vec2 sb=sdBez(cM,a,c2,b);
             float lw=beam(sb.x,.55,pxM,1.4);
             float u=fract(uTime*.03+float(i)*.17);
@@ -2585,11 +2318,6 @@ const post = (() => {
           float win=smoothstep(0.,.14,yb.y)*(1.-smoothstep(.86,1.,yb.y));
           dial+=vec3(1.,.9,.66)*(ga+gb)*dialA*1.25*mix(1.,win,step(.001,uYearMix));
         }
-        // map data credit, when streamed 3D tiles are showing
-        if(uHasAttr>.5){
-          vec2 ab=(cD-vec2(512.-240.,968.-8.5))/vec2(480.,17.);
-          if(ab.x>0.&&ab.x<1.&&ab.y>0.&&ab.y<1.) dial+=vec3(.82,.86,.84)*textureGrad(uAttr,ab,cdx/vec2(480.,17.),cdy/vec2(480.,17.)).r*.6*dialA;
-        }
         col+=srgb(tone(dial*.9));
       }
 
@@ -2635,36 +2363,35 @@ const post = (() => {
           L+=vec3(1.,.9,.7)*(beam(dl,.010,pxR,.035)*(trail*1.1+hd*2.4)+exp(-dl/.06)*hd*.35)*live;
         }
       }
-      // Sweeps, each with shimmering light in its wake: at every chapter, at the opening,
-      // for 2036 and for the finale.
-      vec3 room3=onFloor?vec3(q.x,0.,q.y):vec3(wb.x,hW,wb.y);
-      float pxN=pxR/(onFloor?R0:H);                  // one pixel in sweep units
-      for(int i=0;i<3;i++){
-        vec4 sw=uSw[i];
-        if(sw.x<-1.) continue;
-        float dd=SWV(sw.x)-sw.x;                     // < 0 behind the front, > 0 ahead of it
-        vec3 c=sw.z<.5?mix(GOLD,WARM,.35):sw.z<1.5?mix(GOLD,TEAL,.45):sw.z<2.5?GOLD:WARM;
-        float live=1.-smoothstep(1.8,2.2,sw.x);
-        float edge=beam(abs(dd),.005,pxN,.012)+exp(-max(-dd,0.)/.12)*step(dd,0.)*.08;
-        // the shimmer rides in a narrow band just behind the front and dies away within a
-        // hand's breadth; the 2036 sweep carries a deeper band
-        float band=abs(sw.z-1.)<.5?.1:.06;
-        float m=exp(-max(dd,0.)/.012)*exp(-max(-dd,0.)/band);
-        float fil=0.;
-        if(m>.01){
-          float nn=fb3(room3*1.35+vec3(sw.w*3.1,-uTime*.45,sw.w*1.7));
-          // filaments a pixel or two wide; on a coarse output they thin out in brightness
-          // rather than spread into a haze
-          float e=abs(nn-.5), lw=max(.012,pxR*1.6);
-          fil=(exp(-e/lw)*min(1.,.014/lw)+exp(-e*14.)*.05)*m*(.7+.3*sin(uTime*9.+nn*30.));
+      // Caption stems: before words appear on a wall, a line of light leaves the ring,
+      // crosses the floor and climbs that wall to where the words will be.
+      if(uStemT>-.5){
+        for(int j=0;j<4;j++){
+          vec4 A=uStemA[j], B=uStemB[j];
+          float hT=B.z;
+          float dl, al;
+          if(onFloor){
+            vec2 ab=A.zw-A.xy; float len=max(length(ab),1e-3); vec2 dir=ab/len;
+            float s=dot(q-A.xy,dir);
+            dl=s<0.||s>len?1e3:length(q-(A.xy+dir*s)); al=s;
+          } else { dl=hW<=hT+.02?abs(wrapP(P-B.x)):1e3; al=B.y+hW; }
+          if(dl>.5) continue;
+          float tot=B.y+hT, head=clamp(uStemT,0.,1.)*tot;
+          float after=max(uStemT-1.,0.);
+          float trail=step(al,head)*exp(-(head-al)/(.35+after*3.))*exp(-after*1.6);
+          float hd=exp(-pow((al-head)/.08,2.))*(1.-smoothstep(1.,1.25,uStemT));
+          L+=WARM*(beam(dl,.005,pxR,.025)*(trail*.8+hd*1.3)+exp(-dl/.04)*hd*.12);
         }
-        L+=c*(edge*1.1+fil*1.2)*sw.y*live;
+      }
+      // 2036: a wave of light leaves Dublin on the floor, crosses the room and climbs the walls.
+      if(uWaveR>0.){
+        float dw=onFloor?length(q-uWaveO):length(wb-uWaveO)+hW;
+        float front=beam(abs(dw-uWaveR),.03,pxR,.05)+exp(-abs(dw-uWaveR)/.22)*.12;
+        float gone=1.-smoothstep(9.,12.,uWaveR);
+        L+=mix(vec3(1.,.9,.7),GOLD,.4)*front*gone*.9;
+        L+=TEAL*(1.-smoothstep(-1.2,0.,dw-uWaveR))*exp(-max(uWaveR-dw,0.)/1.4)*.04*gone;
       }
       col+=srgb(tone(L*1.1))*uLines+add;
-      // The ceiling is black: the top of every wall dissolves into it over the last fifth of
-      // its height (at least 45 cm), so the picture has no hard upper edge, and above the
-      // walls there is nothing.
-      if(!onFloor) col*=1.-smoothstep(1.-max(.2,.45/H),1.,t);
 
       // ---- captions, one per wall
       if(!onFloor&&uCapA>0.){
@@ -2689,226 +2416,6 @@ const post = (() => {
 })();
 
 makeCube();
-
-// ---------------------------------------------------------------- photorealistic 3D tiles
-// Google's Photorealistic 3D Tiles: photogrammetry of towns and cities, every building in 3D,
-// and high-resolution ground everywhere else. They stream only when an API key is given
-// (start screen, or ?gkey= in the address); without one the show runs on its own terrain.
-// A venue with its own 3D Tiles set can pass ?tileset=<url to tileset.json> instead.
-//
-// Tiles arrive in Earth-centred coordinates. The tiles renderer chooses detail and culls with
-// six virtual cameras placed where the show's cube cameras are, in that Earth-centred frame.
-// Each mesh is then carried vertex by vertex into the show's own map frame (true longitude and
-// latitude, height above sea level) by the vertex shader below, so the photogrammetry sits
-// exactly on the elevation field, the sea, the clouds' shadows and the floor map.
-const G3D = { status: '', tiles: null, cams: [], geoidN: 56, geoid: [], visible: 0, attr: '', started: false, google: false };
-const WGS_A = 6378137, WGS_E2 = 6.69437999014e-3, D2R = Math.PI / 180;
-function ecefOf(latD, lonD, h) {
-  const la = latD * D2R, lo = lonD * D2R, s = Math.sin(la), c = Math.cos(la);
-  const N = WGS_A / Math.sqrt(1 - WGS_E2 * s * s);
-  return [(N + h) * c * Math.cos(lo), (N + h) * c * Math.sin(lo), (N * (1 - WGS_E2) + h) * s];
-}
-function geoOf(x, y, z) {
-  const lon = Math.atan2(y, x), p = Math.hypot(x, y);
-  let lat = Math.atan2(z, p * (1 - WGS_E2)), h = 0;
-  for (let i = 0; i < 5; i++) {
-    const s = Math.sin(lat), N = WGS_A / Math.sqrt(1 - WGS_E2 * s * s);
-    h = p / Math.cos(lat) - N;
-    lat = Math.atan2(z, p * (1 - WGS_E2 * N / (N + h)));
-  }
-  return [lat / D2R, lon / D2R, h];
-}
-// Radii of curvature: along the meridian (M) and across it (N), at a latitude.
-function radiiAt(latD) { const s = Math.sin(latD * D2R), w = Math.sqrt(1 - WGS_E2 * s * s); return [WGS_A * (1 - WGS_E2) / (w * w * w), WGS_A / w]; }
-// East, north and up unit vectors at a place, in Earth-centred coordinates.
-function enuAt(latD, lonD) {
-  const la = latD * D2R, lo = lonD * D2R, sl = Math.sin(la), cl = Math.cos(la), so = Math.sin(lo), co = Math.cos(lo);
-  return [[-so, co, 0], [-sl * co, -sl * so, cl], [cl * co, cl * so, sl]];
-}
-
-const G3D_VS = `
-uniform mat4 uL; uniform vec3 uG0; uniform vec2 uAW; uniform vec2 uRad; uniform float uGeoidN;
-varying vec2 vUv; varying vec3 vW;
-void main(){
-  vUv=uv;
-  // metres east, north and up of this mesh's anchor
-  vec3 enu=(uL*vec4(position,1.)).xyz;
-  float e=enu.x, n=enu.y, u=enu.z, la=uG0.x, tl=tan(la);
-  // to latitude, longitude and height, second order in the offset: the ground curves away
-  // and a straight line east drifts off its parallel, both of which matter across a tile
-  float dLat=(n-e*e*tl/(2.*uRad.y))/uRad.x;
-  float dLon=e/(uRad.y*cos(la))*(1.+n*tl/uRad.y);
-  float h=uG0.z+u+e*e/(2.*uRad.y)+n*n/(2.*uRad.x);
-  vec3 w=vec3(uAW.x+dLon*${g(M_LON / D2R)},h-uGeoidN,uAW.y-dLat*${g(M_LAT / D2R)});
-  vW=w; gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);
-}`;
-const G3D_FS = `
-uniform sampler2D uMap; uniform float uHasMap;
-varying vec2 vUv; varying vec3 vW;
-void main(){
-  vec3 P=vW;
-  float hD=terrainAt(P.xz);
-  vec3 fx=dFdx(P), fy=dFdy(P);
-  float foot=max(length(fx),length(fy));
-  vec3 N=normalize(cross(fx,fy)); if(dot(N,uCam-P)<0.) N=-N;
-  // Water: the show's own animated sea takes over wherever the elevation data says sea.
-  if(abs(P.y)<1.4&&N.y>.97&&hD<1.5) discard;
-  vec3 tex=uHasMap>.5?texture2D(uMap,vUv).rgb:vec3(.18,.17,.16);
-  vec3 alb=tex*uLandLift;
-  // The photographs carry their own light and shade from a clear day. Relight them for the
-  // show's hour: scaled and tinted by the sun (or moon) and sky, faces toward the light a
-  // little brighter, cloud shadows passing over.
-  float dif=max(dot(N,uLightDir),0.);
-  float csh=cloudShadow(P);
-  vec3 lit=alb*(uLightCol*(.30+.42*dif)*csh+uAmb*1.05);
-  lit+=alb*vec3(.16,.19,.26)*uNight*.5;
-  // Night: street light on built-up ground, lit windows on walls, sodium then 2036 white.
-  float settle=texture2D(uLights,fieldUV(P.xz)).r;
-  float rl=dot(tex,vec3(.2126,.7152,.0722)), rmx=max(tex.r,max(tex.g,tex.b));
-  float chroma=(rmx-min(tex.r,min(tex.g,tex.b)))/max(rmx,1e-3);
-  float urban=smoothstep(.03,.085,rl)*(1.-smoothstep(.22,.5,chroma));
-  float inside=scanInside(P.xz);
-  vec3 lamp=mix(vec3(1.,.6,.28),vec3(1.,.82,.6),inside);
-  if(uNight>.01){
-    const float CELL=28., LR=3.2;
-    vec2 cid=floor(P.xz/CELL), cf=P.xz/CELL-cid;
-    float hh=hash12(cid);
-    vec2 pp=vec2(hash12(cid+17.3),hash12(cid+41.9))*.76+.12;
-    float rr=max(LR,foot*.8), dd=length((cf-pp)*CELL);
-    float pt=exp(-dd*dd/(rr*rr))*LR*LR/(rr*rr), avgPt=PI*LR*LR/(CELL*CELL);
-    float spark=mix(pt,avgPt,smoothstep(CELL*.2,CELL*.55,foot))*step(.3,hh)*(.55+.9*fract(hh*13.7));
-    float lights=(settle*(.1+1.5*urban))*smoothstep(.55,.8,N.y);
-    lit+=alb*lamp*lights*uNight*1.1*uNightLights+lamp*lights*spark*uNight*16.*uNightLights;
-    // windows: a lit or dark pane on a 3.2 m by 3.3 m grid across every wall in town
-    float wall=1.-smoothstep(.3,.5,abs(N.y));
-    vec2 ft=normalize(vec2(-N.z,N.x)+1e-5);
-    vec2 wc=vec2(dot(P.xz,ft)/3.2,P.y/3.3), wid=floor(wc), wf=fract(wc);
-    float pane=step(.2,wf.x)*step(wf.x,.8)*step(.28,wf.y)*step(wf.y,.78);
-    float wh=hash12(wid+floor(P.xz/60.)*7.13);
-    float on=step(wh,mix(.18,.55,smoothstep(.02,.3,settle)));
-    float paneAvg=.6*.5*mix(.18,.55,smoothstep(.02,.3,settle));
-    float wlit=mix(pane*on,paneAvg,smoothstep(.8,2.4,foot));
-    vec3 wcol=mix(mix(vec3(1.,.72,.42),vec3(1.,.86,.64),fract(wh*7.)),vec3(1.,.9,.78),inside);
-    lit+=wcol*wlit*wall*smoothstep(.01,.12,settle)*uNight*2.2*uNightLights;
-  }
-  lit+=scanRing(P.xz)*mix(GOLD,vec3(1.,.93,.8),.35)*4.;
-  gl_FragColor=vec4(applyFog(lit,P),1.);
-}`;
-
-// Where the sea level sits on the ellipsoid: measured from the tiles' own water, which lies
-// at mean sea level, wherever the elevation data says the water is open and deep.
-function calibrateGeoid(pos, M) {
-  const v = new T.Vector3(), found = [];
-  const step = Math.max(1, Math.floor(pos.count / 300));
-  for (let i = 0; i < pos.count; i += step) {
-    v.fromBufferAttribute(pos, i).applyMatrix4(M);
-    const [lat, lon, h] = geoOf(v.x, v.y, v.z);
-    if (lat < LAT_S || lat > LAT_N || lon < LON_W || lon > LON_E) continue;
-    if (heightAt(gx(lon), gz(lat)) < -15 && h > 30 && h < 80) found.push(h);
-  }
-  if (found.length < 20) return;
-  found.sort((a, b) => a - b);
-  G3D.geoid.push(found[found.length >> 1]);
-  if (G3D.geoid.length > 60) G3D.geoid.shift();
-  const all = G3D.geoid.slice().sort((a, b) => a - b);
-  G3D.geoidN = clamp(all[all.length >> 1], 48, 64);
-}
-const G3D_PLUGIN = {
-  name: 'IRELAND_MAP_FRAME',
-  processTileModel(scene) {
-    scene.updateMatrixWorld(true);
-    scene.traverse((o) => {
-      if (!o.isMesh) return;
-      const geo = o.geometry;
-      if (!geo.boundingSphere) geo.computeBoundingSphere();
-      const M = o.matrixWorld;
-      const c = geo.boundingSphere.center.clone().applyMatrix4(M);
-      const [lat0, lon0, h0] = geoOf(c.x, c.y, c.z);
-      const [E, Nn, Up] = enuAt(lat0, lon0);
-      // local vertex -> metres east, north, up of the anchor (computed in double precision)
-      const L = new T.Matrix4().set(E[0], E[1], E[2], 0, Nn[0], Nn[1], Nn[2], 0, Up[0], Up[1], Up[2], 0, 0, 0, 0, 1)
-        .multiply(new T.Matrix4().makeTranslation(-c.x, -c.y, -c.z)).multiply(M);
-      const [Mr, Nr] = radiiAt(lat0);
-      if (geo.attributes.position) calibrateGeoid(geo.attributes.position, M);
-      const old = o.material, map = old && old.map ? old.map : null;
-      const mat = new T.ShaderMaterial({
-        uniforms: Object.assign({}, U, {
-          uMap: { value: map || BLANK }, uHasMap: { value: map ? 1 : 0 },
-          uL: { value: L }, uG0: { value: new T.Vector3(lat0 * D2R, 0, h0) },
-          uAW: { value: new T.Vector2(gx(lon0), gz(lat0)) }, uRad: { value: new T.Vector2(Mr + h0, Nr + h0) },
-          uGeoidN: G3D_GEOID,
-        }),
-        vertexShader: COMMON + G3D_VS, fragmentShader: COMMON + G3D_FS, side: T.DoubleSide,
-      });
-      mat.map = map;                        // so the tiles renderer frees it with the tile
-      if (old) old.dispose();
-      o.material = mat;
-      o.frustumCulled = false;              // placement is ours; culling is done by the tiles renderer
-    });
-  },
-};
-const G3D_GEOID = { value: 56 };
-
-async function startTiles(opts) {
-  if (G3D.started) return;
-  G3D.started = true; G3D.status = '3D cities loading';
-  try {
-    const [{ TilesRenderer }, plugins, { DRACOLoader }] = await Promise.all([
-      import('3d-tiles-renderer'), import('3d-tiles-renderer/plugins'), import('three/addons/loaders/DRACOLoader.js')]);
-    const tiles = opts.url ? new TilesRenderer(opts.url) : new TilesRenderer();
-    // A Google Maps Platform key reads Google's tiles directly. A Cesium ion token (a JWT,
-    // "eyJ…") reads the same Google tiles through Cesium ion's copy of them, asset 2275207.
-    const ion = /^eyJ/.test(opts.key || '');
-    if (opts.key && ion) tiles.registerPlugin(new plugins.CesiumIonAuthPlugin({ apiToken: opts.key, assetId: '2275207', autoRefreshToken: true, useRecommendedSettings: false }));
-    else if (opts.key) tiles.registerPlugin(new plugins.GoogleCloudAuthPlugin({ apiToken: opts.key, autoRefreshToken: true, useRecommendedSettings: false }));
-    G3D.google = !!opts.key;
-    const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/');
-    tiles.registerPlugin(new plugins.GLTFExtensionsPlugin({ dracoLoader: draco }));
-    tiles.registerPlugin(G3D_PLUGIN);
-    tiles.errorTarget = 14;                           // finer than the provider's default
-    tiles.lruCache.minBytesSize = 0.8e9; tiles.lruCache.maxBytesSize = 1.4e9; tiles.lruCache.maxSize = 12000;
-    for (let i = 0; i < 6; i++) {
-      const cam = new T.PerspectiveCamera(94, 1, 5, 4e6);
-      tiles.setCamera(cam); G3D.cams.push(cam);
-    }
-    tiles.addEventListener('load-error', (e) => {
-      const msg = String(e && e.error && e.error.message || '');
-      if (/403|401|PERMISSION|key/i.test(msg) || (e && e.url && /root\.json|api\.cesium\.com/.test(String(e.url)))) G3D.status = '3D cities: key or tileset rejected';
-    });
-    scene.add(tiles.group);
-    G3D.tiles = tiles;
-    G3D.status = '3D cities streaming';
-  } catch (e) {
-    G3D.status = '3D cities unavailable (' + (e.message || e) + ')';
-  }
-}
-const tmpM4 = new T.Matrix4();
-function updateTiles() {
-  const tiles = G3D.tiles;
-  if (!tiles) return;
-  G3D_GEOID.value = G3D.geoidN;
-  const c = U.uCam.value;
-  const [lon, lat] = lonLatOf(c.x, c.z);
-  const P = ecefOf(lat, lon, c.y + G3D.geoidN);
-  const [E, N, Up] = enuAt(lat, lon);
-  // world axes in Earth-centred coordinates: x east, y up, z south
-  const B = new T.Matrix4().set(E[0], Up[0], -N[0], 0, E[1], Up[1], -N[1], 0, E[2], Up[2], -N[2], 0, 0, 0, 0, 1);
-  cubeCam.updateMatrixWorld(true);
-  const size = QUALITY[qIndex];
-  cubeCam.children.forEach((src, i) => {
-    const cam = G3D.cams[i];
-    tmpM4.extractRotation(src.matrixWorld).premultiply(B).setPosition(P[0], P[1], P[2]);
-    tmpM4.decompose(cam.position, cam.quaternion, cam.scale);
-    cam.near = Math.max(5, c.y * .01); cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
-    tiles.setResolution(cam, size, size);
-  });
-  tiles.update();
-  G3D.visible = tiles.visibleTiles ? tiles.visibleTiles.size : 0;
-  const on = G3D.visible > 0 ? 1 : 0;
-  U.uG3D.value = on;
-  LANDMARKS.forEach((o) => { o.visible = !on; });
-  if (on && /loading|streaming/.test(G3D.status)) G3D.status = '3D cities on';
-}
 
 
 
@@ -3071,20 +2578,28 @@ function updateSeamGeo() {
   const norm = (u) => { const l = Math.hypot(u[0], u[1]) || 1; return [u[0] / l, u[1] / l]; };
   const c0 = toRoom(off[0], off[1]);
   const start = (RING + 72) / 1024 * S;       // just beyond the numerals
-  // Each year's line leaves its mark on the ring and runs straight to the nearest wall, at a
-  // right angle to it, so every line on the floor is square to the room.
   for (let k = 0; k <= 10; k++) {
     const a = RING_A0 + RING_SWEEP * k / 10;
     const e = toRoom(off[0] + Math.cos(a), off[1] + Math.sin(a)), u = norm([e[0] - c0[0], e[1] - c0[1]]);
     let A = [c0[0] + u[0] * start, c0[1] + u[1] * start];
     if (!inside(A)) A = hit(inside(c0) ? c0 : [0, 0], u);     // a dial larger than the room
-    A = [clamp(A[0], -W / 2, W / 2), clamp(A[1], -D / 2, D / 2)];
-    const toX = W / 2 - Math.abs(A[0]), toZ = D / 2 - Math.abs(A[1]);
-    const B = toX / (W / 2) < toZ / (D / 2) ? [Math.sign(A[0] || 1) * W / 2, A[1]] : [A[0], Math.sign(A[1] || 1) * D / 2];
+    const B = hit(A, u);
     P.uMerA.value[k].set(A[0], A[1], B[0], B[1]);
     P.uMerB.value[k].x = perimOf(B[0], B[1], W, D); P.uMerB.value[k].y = Math.hypot(B[0] - A[0], B[1] - A[1]);
   }
-  seamGeo.ringN = start / Math.min(W, D) * 2 * (RING / (RING + 72));   // the ring, in sweep units
+  // Caption stems run to the middle of each wall, where the caption is centred.
+  [[0, -D / 2, W], [W / 2, 0, D], [0, D / 2, W], [-W / 2, 0, D]].forEach(([bx, bz, wallL], j) => {
+    const u = norm([bx - c0[0], bz - c0[1]]);
+    let A = [c0[0] + u[0] * start, c0[1] + u[1] * start];
+    if (!inside(A) || Math.hypot(bx - c0[0], bz - c0[1]) < start) A = [bx, bz];
+    const cw = Math.min(wallL * .88, H * 2.9), ch = cw / 3.2;
+    const hT = H * .64 + ((1 - CAP_RULE) - .5) * ch;
+    P.uStemA.value[j].set(A[0], A[1], bx, bz);
+    P.uStemB.value[j].set(perimOf(bx, bz, W, D), Math.hypot(bx - A[0], bz - A[1]), hT, 0);
+  });
+  const [mx, mz] = mapXY(PLACES.dublin[0], PLACES.dublin[1]);
+  const o = toRoom(off[0] + (mx / 1024 - .5) * S, off[1] + (mz / 1024 - .5) * S);
+  P.uWaveO.value.set(o[0], o[1]);
 }
 // The cove line's colour through the show: dawn gold, daylight, the 2036 gold, night.
 const COVE = [
@@ -3116,7 +2631,6 @@ function applyTime(t, dt) {
   const sun = U.uSunDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).normalize();
   U.uZenith.value.fromArray(a[3]); U.uHorizon.value.fromArray(a[4]); U.uSunCol.value.fromArray(a[5]);
   U.uNight.value = a[6]; U.uCloud.value = a[7]; U.uAurora.value = a[8]; U.uFogD.value = a[9];
-  U.uCloudOn.value = U.uCloud.value > CLOUD_MIN ? 1 : 0;
   P.uExp.value = a[10];
   const sunUp = smooth(-.06, .12, sun.y);
   const moon = tmpV.set(.5, .55, -.65).normalize();
@@ -3158,7 +2672,7 @@ function applyTime(t, dt) {
   if (yk >= 1 && since < .9) { P.uYearA.value = yk - 1; P.uYearMix.value = since / .9; }
   else { P.uYearA.value = yk; P.uYearMix.value = 0; }
 
-  // ---- light lines: year pulses, the sweeps, the cove line
+  // ---- light lines: year pulses, caption stems, the 2036 wave, the cove line
   updateSeamGeo();
   for (let k = 0; k <= 10; k++) {
     const Tk = k * YEAR_END / 10;
@@ -3169,20 +2683,10 @@ function applyTime(t, dt) {
     P.uMerB.value[k].z = tau;
     P.uMerB.value[k].w = t >= Tk ? 1 : 0;
   }
-  // Sweeps. Each chapter's reaches the height of its words on the walls as they appear.
-  const sw = [];
-  if (t >= 1.9 && t < 5.5) sw.push([seamGeo.ringN + (t - 1.9) * .9, 1.1, 2, 1.3]);
-  CAPTIONS.forEach((k, i) => {
-    if (i === 0 || Math.abs(k.t0 - SCAN_T0) < 4) return;      // the opening and 2036 have their own
-    const f = (t - (k.t0 - 1.8)) * .9;
-    if (f > -.05 && f < 2.3) sw.push([f, 1, 0, i * 1.37]);
-  });
-  if (s > 0 && s < 4.5) sw.push([s * .55, 1.6, 1, 7.3]);
-  const sf = t - YEAR_END;
-  if (sf > 0 && sf < 3.4) sw.push([sf * .75, 1.3, 3, 3.1]);
-  for (let i = 0; i < 3; i++) { const v = sw[i]; P.uSw.value[i].set(v ? v[0] : -9, v ? v[1] : 0, v ? v[2] : 0, v ? v[3] : 0); }
-  P.uF36.value = s > 0 ? s * .55 : -1;
-  P.uFI.value = t < 1.9 ? -9 : t < 7 ? seamGeo.ringN + (t - 1.9) * .9 : 99;
+  let stemT = -1;
+  for (const k of CAPTIONS) { const u = (t - (k.t0 - 1.1)) / 1.1; if (u >= 0 && u < 3.5) { stemT = u; break; } }
+  P.uStemT.value = stemT;
+  P.uWaveR.value = s > 0 ? 1.1 * s + .28 * s * s : -1;
   let ci = 0; while (ci < COVE.length - 2 && COVE[ci + 1][0] <= t) ci++;
   const ka = COVE[ci], kb = COVE[ci + 1], ku = smooth(ka[0], kb[0], t);
   P.uCove.value.set(...ka[1].map((v, i) => lerp(v, kb[1][i], ku) * lerp(ka[2], kb[2], ku)));
@@ -3455,7 +2959,7 @@ ACTS.forEach((a, i) => {
   b.addEventListener('click', () => seek(a.t + .01)); actsEl.appendChild(b);
 });
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('off'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('off'), 1600); }
-function seek(t) { showT = clamp(t, 0, DURATION - .01); camSmooth.ready = false; graceSecs = 2; }
+function seek(t) { showT = clamp(t, 0, DURATION - .01); camSmooth.ready = false; }
 function currentAct() { let i = 0; ACTS.forEach((a, k) => { if (showT >= a.t) i = k; }); return i; }
 function setMode(m) {
   mode = m; post.material.uniforms.uMode.value = m; resize();
@@ -3505,7 +3009,7 @@ addEventListener('keydown', (e) => {
   else if (k === 'a' || k === 'A') { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; toast(on ? 'Sound on' : 'Sound off'); }
   else if (k === 'h' || k === 'H') { if (document.body.classList.contains('show-hidden')) poke(); else document.body.classList.add('show-hidden'); return; }
   else if (k === 'b' || k === 'B' || k === '.') { blackout = !blackout; toast(blackout ? 'Blackout' : 'Picture on'); }
-  else if (k === 'q' || k === 'Q') { qManual = true; holdFrameRate.auto = false; do { qIndex = (qIndex + 1) % QUALITY.length; } while (QUALITY[qIndex] > MAX_CUBE); makeCube(); toast('Detail ' + QUALITY[qIndex] + ' px per face'); }
+  else if (k === 'q' || k === 'Q') { qIndex = (qIndex + 1) % QUALITY.length; makeCube(); toast('Detail ' + QUALITY[qIndex] + ' px per face'); }
   else if (k === 'c' || k === 'C') { openControl(); }
   else if (k === 'o' || k === 'O') { const u = post.material.uniforms.uFloorRot; u.value = (u.value + 1) % 4; toast('Floor rotated ' + u.value * 90 + '°'); saveRoom(); }
   else if (k >= '1' && k <= '4') { seek(ACTS[+k - 1].t + .01); toast(ACTS[+k - 1].name); }
@@ -3531,27 +3035,15 @@ try {
   const r = JSON.parse(localStorage.getItem('ire2036-room') || 'null');
   if (Array.isArray(r) && r.length >= 4) { $('r-w').value = r[0]; $('r-d').value = r[1]; $('r-h').value = r[2]; $('r-e').value = r[3]; post.material.uniforms.uFloorRot.value = (r[4] | 0) % 4; }
 } catch (e) {}
-let resScale = 1;
-// Output size. By default the picture is rendered at the display's own pixels up to about
-// 2560 x 1600 (4 megapixels), and a larger display is scaled up by the browser: a 4K or Retina
-// screen would otherwise cost two to three times the frame for detail the 2048 px cube cannot
-// supply. Full output resolution (Controls > Look) renders every display pixel, up to 40
-// megapixels, for a venue output that needs it.
-const OUT_BUDGET = 2560 * 1600, OUT_FULL = 40e6;
 function resize() {
-  const cw = innerWidth, ch = innerHeight;
-  const budget = ctrl.fullres ? OUT_FULL : OUT_BUDGET;
-  const dpr = Math.min(window.devicePixelRatio || 1, Math.sqrt(budget / Math.max(1, cw * ch))) * resScale;
-  renderer.setPixelRatio(dpr);
-  renderer.setSize(cw, ch, false);
-  const w = canvas.width, h = canvas.height;
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
   let rx = 0, ry = 0, rw = w, rh = h;
   if (mode === 1) {
     const R = post.material.uniforms.uRoom.value, asp = (3 * R.x + 2 * R.y) / Math.max(R.z, R.y);
     if (w / h > asp) { rw = h * asp; rx = (w - rw) / 2; } else { rh = w / asp; ry = (h - rh) / 2; }
   }
   post.material.uniforms.uRect.value.set(rx, ry, rw, rh);
-  if (!qManual) { const qi = idealCubeIndex(w, h); if (qi !== qIndex) { qIndex = qi; if (cubeRT) makeCube(); } }
 }
 addEventListener('resize', resize);
 
@@ -3562,16 +3054,12 @@ addEventListener('resize', resize);
 const CTRL_DEFAULTS = {
   fmapb: 1, lines: 1, grade: .45, warm: .35, nlight: .55, land: 1,
   inset: 0, fscale: 1, tiltx: 0, tilty: 0, dscale: 1, dx: 0, dy: 0,
-  vol: .9, harp: 1, arp: 1, sea: 1, hold60: true, fullres: false,
+  vol: .9, harp: 1, arp: 1, sea: 1,
 };
 const ctrl = Object.assign({}, CTRL_DEFAULTS);
 try { Object.assign(ctrl, JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}')); } catch (e) {}
 
-$('c-auto').addEventListener('change', (e) => { ctrl.hold60 = e.target.checked; applyCtrl(); });
-$('c-fullres').addEventListener('change', (e) => { ctrl.fullres = e.target.checked; applyCtrl(); });
 function applyCtrl() {
-  $('c-auto').checked = !!ctrl.hold60;
-  $('c-fullres').checked = !!ctrl.fullres;
   const P = post.material.uniforms;
   P.uMapBright.value = ctrl.fmapb;
   P.uLines.value = ctrl.lines;
@@ -3588,12 +3076,6 @@ function applyCtrl() {
   audio.setLevel('pad', ctrl.harp);
   audio.setLevel('chime', ctrl.arp);
   audio.setLevel('ocean', ctrl.sea);
-  // A new output size (from the box, Reset all or pasted settings) starts the frame-rate hold
-  // afresh, with the cube sized to the new output again.
-  if (applyCtrl.fullres !== undefined && applyCtrl.fullres !== !!ctrl.fullres) {
-    resScale = 1; if (holdFrameRate.auto) { qManual = false; holdFrameRate.auto = false; } graceSecs = 3; resize();
-  }
-  applyCtrl.fullres = !!ctrl.fullres;
   try { localStorage.setItem('ire2036-ctrl', JSON.stringify(ctrl)); } catch (e) {}
 }
 
@@ -3724,62 +3206,25 @@ syncSliders();
 
 // ---------------------------------------------------------------- loop
 let fpsAcc = 0, fpsN = 0, fpsShown = 0, wake = null;
-// Map data credit, shown on the floor under the year whenever streamed tiles are on screen.
-const attrCv = document.createElement('canvas'); attrCv.width = 2048; attrCv.height = 72;
-const attrTex = canvasTex(attrCv);
-function refreshAttribution() {
-  if (G3D.status) $('g-note').textContent = G3D.status;
-  if (!G3D.tiles) return;
-  let list = [];
-  try { list = G3D.tiles.getAttributions ? G3D.tiles.getAttributions() : []; } catch (e) {}
-  const txt = list.filter((a) => a.type === 'string' && a.value).map((a) => a.value).join(' \u00b7 ');
-  const show = G3D.visible > 0 ? (G3D.google ? (txt ? 'Google \u00b7 ' + txt : 'Google') : txt) : '';
-  if (show === G3D.attr) return;
-  G3D.attr = show;
-  const x = attrCv.getContext('2d');
-  x.clearRect(0, 0, 2048, 72); x.fillStyle = '#000'; x.fillRect(0, 0, 2048, 72);
-  x.fillStyle = '#f00'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = `500 30px ${SANS_F}`;
-  if ('letterSpacing' in x) x.letterSpacing = '1px';
-  let size = 30; while (x.measureText(show).width > 2000 && size > 16) { size -= 2; x.font = `500 ${size}px ${SANS_F}`; }
-  x.fillText(show, 1024, 38);
-  attrTex.needsUpdate = true;
-  post.material.uniforms.uAttr.value = attrTex; post.material.uniforms.uHasAttr.value = show ? 1 : 0;
-}
 async function keepAwake() { try { if (navigator.wakeLock && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch (e) {} }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && started) keepAwake(); });
-// Hold the display's own frame rate. The refresh rate is measured while the data loads,
-// before anything heavy is drawn (60 on most projectors, 50 on some). If the show falls
-// short of it for two seconds in a row, detail steps down one notch: cube size first, down
-// to 1536 px per face, then the output resolution to 87% and 75%, and only then smaller
-// cubes. The status line says where it settled; Q still overrides it by hand.
-let slowSecs = 0, graceSecs = 3, refreshHz = 60;
-(() => {
-  const ts = [];
-  const tick = (t) => { ts.push(t); if (ts.length < 90) requestAnimationFrame(tick); else {
-    const d = ts.slice(1).map((x, i) => x - ts[i]).sort((x, y) => x - y), m = d[d.length >> 1];
-    if (m > 0) refreshHz = clamp(1000 / m, 24, 240);
-  } };
-  requestAnimationFrame(tick);
-})();
-function holdFrameRate(fps) {
-  if (document.hidden) { graceSecs = 2; return; }
-  if (!started || !playing || softGPU || !ctrl.hold60 || qManual && !holdFrameRate.auto) { slowSecs = 0; return; }
-  if (graceSecs > 0) { graceSecs--; slowSecs = 0; return; }
-  slowSecs = fps < Math.min(refreshHz, 60) * .95 ? slowSecs + 1 : 0;
-  if (slowSecs < 2) return;
-  slowSecs = 0; graceSecs = 3; holdFrameRate.auto = true;
-  if (QUALITY[qIndex] > 1536 || resScale < .76) { if (qIndex > 0) { qIndex--; qManual = true; makeCube(); } }
-  else if (resScale > .76) { resScale = resScale > .9 ? .875 : .75; resize(); }
+// If the machine cannot hold a smooth frame rate at the current cube size, step down
+// one size after a few slow seconds. Q still overrides it by hand.
+let slowSecs = 0;
+function adaptQuality(fps) {
+  if (!started || !playing || softGPU) { slowSecs = 0; return; }
+  slowSecs = fps < 28 ? slowSecs + 1 : 0;
+  if (slowSecs >= 4 && qIndex > 2) { qIndex--; makeCube(); slowSecs = 0; toast('Detail ' + QUALITY[qIndex] + ' px per face (auto)'); }
 }
 function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (playing) { showT += dt; if (showT >= DURATION) { showT = 0; camSmooth.ready = false; } }
-  const idleT = started ? showT : (G3D.started ? 9 : 40 + (now / 1000) % 30);
+  const idleT = started ? showT : 40 + (now / 1000) % 30;
   U.uTime.value = now / 1000; U.uShow.value = idleT;
   applyTime(idleT, Math.max(dt, 1 / 120));
   post.material.uniforms.uIntro.value = started ? showT : 99;
   post.material.uniforms.uPrev.value.set(look.yaw, look.pitch, Math.tan(40 * Math.PI / 180));
-  if (needsWorld()) { updateTiles(); skyLUT.update(); renderCube(); }
+  if (needsWorld()) { skyLUT.update(); renderCube(); }
   renderer.setRenderTarget(null);
   renderer.render(post.scene, post.cam);
   const cap = CAPTIONS.findIndex((c) => idleT >= c.t0 && idleT <= c.t1);
@@ -3796,7 +3241,7 @@ function frame(now) {
     });
   }
   fpsAcc += dt; fpsN++;
-  if (fpsAcc > 1) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; holdFrameRate(fpsShown); refreshAttribution(); $('stat').textContent = `${fpsShown} fps · ${canvas.width}×${canvas.height} · ${QUALITY[qIndex]} px/face${resScale < 1 ? ' · ' + Math.round(resScale * 100) + '% output' : ''}${ctrl.hold60 ? '' : ' locked'} · ${IMAGERY_NOTE || FIELD_SOURCE}${G3D.status ? ' · ' + G3D.status : ''} · Q to change`; }
+  if (fpsAcc > 1) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; adaptQuality(fpsShown); $('stat').textContent = `${fpsShown} fps · ${QUALITY[qIndex]} px/face · ${IMAGERY_NOTE || FIELD_SOURCE} · Q to change`; }
   requestAnimationFrame(frame);
 }
 window.__ireland = { seek: (t) => { started = true; seek(t); camSmooth.ready = false; }, pause: () => setPlaying(false), mode: setMode, media: loadMedia,
@@ -3867,13 +3312,6 @@ keepAwake();
       PU.uImage.value = imageryTex || BLANK; PU.uHasImage.value = imageryTex ? 1 : 0; PU.uSettle.value = lightsTex;
 
       buildWorld();
-      // Real 3D cities, if a key (or a venue tileset) was given.
-      const qs = new URLSearchParams(location.search);
-      let gkey = qs.get('gkey') || '';
-      try { gkey = gkey || localStorage.getItem('ire2036-gkey') || ''; } catch (e) {}
-      $('g-key').value = gkey;
-      const tilesetURL = qs.get('tileset');
-      if (gkey || tilesetURL) startTiles({ key: gkey, url: tilesetURL });
 
       say(`Ready. Real terrain, real bathymetry and satellite imagery — ${IMAGERY_NOTE}.`);
       startBtn.disabled = false;
@@ -3898,18 +3336,12 @@ keepAwake();
   seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
     if (FIELD && imageryTex) return;            // already loaded; changing now would do nothing
     QUALITY_KEY = b.dataset.q;
-    try { localStorage.setItem('ire2036-quality-v2', QUALITY_KEY); } catch (e) {}
+    try { localStorage.setItem('ire2036-quality', QUALITY_KEY); } catch (e) {}
     labelTiers();
   }));
-  try { const sq = localStorage.getItem('ire2036-quality-v2'); if (sq && QUALITY_TIERS[sq]) QUALITY_KEY = sq; } catch (e) {}
+  try { const sq = localStorage.getItem('ire2036-quality'); if (sq && QUALITY_TIERS[sq]) QUALITY_KEY = sq; } catch (e) {}
   labelTiers();
 
-  $('g-key').addEventListener('change', () => {
-    const k = $('g-key').value.trim();
-    try { if (k) localStorage.setItem('ire2036-gkey', k); else localStorage.removeItem('ire2036-gkey'); } catch (e) {}
-    if (G3D.started) { toast('Reloading with the new key'); setTimeout(() => location.reload(), 600); }
-    else if (k && FIELD) startTiles({ key: k });
-  });
   retry.addEventListener('click', load);
   load();
 })();
