@@ -2401,6 +2401,9 @@ const post = (() => {
           col+=GOLD*exp(-abs(rr2-dd)*60.)*step(rr2,1.1)*smoothstep(.3,.45,cu.y)*(1.-smoothstep(.6,.75,cu.y))*.14*uCapA;
         }
       }
+      // The top of every wall dissolves into the dark room above: world, light lines and
+      // captions all fade to black over the upper third, and nothing is drawn above the walls.
+      if(!onFloor){ float tf=smoothstep(.66,1.,t); col*=1.-tf*(.35+.65*tf); }
       col+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)/255.;
       gl_FragColor=black?vec4(0.,0.,0.,1.):vec4(clamp(col,0.,1.)*uFade,1.);
     }`,
