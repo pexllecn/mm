@@ -1833,7 +1833,7 @@ function captionTexture(c) {
   const t = new T.CanvasTexture(cv); t.anisotropy = 8; t.generateMipmaps = true; return t;
 }
 let capTextures = [];
-function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures = CAPTIONS.map(captionTexture); sceneDirty = true; }
+function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures = CAPTIONS.map(captionTexture); capTextures.forEach(t=>renderer.initTexture(t)); sceneDirty = true; }
 
 // ---------------------------------------------------------------- final projection pass
 // Every output pixel is resolved to a point in the physical room (a wall at perimeter P and
@@ -2995,7 +2995,7 @@ function setMode(m) {
   $('b-mode').textContent = MODES[m];
   try { localStorage.setItem('ire2036-mode', String(m)); } catch (e) {}
 }
-function setPlaying(p) { playing = !!p; last = performance.now(); sceneDirty = true; frameMeter.clear(); governor.reset(); $('b-play').textContent = p ? 'Pause' : 'Play'; $('b-play').setAttribute('aria-label',p?'Pause the journey':'Play the journey'); }
+function setPlaying(p) { playing = !!p; if(!playing)document.body.classList.remove('show-hidden'); last = performance.now(); sceneDirty = true; frameMeter.clear(); governor.reset(); $('b-play').textContent = p ? 'Pause' : 'Play'; $('b-play').setAttribute('aria-label',p?'Pause the journey':'Play the journey'); }
 function fullscreen() {
   const el = document.documentElement;
   if (!document.fullscreenElement) { (el.requestFullscreen ? el.requestFullscreen() : Promise.reject()).catch(() => toast('Full screen is not available here')); }
@@ -3022,7 +3022,7 @@ $('open-media').addEventListener('click', openMedia);
 $('close-media').addEventListener('click', () => { $('media').hidden = true; });
 
 let idle;
-function poke() { document.body.classList.remove('show-hidden'); clearTimeout(idle); idle = setTimeout(() => { if (started && $('media').hidden && $('control').hidden && $('chapters').hidden && !(document.activeElement.closest('#hud') && document.activeElement.matches(':focus-visible'))) document.body.classList.add('show-hidden'); }, 2800); }
+function poke() { document.body.classList.remove('show-hidden'); clearTimeout(idle); idle = setTimeout(() => { if (started && playing && $('media').hidden && $('control').hidden && $('chapters').hidden && !(document.activeElement.closest('#hud') && document.activeElement.matches(':focus-visible'))) document.body.classList.add('show-hidden'); }, 2800); }
 addEventListener('pointermove', poke);
 addEventListener('keydown', (e) => {
   if(e.key==='Escape'){closePanels();poke();return;}
@@ -3340,7 +3340,7 @@ keepAwake();
 // exactly what failed. Nothing is ever substituted for the real data.
 (async () => {
   const noteEl = $('load-note'), startBtn = $('start'), retry = $('retry');
-  let loading=false, ready=false;
+  let loading=false, ready=false, worldBuilt=false;
   const say = (msg, err) => { noteEl.textContent = msg; noteEl.classList.toggle('err', !!err); };
   const progress=p=>$('load-progress').value=p;
   const pct = (p) => Math.round(clamp(p, 0, 1) * 100);
@@ -3353,7 +3353,7 @@ keepAwake();
       const field = await realField((p) => {progress(p*25);say(`Reading the shape of Ireland… ${pct(p)}%`);});
 
       FIELD = field;
-      elevTex.dispose();
+      U.uElev.value.dispose();
       const tex = new T.DataTexture(field, FW, FH, T.RedFormat, T.FloatType);
       tex.magFilter = tex.minFilter = T.NearestFilter;
       tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping;
@@ -3390,7 +3390,7 @@ keepAwake();
       PU.uMask.value = floorTex.mask; PU.uTrackT.value = floorTex.track;
       PU.uImage.value = imageryTex || BLANK; PU.uHasImage.value = imageryTex ? 1 : 0; PU.uSettle.value = lightsTex;
 
-      buildWorld();
+      worldBuilt=true;buildWorld();
       say('Preparing light, atmosphere and transitions…');progress(94);
       await new Promise(r=>requestAnimationFrame(r));
       applyTime(48,0);U.uTime.value=48;skyLUT.update();lastSkyTime=48;
@@ -3403,7 +3403,7 @@ keepAwake();
       startBtn.disabled=false;last=performance.now();sceneDirty=true;
       requestAnimationFrame(frame);
     } catch (e) {
-      FIELD = null;loading=false;labelTiers();
+      FIELD = null;loading=false;if(worldBuilt){contextLost=true;retry.textContent='Reload experience';}labelTiers();
       say(`Could not load the real world: ${e.message}. This build renders measured terrain and sea-floor data, so it will not start without it. Check the network, any proxy or content filter, then try again.`, true);
       retry.hidden = false;
     }
