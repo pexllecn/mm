@@ -1,0 +1,30 @@
+name: Experience checks
+on:
+  push:
+    branches: [codex-cinematic-60fps]
+  pull_request:
+    paths: ['index.html', 'igloo/9.html', 'igloo/assets/**', 'tests/**', '.github/workflows/experience-checks.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/runtime.test.cjs
+      - name: Prepare pinned browser test tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/ireland-browser" --no-save --ignore-scripts playwright@1.62.1 three@0.158.0
+          node "$RUNNER_TEMP/ireland-browser/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Verify production shaders and presentation controls
+        run: NODE_PATH="$RUNNER_TEMP/ireland-browser/node_modules" node tests/browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experience-verification
+          path: test-results/
+          if-no-files-found: ignore
