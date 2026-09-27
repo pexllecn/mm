@@ -52,6 +52,18 @@ A soft ambient score: slow sine and triangle voicings held for a whole act, with
 
 `Space` pause · `→`/`PageDown` next act · `←`/`PageUp` previous · `1`–`4` jump · `R` restart · `B`/`.` blackout · `A` sound · `F` full screen · `H` hide controls · `V` output · `O` rotate floor
 
+## `9.html`: the live 3D version, rebuilt
+
+A rework of the original live 3D show (kept unchanged as `7.html`; `6.html` holds the separate Living Atlas upgrade, see `6-VENUE-NOTES.md`). The same three minutes rendered live over the real island instead of footage: terrain and sea-floor depth from Terrain Tiles on AWS, Esri World Imagery draped over it, a physical sky, and cumulus with its shadows on the ground. It needs a WebGL 2 GPU and the network (the map services load at start).
+
+- **Walls**: a slow forward flight from dawn at the Cliffs of Moher to night over Dublin. The sun rises during the opening. Cities light up where the imagery shows built-up ground, in sodium orange, then warm white once the 2036 wave has passed. The world is rendered through 4× multisampled cube faces and filtered for the room's own pixel size, with a round bloom.
+- **Floor**: the island as a lit relief map, drawn per pixel at the room's resolution from the elevation and the imagery (no canvas is re-uploaded while the show runs). It has the show's own sun, a day–night line that crosses the island at dusk, and city lights at night. The map also carries the illustrative connections from Dublin, the flight so far with the aircraft and the wedge the front wall sees, and the rounded 2026 → 2036 timeline round it. The dial reaches 2036 at 2:46.
+- **Floor to walls**: beyond the ring the floor shows the live world under the aircraft, so it meets the walls without a break. A cove line of light runs along the join. Each year sends a line of light from its mark on the ring out across the floor and straight up the wall. Each caption is preceded by a stem of light from the ring to where its words appear. The 2036 wave leaves Dublin on the map, crosses the floor and climbs the walls.
+- **Opening**: the ring draws itself, lines of light run to the walls, and the world rises up the walls from the floor.
+- **Finale**: the map turns to the aircraft's heading, locks onto the real island 200 km below at the same scale, and dissolves into it, with the whole coast drawn in light under the aurora.
+
+Operator controls (`C`): **Look → Light lines** sets the cove line, year lines and caption stems together; the **Floor** tab fits the dial. Enter the real room size on the start screen so the light lines meet the walls.
+
 ## Facts on screen (confirm before the visit)
 
 - 5.4 million people; one of the youngest populations in Europe
