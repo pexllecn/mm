@@ -52,9 +52,9 @@ A soft ambient score: slow sine and triangle voicings held for a whole act, with
 
 `Space` pause · `→`/`PageDown` next act · `←`/`PageUp` previous · `1`–`4` jump · `R` restart · `B`/`.` blackout · `A` sound · `F` full screen · `H` hide controls · `V` output · `O` rotate floor
 
-## `6.html`: the live 3D version
+## `9.html`: the live 3D version, rebuilt
 
-The same three minutes rendered live over the real island instead of footage: terrain and sea-floor depth from Terrain Tiles on AWS, Esri World Imagery draped over it, a physical sky, and cumulus with its shadows on the ground. It needs a WebGL 2 GPU and the network (the map services load at start).
+A rework of the original live 3D show (kept unchanged as `7.html`; `6.html` holds the separate Living Atlas upgrade, see `6-VENUE-NOTES.md`). The same three minutes rendered live over the real island instead of footage: terrain and sea-floor depth from Terrain Tiles on AWS, Esri World Imagery draped over it, a physical sky, and cumulus with its shadows on the ground. It needs a WebGL 2 GPU and the network (the map services load at start).
 
 - **Walls**: a slow forward flight from dawn at the Cliffs of Moher to night over Dublin. The sun rises during the opening. Cities light up where the imagery shows built-up ground, in sodium orange, then warm white once the 2036 wave has passed. The world is rendered through 4× multisampled cube faces and filtered for the room's own pixel size, with a round bloom.
 - **Floor**: the island as a lit relief map, drawn per pixel at the room's resolution from the elevation and the imagery (no canvas is re-uploaded while the show runs). It has the show's own sun, a day–night line that crosses the island at dusk, and city lights at night. The map also carries the illustrative connections from Dublin, the flight so far with the aircraft and the wedge the front wall sees, and the rounded 2026 → 2036 timeline round it. The dial reaches 2036 at 2:46.
