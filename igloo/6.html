@@ -1,6 +1,7 @@
+<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ireland 2036</title>
+<title>Ireland 2036 · Living Atlas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
@@ -32,13 +33,14 @@
 
   /* Start gate */
   #gate {
-    position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: flex-start;
+    position: fixed; inset: 0; display: flex; align-items: safe center; justify-content: flex-start;
     padding-inline: clamp(16px, 5vw, 72px); padding-block: clamp(24px, 6vh, 72px);
     background: linear-gradient(90deg, rgba(3,6,9,.92) 0%, rgba(3,6,9,.72) 38%, rgba(3,6,9,.1) 75%);
     overflow-y: auto;
   }
-  .gate-card { max-width: 560px; display: grid; gap: 22px; }
-  .gate-card h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(56px, 9vw, 120px); line-height: .9; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+  .gate-card { max-width: 560px; display: grid; gap: 18px; }
+  .gate-card .credit { font-size: 11px; line-height: 1.45; color: var(--mute); }
+  .gate-card h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(56px, 8vw, 104px); line-height: .9; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
   .gate-card h1 em { color: var(--gold); font-style: italic; }
   .gate-card p { margin: 0; font-size: 17px; line-height: 1.5; color: var(--stone); max-width: 52ch; }
   .spec { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--mute); font-variant-numeric: tabular-nums; }
@@ -136,10 +138,10 @@
 
 <section id="gate" aria-labelledby="gate-title">
   <div class="gate-card">
-    <div class="eyebrow">Igloo immersive · four walls + floor</div>
+    <div class="eyebrow">EY IRELAND · THE LIVING ATLAS</div>
     <h1 id="gate-title">Ireland <em>2036</em></h1>
-    <p>The real island. Terrain and sea-floor depth from satellite survey data, satellite imagery draped over it, and every place — the Cliffs of Moher, the Liffey, Arklow Bank — at its true longitude and latitude. The flight is slow, level and always forward, so the room stays comfortable. Then a wave of light sweeps out from Dublin, and Ireland 2036 takes shape around you.</p>
-    <div class="spec"><span><b>3:00</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> live render</span><span id="gpu-note">Checking graphics…</span></div>
+    <p>A journey across the real island, from Atlantic light to the next decade. Satellite landscapes. An illuminated atlas underfoot. A ribbon of light that leaves the floor and rises around the room.</p>
+    <div class="spec"><span><b>3:00</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> continuous room</span><span id="gpu-note">Checking graphics…</span></div>
     <div class="note" id="load-note" role="status">Starting up…</div>
     <div class="row" role="group" aria-label="Output format">
       <div class="seg" id="mode-seg">
@@ -178,8 +180,9 @@
       <span><kbd>B</kbd>Blackout</span>
       <span><kbd>O</kbd>Rotate floor panel</span>
       <span><kbd>C</kbd>Room controls</span>
+      <span><kbd>G</kbd>Check seams</span>
     </div>
-    <p class="credit">Elevation and bathymetry: Terrain Tiles on AWS (SRTM, NED, GEBCO). Imagery: Esri World Imagery. Place, route and offshore-site coordinates: public geographic data. Floor map: Natural Earth 1:10m (public domain), Ireland and Northern Ireland distinguished; illustrative, not a boundary survey. Swap either service at the top of the script if the venue holds a licensed source.</p>
+    <p class="credit">Elevation and bathymetry: Terrain Tiles on AWS (SRTM, NED, GEBCO). Imagery: Esri World Imagery and its data contributors (source credits available from the service). Place, route and offshore-site coordinates: public geographic data. Floor map: Natural Earth 1:10m (public domain), Ireland and Northern Ireland distinguished; illustrative, not a boundary survey. Swap either service at the top of the script if the venue holds a licensed source.</p>
   </div>
 </section>
 
@@ -193,6 +196,8 @@
     <button type="button" id="b-audio">Sound on</button>
     <button type="button" id="b-media">Footage</button>
     <button type="button" id="b-control">Controls</button>
+    <button type="button" id="b-detail" aria-pressed="true">Detail locked</button>
+    <button type="button" id="b-seam" aria-pressed="false">Check seams</button>
     <button type="button" id="b-full">Full screen</button>
     <span class="spacer"></span>
     <span class="stat" id="stat"></span>
@@ -204,7 +209,7 @@
     <h2 id="media-title">Footage library</h2>
     <button type="button" class="ghost" id="close-media" style="padding:8px 14px">Close</button>
   </div>
-  <p>One clip per scene. Each clip wraps around all four walls as a seamless panorama and pools across the floor as a moving reflection. Clips save with the show, so the Igloo PC picks them up live. Scenes without a clip show the live 3D world.</p>
+  <p>The live geographic world fills the whole room. Add genuine 360° equirectangular footage for a continuous filmed environment, or use standard footage as a cinema view on each wall. Local clips stay in this session; reload them after reopening. Original resolution is preserved.</p>
   <div id="slots"></div>
   <div class="note" id="media-note" role="status"></div>
 </aside>
@@ -222,6 +227,7 @@
   </div>
 
   <div class="tabpane" data-pane="look">
+    <div class="sl"><label for="c-bridge">Floor-to-wall light</label><input id="c-bridge" type="range" min="0" max="2" step="0.02"><output></output></div>
     <div class="sl"><label for="c-mapb">Map brightness</label><input id="c-mapb" type="range" min="0" max="2" step="0.02"><output></output></div>
     <div class="sl"><label for="c-mapd">Sea over the moving floor</label><input id="c-mapd" type="range" min="0" max="1" step="0.02"><output></output></div>
     <div class="sl"><label for="c-grade">2036 colour grade</label><input id="c-grade" type="range" min="0" max="1" step="0.02"><output></output></div>
@@ -280,7 +286,7 @@ if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the netwo
 
 // ---------------------------------------------------------------- show data
 const DURATION = 180;
-// Each scene is a stock clip wrapped around the room. `want` is what the clip should show.
+// Live geographic chapters, with optional original-resolution media overrides.
 const SCENES = [
   { id: 's01', t0: 0,   name: 'Atlantic dawn',   want: 'Wild Atlantic Way, aerial at sunrise, open sea' },
   { id: 's02', t0: 22,  name: 'The coast',       want: 'Cliffs of Moher, aerial along the cliff face' },
@@ -294,7 +300,7 @@ const SCENES = [
   { id: 's10', t0: 162, name: 'Together',        want: 'Ireland at night from above, or starry sky over the coast' },
 ];
 SCENES.forEach((s, i) => { s.t1 = i < SCENES.length - 1 ? SCENES[i + 1].t0 : DURATION; });
-const XFADE = 3.2; // seconds of liquid dissolve into each scene
+const XFADE = 3.2; // seconds of optical crossfade into each scene
 
 const ACTS = [
   { name: 'Today', t: 0 },
@@ -306,11 +312,11 @@ const ACTS = [
 const CAPTIONS = [
   { t0: 4,   t1: 16,  eb: 'Ireland \u00b7 2026',     ti: 'Where we stand today',         sub: 'The Wild Atlantic Way at first light' },
   { t0: 22,  t1: 34,  eb: 'Our coast',            ti: 'Where the Atlantic meets us',  sub: 'The Cliffs of Moher, County Clare' },
-  { t0: 40,  t1: 54,  eb: 'Our people',           ti: '5.4 million people',           sub: 'One of the youngest populations in Europe' },
+  { t0: 40,  t1: 54,  eb: 'Our people',           ti: 'An island of possibility',      sub: 'People, places and connections that shape our future' },
   { t0: 60,  t1: 74,  eb: 'Open economy',         ti: 'Connected to the world',       sub: 'European home to many of the world\u2019s leading companies' },
   { t0: 78,  t1: 90,  eb: '2026 \u2192 2036',        ti: 'The next ten years start now', sub: '' },
-  { t0: 94,  t1: 108, eb: 'Energy',               ti: 'Powered by the Atlantic',      sub: 'National offshore wind targets: 5 GW by 2030, 20 GW by 2040' },
-  { t0: 112, t1: 124, eb: 'Transport',            ti: 'Connected by MetroLink',       sub: 'Airport to city centre by metro, regions linked by rail' },
+  { t0: 94,  t1: 108, eb: 'Energy',               ti: 'Powered by the Atlantic',      sub: 'A possible future of cleaner power and greater energy resilience' },
+  { t0: 112, t1: 124, eb: 'Transport',            ti: 'A more connected Ireland',       sub: 'A vision of easier journeys, from the capital to the regions' },
   { t0: 128, t1: 140, eb: 'Dublin \u00b7 the capital', ti: 'A capital on the move',     sub: 'Talent, technology and trade along the Liffey' },
   { t0: 144, t1: 156, eb: 'Housing',              ti: 'Homes for a growing nation',   sub: 'New communities, built at pace and powered cleanly' },
   { t0: 162, t1: 177.5, eb: 'Ireland 2036',       ti: 'Ambition, delivered together', sub: '' },
@@ -386,7 +392,7 @@ const ROUTES = {
 
 // ---------------------------------------------------------------- real-world data services
 // Elevation and bathymetry: Terrain Tiles on AWS (SRTM and NED on land, GEBCO at sea),
-// terrarium encoding. Imagery: Esri World Imagery. Both are swappable here if the
+// terrarium encoding. Imagery: Esri World Imagery and its data contributors (source credits available from the service). Both are swappable here if the
 // venue holds a licensed source.
 const ELEV_URL  = (z, x, y) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`;
 const IMAGE_URL = (z, x, y) => `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
@@ -529,7 +535,7 @@ async function imageryLayer(z, box, IW, onProgress) {
   const wm = Math.abs(gx(box.lon1) - gx(box.lon0)), hm = Math.abs(gz(box.lat1) - gz(box.lat0));
   // Stay inside the browser's canvas limits: 16384 on either side and about 268 Mpx
   // of area. Exceeding either silently yields a blank canvas, so clamp instead.
-  const MAXDIM = 16384, MAXAREA = 240e6;
+  const MAXDIM = Math.min(16384, renderer.capabilities.maxTextureSize), MAXAREA = 100e6;
   const x0 = Math.floor(tileX(box.lon0, z)), x1 = Math.floor(tileX(box.lon1, z));
   const y0 = Math.floor(tileY(box.lat0, z)), y1 = Math.floor(tileY(box.lat1, z));
   // Never draw a canvas larger than the tiles can actually fill: upscaling invents
@@ -561,7 +567,7 @@ async function imageryLayer(z, box, IW, onProgress) {
   const tex = new T.CanvasTexture(cv);
   if ('SRGBColorSpace' in T) tex.colorSpace = T.SRGBColorSpace;
   tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping;
-  tex.anisotropy = 16; tex.minFilter = T.LinearMipmapLinearFilter; tex.generateMipmaps = true;
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); tex.minFilter = T.LinearMipmapLinearFilter; tex.generateMipmaps = true;
   return tex;
 }
 const baseBox = { lon0: LON_W, lon1: LON_E, lat0: LAT_N, lat1: LAT_S };
@@ -624,47 +630,92 @@ const irelandOutline = new Path2D("M560.10,257.62L558.41,258.22L557.65,259.12L55
 const northOutline = new Path2D("M560.10,257.62L559.26,260.30L560.64,260.36L564.60,259.24L566.16,259.40L569.95,261.29L572.95,261.70L575.94,261.29L576.93,260.58L578.83,258.25L580.10,257.36L580.05,255.51L580.74,252.88L581.78,250.52L582.78,249.50L583.78,248.10L584.33,241.59L584.86,239.57L586.24,239.47L589.99,241.87L591.71,242.52L602.96,242.00L612.88,237.60L618.90,237.18L620.36,236.13L621.69,234.39L623.37,232.94L625.26,232.01L627.19,231.79L630.32,233.61L632.41,234.21L635.70,232.14L637.90,232.66L646.34,237.23L647.74,237.60L649.67,237.30L652.98,235.96L654.68,235.64L658.09,236.23L659.81,237.02L660.56,238.09L661.27,238.48L664.49,241.89L665.37,243.42L665.06,251.47L664.47,253.83L663.20,256.93L663.87,258.22L665.52,258.44L667.15,258.34L668.29,258.50L669.59,259.04L670.71,259.96L671.36,261.29L671.19,263.88L669.62,269.23L669.80,270.23L672.33,270.63L674.66,271.79L676.73,273.65L678.49,276.12L678.87,277.10L679.45,279.42L679.98,280.50L680.54,281.14L681.91,282.27L682.59,283.01L683.39,284.14L684.18,285.59L684.79,287.36L685.03,289.44L685.95,293.41L688.15,294.74L690.73,295.74L692.80,298.74L693.34,298.74L691.76,295.65L686.21,289.98L687.59,287.51L690.21,288.21L692.91,290.49L694.53,292.84L695.58,297.39L695.34,301.41L694.10,304.61L692.15,306.70L689.58,307.93L684.40,309.41L682.05,310.62L679.78,312.63L678.11,314.79L676.05,318.46L674.93,320.45L675.98,321.13L676.35,322.40L676.43,323.68L676.66,324.39L677.74,324.51L678.41,323.79L678.87,322.87L679.82,321.99L681.76,318.98L682.61,318.04L685.67,316.62L688.65,314.45L690.53,313.62L691.88,314.11L693.25,315.14L695.16,315.31L705.60,313.67L706.10,314.12L707.17,316.16L708.00,316.62L708.91,316.93L709.21,317.76L709.25,318.98L709.48,320.45L710.85,325.50L711.88,327.58L713.34,328.41L713.93,329.59L714.46,335.27L714.83,337.26L717.57,341.35L718.12,341.73L717.53,343.11L717.62,343.89L717.89,344.46L717.86,345.22L717.42,346.09L715.74,348.61L715.21,350.37L715.81,352.75L715.48,355.14L714.64,356.25L713.49,357.23L713.05,358.38L714.29,359.96L713.01,360.67L711.92,362.69L710.73,362.92L709.69,361.88L708.88,359.86L708.00,357.01L706.97,356.50L706.05,355.22L705.43,353.60L705.28,352.01L705.86,350.31L707.86,347.83L708.30,345.67L707.98,341.17L707.05,337.89L705.55,335.42L699.49,329.84L697.15,328.54L694.53,328.41L694.53,329.41L695.17,330.80L694.92,332.23L694.17,333.46L693.34,334.32L694.57,334.37L695.53,334.98L696.31,335.73L696.96,336.19L700.19,336.43L701.17,337.26L699.75,337.78L697.84,338.13L697.28,338.78L699.92,340.21L699.51,341.95L699.52,343.62L700.05,344.85L701.17,345.22L701.08,345.84L700.96,346.25L700.52,347.18L701.17,348.08L698.74,355.59L698.05,356.94L694.88,359.43L693.93,360.95L697.46,359.66L701.47,357.36L705.17,356.35L707.70,358.98L708.56,364.46L707.48,368.61L705.18,371.90L702.30,374.80L701.91,374.91L700.92,374.66L700.52,374.80L699.92,377.75L699.32,378.17L698.55,378.53L697.88,378.36L697.60,377.21L696.54,376.15L691.49,375.73L687.79,376.10L684.03,377.44L682.32,377.75L680.60,378.40L680.08,380.14L680.25,385.08L680.27,385.61L680.04,388.37L679.51,391.36L678.76,394.21L677.84,396.53L676.26,398.45L672.62,400.27L669.93,403.06L666.23,405.81L665.08,406.35L661.68,406.62L660.30,406.36L658.78,405.28L658.78,404.38L660.51,403.55L661.21,403.40L654.55,400.98L653.44,400.90L652.43,398.25L650.11,397.42L647.50,397.23L645.66,396.53L645.12,397.50L643.84,396.45L642.54,396.62L641.30,397.24L640.14,397.50L639.11,396.77L638.44,395.78L637.73,395.67L636.57,397.59L636.47,398.48L636.62,399.59L636.68,400.79L636.31,401.98L635.76,402.49L633.71,402.83L631.47,403.62L630.85,403.64L630.29,403.25L629.78,402.61L629.43,402.00L629.37,401.75L626.97,401.85L619.53,404.55L618.85,404.47L617.52,403.92L616.83,404.05L616.37,404.55L615.95,405.20L615.44,405.95L614.97,406.23L613.74,405.58L611.42,402.79L610.09,401.75L611.43,398.36L611.55,396.72L610.62,395.07L612.58,392.62L613.39,389.98L612.89,387.41L612.19,386.59L610.92,385.13L609.10,383.61L608.17,383.09L607.13,382.96L606.20,383.50L605.54,384.44L604.84,385.17L603.80,385.08L601.92,383.90L600.06,382.37L598.36,380.45L596.92,378.14L596.41,376.70L596.11,375.30L595.72,374.09L594.94,373.23L591.85,371.67L593.37,370.89L594.07,369.44L593.92,367.34L592.91,364.66L592.07,362.41L591.52,361.83L590.48,361.75L589.78,361.34L588.99,358.91L588.38,357.93L582.98,353.56L580.05,352.10L577.31,352.34L574.77,354.76L570.55,361.23L567.69,363.33L566.98,363.36L565.45,363.08L565.12,363.26L564.86,363.40L564.73,364.08L564.94,364.96L565.27,365.69L565.50,365.92L565.54,366.00L564.86,367.34L564.75,367.31L564.27,367.90L563.62,367.69L563.20,367.80L563.41,369.35L566.33,370.75L565.81,372.75L568.91,375.30L567.70,376.94L568.26,379.31L566.40,380.49L561.63,381.71L560.64,382.47L559.93,383.17L559.37,384.12L558.88,385.55L559.30,386.13L560.11,386.80L560.22,387.56L558.51,388.40L558.90,389.83L558.68,391.30L558.05,392.56L557.24,393.43L556.04,394.03L555.73,393.47L555.82,392.16L555.81,390.50L555.93,389.22L556.18,388.18L555.89,387.82L553.24,389.34L552.61,390.09L552.61,391.05L554.60,395.09L554.07,395.14L553.15,395.24L548.93,393.84L547.65,394.15L547.26,394.04L547.09,393.42L546.46,392.15L545.74,391.95L544.86,392.09L544.56,391.88L545.52,390.62L543.35,390.44L539.77,393.22L537.90,393.58L528.62,391.45L527.59,390.73L527.31,389.52L527.16,388.25L526.56,387.33L520.29,382.75L518.73,382.47L513.56,382.80L508.78,382.17L507.09,381.16L505.94,378.93L505.59,372.57L505.02,370.27L503.74,369.32L500.33,368.82L499.64,368.56L498.88,368.27L497.38,366.64L496.25,364.58L494.41,360.06L491.87,360.04L489.69,358.91L487.65,356.85L483.95,351.81L481.87,349.57L481.02,348.38L480.84,347.22L480.58,346.11L479.48,345.11L479.94,344.86L481.54,344.01L486.16,342.68L488.30,341.46L489.30,340.56L489.74,339.95L490.81,337.84L492.57,335.32L494.41,333.34L501.00,334.84L504.42,334.97L507.75,333.71L516.41,325.75L520.02,324.60L520.01,324.51L519.78,321.71L518.86,321.48L517.50,322.43L516.04,323.11L514.68,322.61L511.90,320.19L510.70,319.52L510.04,319.71L508.69,320.70L507.96,320.67L507.28,319.96L506.40,318.13L505.67,317.68L504.16,317.27L502.72,316.37L502.01,314.88L502.68,312.72L502.15,312.43L500.72,311.27L505.03,309.21L508.01,306.33L509.20,306.39L511.69,308.48L514.57,309.93L517.52,309.73L520.50,308.08L523.53,305.22L525.08,304.34L528.06,305.13L530.67,304.36L532.30,305.23L533.22,305.28L534.35,304.80L534.36,304.49L533.89,304.00L533.60,302.92L533.77,299.34L534.33,297.39L540.64,289.88L542.01,287.33L542.91,284.24L542.91,282.74L542.54,279.07L542.86,277.37L543.58,276.48L545.31,275.80L545.43,275.61L546.05,274.64L546.15,273.44L545.66,269.77L546.01,268.75L546.47,268.59L546.70,268.34L546.34,267.09L548.80,263.44L549.67,262.48L550.71,261.71L556.27,260.89L556.98,260.14L557.65,259.12L558.41,258.22L560.10,257.62ZM648.03,222.77L652.52,223.42L653.44,223.84L653.65,225.38L653.11,227.20L652.28,228.81L651.65,229.74L651.79,228.58L651.82,227.89L651.92,227.37L652.25,226.70L650.24,225.07L648.08,224.88L645.93,225.11L643.93,224.82L644.89,223.96L645.85,223.32L646.88,222.92L648.03,222.77Z");
 const floorCities = [['Dublin', -6.2603, 53.3498], ['Cork', -8.4756, 51.8985], ['Galway', -9.0568, 53.2707], ['Limerick', -8.6305, 52.6638], ['Waterford', -7.1101, 52.2593], ['Sligo', -8.4694, 54.2766], ['Letterkenny', -7.7333, 54.95]];
 const mapXY = (lon, lat) => [512 + (lon + 7.8) * 87, 498 - (lat - 53.4) * 144];
-const floorCv = document.createElement('canvas'); floorCv.width = floorCv.height = 4096;
+// Static geographic detail is baked once. Only typography and motion repaint.
+const floorCv = document.createElement('canvas'); floorCv.width = floorCv.height = 2048;
 const fctx = floorCv.getContext('2d');
-// `seaA` scales the sea wash over the moving floor; 1 is the film room exactly.
-function paintFloor(t, seaA = 1) {
-  const ctx = fctx, W = 1024, H = 1024, progress = clamp(t / DURATION, 0, 1), year = 2026 + Math.min(10, Math.floor(progress * 10)), startAngle = Math.PI * 2 / 3, sweep = Math.PI * 5 / 3;
-  ctx.setTransform(floorCv.width / W, 0, 0, floorCv.height / H, 0, 0); ctx.clearRect(0, 0, W, H); ctx.save();
-  // The live floor shows through here, where the film room drew its faint film.
-  ctx.save(); ctx.globalAlpha = clamp(seaA, 0, 1);
-  let sea = ctx.createRadialGradient(510, 480, 30, 512, 512, 690); sea.addColorStop(0, '#0d303bba'); sea.addColorStop(.65, '#04131ede'); sea.addColorStop(1, '#01090ff5'); ctx.fillStyle = sea; ctx.fillRect(0, 0, W, H);
-  ctx.restore();
-  ctx.save(); ctx.strokeStyle = '#79b6c4'; ctx.lineWidth = .6; ctx.globalAlpha = .13;
-  for (let n = 0; n < 12; n++) { ctx.beginPath(); ctx.arc(512, 500, 210 + n * 22 + Math.sin(t * .16 + n) * 4, 0, Math.PI * 2); ctx.stroke(); } ctx.restore();
-  // The geographic paths remain visible at t=0, paused, and through every chapter.
-  ctx.save(); ctx.shadowColor = '#58dbc3'; ctx.shadowBlur = 22; ctx.fillStyle = '#174f50'; ctx.fill(irelandOutline); ctx.restore();
-  let land = ctx.createLinearGradient(320, 230, 700, 780); land.addColorStop(0, '#255d5b'); land.addColorStop(.55, '#163f46'); land.addColorStop(1, '#0e303c'); ctx.fillStyle = land; ctx.fill(irelandOutline); ctx.lineWidth = 1.9; ctx.strokeStyle = '#a5d2be'; ctx.stroke(irelandOutline);
-  ctx.fillStyle = '#1a323e'; ctx.fill(northOutline); ctx.strokeStyle = '#668592'; ctx.lineWidth = 1; ctx.stroke(northOutline);
-  ctx.save(); ctx.clip(irelandOutline); let scanY = 800 - ((t / 24) % 1) * 630; const wash = ctx.createLinearGradient(0, scanY - 80, 0, scanY + 80); wash.addColorStop(0, 'transparent'); wash.addColorStop(.5, '#ade3c916'); wash.addColorStop(1, 'transparent'); ctx.fillStyle = wash; ctx.fillRect(210, 180, 600, 640); ctx.restore();
-  // Routes are illustrative relationships, not claims of funded infrastructure.
-  const cityPoints = floorCities.map((c) => mapXY(c[1], c[2])); ctx.save(); ctx.lineWidth = 1; ctx.strokeStyle = '#87c9bf';
-  for (let n = 1; n < cityPoints.length; n++) { let a = cityPoints[0], b = cityPoints[n], cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2 - 35; ctx.globalAlpha = .12 + progress * .18; ctx.beginPath(); ctx.moveTo(...a); ctx.quadraticCurveTo(cx, cy, ...b); ctx.stroke(); const u = (t * .03 + n * .17) % 1, x = (1 - u) ** 2 * a[0] + 2 * (1 - u) * u * cx + u * u * b[0], y = (1 - u) ** 2 * a[1] + 2 * (1 - u) * u * cy + u * u * b[1]; ctx.globalAlpha = .55; ctx.fillStyle = '#dfedc8'; ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill(); } ctx.restore();
-  floorCities.forEach((city, n) => { const [x, y] = cityPoints[n], pulse = (Math.sin(t * 1.1 + n) + 1) / 2; ctx.strokeStyle = '#a9dec6'; ctx.lineWidth = .8; ctx.globalAlpha = .15; ctx.beginPath(); ctx.arc(x, y, 7 + pulse * 7, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; ctx.fillStyle = n === 0 ? '#ffe16a' : '#d1e9d4'; ctx.beginPath(); ctx.arc(x, y, n === 0 ? 4 : 2.6, 0, Math.PI * 2); ctx.fill(); ctx.font = '11px Arial'; ctx.textAlign = n === 0 ? 'left' : 'right'; ctx.fillText(city[0], x + (n === 0 ? 11 : -10), y + 4); });
-  ctx.textAlign = 'center'; ctx.fillStyle = '#819ca7'; ctx.font = '9px Arial'; ctx.fillText('NORTHERN', 649, 329); ctx.fillText('IRELAND', 649, 342); ctx.font = '10px Arial'; ctx.fillStyle = '#89a4ac'; ctx.fillText('ATLANTIC OCEAN', 248, 490);
-  // 300-degree circle gives 2026 and 2036 separate, readable end positions.
-  const r = 405; ctx.lineCap = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = '#24404b'; ctx.beginPath(); ctx.arc(512, 512, r, startAngle, startAngle + sweep); ctx.stroke();
-  ctx.strokeStyle = '#e9d78b'; ctx.lineWidth = 4; ctx.shadowColor = '#e6d07a'; ctx.shadowBlur = 12; ctx.beginPath(); ctx.arc(512, 512, r, startAngle, startAngle + sweep * Math.max(.001, progress)); ctx.stroke(); ctx.shadowBlur = 0;
-  for (let n = 0; n <= 100; n++) { const a = startAngle + sweep * n / 100, major = n % 10 === 0; ctx.strokeStyle = n <= progress * 100 ? '#eadb9f' : '#58727d'; ctx.lineWidth = major ? 2 : 1; ctx.beginPath(); ctx.moveTo(512 + Math.cos(a) * (r + 9), 512 + Math.sin(a) * (r + 9)); ctx.lineTo(512 + Math.cos(a) * (r + (major ? 23 : 15)), 512 + Math.sin(a) * (r + (major ? 23 : 15))); ctx.stroke(); if (major) { ctx.fillStyle = 2026 + n / 10 <= year ? '#f0e8c3' : '#8fa6af'; ctx.font = '600 17px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(2026 + n / 10), 512 + Math.cos(a) * (r + 51), 512 + Math.sin(a) * (r + 51)); } }
-  // Each new year lands with a soft gold ripple from its mark on the ring.
-  const yf = progress * 10, since = (yf - Math.floor(yf)) * DURATION / 10;
-  if (progress > .001 && yf >= 1 && since < 2.2) { const k = since / 2.2, ya = startAngle + sweep * Math.floor(yf) / 10; ctx.save(); ctx.globalAlpha = (1 - k) * .85; ctx.strokeStyle = '#ffe16a'; ctx.lineWidth = 2 * (1 - k) + .5; ctx.shadowColor = '#ffe16a'; ctx.shadowBlur = 18; ctx.beginPath(); ctx.arc(512 + Math.cos(ya) * r, 512 + Math.sin(ya) * r, 8 + k * 46, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
-  const a = startAngle + sweep * progress, px = 512 + Math.cos(a) * r, py = 512 + Math.sin(a) * r; ctx.fillStyle = '#fff4bc'; ctx.shadowBlur = 22; ctx.shadowColor = '#ffe16a'; ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#d7ded5'; ctx.font = '12px Arial'; ctx.fillText('IRELAND · THE NEXT DECADE', 512, 140);
-  ctx.fillStyle = '#f1dfa0'; ctx.font = '58px Georgia'; ctx.fillText(String(year), 512, 916); ctx.font = '11px Arial'; ctx.fillStyle = '#9db2ba'; ctx.fillText(progress >= 1 ? 'BUILT TOGETHER' : 'A POSSIBLE FUTURE · BUILT TOGETHER', 512, 942);
-  ctx.fillStyle = '#708a96'; ctx.font = '9px Arial'; ctx.fillText('ILLUSTRATIVE CONNECTIONS', 512, 830);
-  ctx.restore(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+const atlasCv = document.createElement('canvas'); atlasCv.width = atlasCv.height = 4096;
+let atlasReady = false;
+function bakeAtlas() {
+  if (!imageryTex || !FIELD) return;
+  const c = atlasCv.getContext('2d'); c.clearRect(0, 0, 4096, 4096);
+  c.save(); c.scale(4, 4);
+  const island = new Path2D(irelandOutline); island.addPath(northOutline);
+  c.save(); c.shadowColor = '#96d0ce'; c.shadowBlur = 12;
+  c.strokeStyle = '#80b0ae'; c.lineWidth = 1; c.stroke(island); c.restore();
+  c.save(); c.clip(island);
+  const [x0,y0] = mapXY(LON_W,LAT_N), [x1,y1] = mapXY(LON_E,LAT_S);
+  c.drawImage(imageryTex.image,x0,y0,x1-x0,y1-y0);
+  // Measured hillshade, baked in map coordinates, adds real relief without
+  // painting fictional mountains or flattening the satellite colours.
+  const relief = document.createElement('canvas'); relief.width = relief.height = 1024;
+  const rc = relief.getContext('2d'), pixels = rc.createImageData(1024,1024);
+  for (let y=180;y<820;y++) for (let x=200;x<800;x++) {
+    const lon=(x-512)/87-7.8, lat=53.4-(y-498)/144;
+    const wx=gx(lon), wz=gz(lat), step=500;
+    const nx=heightAt(wx-step,wz)-heightAt(wx+step,wz);
+    const nz=heightAt(wx,wz-step)-heightAt(wx,wz+step);
+    const len=Math.hypot(nx,2*step,nz);
+    const light=clamp((nx*-.48+2*step*.8+nz*-.36)/len,0,1);
+    const k=(y*1024+x)*4;
+    pixels.data[k]=6; pixels.data[k+1]=15; pixels.data[k+2]=22;
+    pixels.data[k+3]=Math.round((1-light)*115);
+  }
+  rc.putImageData(pixels,0,0); c.drawImage(relief,0,0);
+  c.restore(); c.strokeStyle='#afcfc9'; c.lineWidth=.9; c.stroke(island);
+  c.strokeStyle='rgba(181,202,197,.55)'; c.lineWidth=.65; c.setLineDash([2,3]); c.stroke(northOutline); c.setLineDash([]);
+  c.restore(); atlasReady=true;
+}
+function paintFloor(t, seaA = .38) {
+  const ctx=fctx, progress=clamp(t/(DURATION-18),0,1), year=2026+Math.min(10,Math.floor(progress*10));
+  const startAngle=Math.PI*7/12, sweep=Math.PI*11/6, r=410;
+  ctx.setTransform(2,0,0,2,0,0); ctx.clearRect(0,0,1024,1024); ctx.save();
+  ctx.strokeStyle='rgba(147,187,192,.10)'; ctx.lineWidth=.65;
+  for (let i=0;i<4;i++) { ctx.beginPath(); ctx.arc(512,512,350+i*16,0,Math.PI*2); ctx.stroke(); }
+
+  const cityPoints=floorCities.map(c=>mapXY(c[1],c[2]));
+  // Restrained travelling connections on the real island, with luminous pinpoints.
+  for(let n=1;n<cityPoints.length;n++) {
+    const a=cityPoints[0],b=cityPoints[n],cx=(a[0]+b[0])/2,cy=(a[1]+b[1])/2-30;
+    ctx.lineWidth=.9;ctx.strokeStyle=`rgba(169,211,206,${.18+progress*.25})`;
+    ctx.beginPath();ctx.moveTo(...a);ctx.quadraticCurveTo(cx,cy,...b);ctx.stroke();
+    const u=(t*.025+n*.16)%1,x=(1-u)**2*a[0]+2*(1-u)*u*cx+u*u*b[0],y=(1-u)**2*a[1]+2*(1-u)*u*cy+u*u*b[1];
+    ctx.fillStyle='#f7e1a4';ctx.shadowColor='#efd196';ctx.shadowBlur=8;ctx.beginPath();ctx.arc(x,y,1.65,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+  }
+  floorCities.forEach((city,n)=>{
+    const [x,y]=cityPoints[n];ctx.fillStyle=n===0?'#ffe3a0':'#e3ede6';
+    ctx.shadowColor='#000';ctx.shadowBlur=4;ctx.font='500 12px "IBM Plex Sans Condensed",Arial';ctx.textAlign=n===0?'left':'right';
+    ctx.fillText(city[0],x+(n===0?12:-10),y+4);ctx.shadowBlur=0;
+    ctx.beginPath();ctx.arc(x,y,n===0?3.6:2.1,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(200,224,210,.28)';ctx.lineWidth=.7;ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.stroke();
+  });
+  ctx.textAlign='center';ctx.fillStyle='#98afb9';ctx.font='9px Arial';ctx.fillText('NORTHERN IRELAND',649,329);
+  ctx.save();ctx.translate(231,530);ctx.rotate(-Math.PI/2);ctx.fillStyle='#8da4af';ctx.font='10px Arial';ctx.fillText('A T L A N T I C   O C E A N',0,0);ctx.restore();
+  // A 330 degree machined dial. Eleven individual year stops, no duplicate endpoint.
+  ctx.lineCap='round';ctx.strokeStyle='rgba(190,209,209,.28)';ctx.lineWidth=1;
+  for(const radius of [r-7,r+7]) {ctx.beginPath();ctx.arc(512,512,radius,startAngle,startAngle+sweep);ctx.stroke();}
+  ctx.strokeStyle='#182d37';ctx.lineWidth=4;ctx.beginPath();ctx.arc(512,512,r,startAngle,startAngle+sweep);ctx.stroke();
+  const metal=ctx.createLinearGradient(100,900,900,100);metal.addColorStop(0,'#a88a52');metal.addColorStop(.5,'#fff0bd');metal.addColorStop(1,'#bf9e63');
+  ctx.strokeStyle=metal;ctx.lineWidth=3;ctx.beginPath();ctx.arc(512,512,r,startAngle,startAngle+sweep*Math.max(.00001,progress));ctx.stroke();
+  for(let n=0;n<=100;n++) {
+    const a=startAngle+sweep*n/100,major=n%10===0,lit=n<=progress*100;
+    ctx.strokeStyle=lit?'#eadba5':'#57707b';ctx.lineWidth=major?1.8:.7;
+    ctx.beginPath();ctx.moveTo(512+Math.cos(a)*(r+12),512+Math.sin(a)*(r+12));ctx.lineTo(512+Math.cos(a)*(r+(major?25:18)),512+Math.sin(a)*(r+(major?25:18)));ctx.stroke();
+    if(major) {ctx.font='500 19px "IBM Plex Sans Condensed",Arial';ctx.fillStyle=lit?'#f5e5b6':'#90a6ae';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(2026+n/10),512+Math.cos(a)*(r+52),512+Math.sin(a)*(r+52));}
+  }
+  const angle=startAngle+sweep*progress,x=512+Math.cos(angle)*r,y=512+Math.sin(angle)*r;
+  ctx.shadowColor='#ffdb8b';ctx.shadowBlur=16;ctx.fillStyle='#fff1c4';ctx.beginPath();ctx.arc(x,y,4.5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+  ctx.textBaseline='alphabetic';ctx.textAlign='center';ctx.font='500 12px "IBM Plex Sans Condensed",Arial';ctx.fillStyle='#d3dfda';ctx.fillText('I R E L A N D   /   A   L I V I N G   A T L A S',512,122);
+  ctx.font='400 55px "Instrument Serif",Georgia';ctx.fillStyle='#f4e4b5';ctx.fillText(String(year),512,879);
+  ctx.font='10px "IBM Plex Sans Condensed",Arial';ctx.fillStyle='#b4c4c8';ctx.fillText(progress===1?'OUR NEXT DECADE · BUILT TOGETHER':'A POSSIBLE FUTURE · BUILT TOGETHER',512,903);
+  ctx.font='9px Arial';ctx.fillStyle='#849ba3';ctx.fillText('Illustrative connections',512,821);
+  ctx.restore();ctx.setTransform(1,0,0,1,0,0);
 }
 
 // ---------------------------------------------------------------- renderer
 const canvas = $('stage');
 let renderer;
 try {
-  renderer = new T.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: false });
+  renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: false });
 } catch (e) { $('gpu-note').textContent = 'WebGL is not available on this machine.'; return; }
 renderer.setPixelRatio(1);
 renderer.autoClear = true;
@@ -677,11 +728,11 @@ const floatLinear = !!gl.getExtension('OES_texture_float_linear');
 $('gpu-note').textContent = halfOK ? 'HDR render ready' : 'Standard render';
 
 const QUALITY = [512, 768, 1024, 1536, 2048];
-// Default to the sharpest cube the GPU allows: 2048 px per face matches an 8K
-// equirectangular output pixel for pixel. The loop steps down on its own if the
-// machine cannot hold frame rate (see adaptQuality).
+// Start at 2048 per cube face on hardware GPUs. Keep detail locked unless the
+// operator explicitly selects adaptive rendering; display resolution is separate.
 const softGPU = /swiftshader|llvmpipe|software/i.test((() => { try { const e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''; } catch (x) { return ''; } })());
-let qIndex = softGPU ? 2 : (gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE) >= 2048 ? 4 : 3);
+let qIndex = softGPU ? 0 : (gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE) >= 2048 ? 4 : 3);
+let qualityLocked = true;
 let cubeRT, cubeCam;
 function makeCube() {
   if (cubeRT) cubeRT.dispose();
@@ -919,70 +970,9 @@ const cloudDeck = (() => {
   return m;
 })();
 
-// ---------------------------------------------------------------- cloud layer
-// A real altocumulus layer from 4.2 to 6.5 km, raymarched through its full thickness
-// with light marched toward the sun: dark bases, bright tops, silver edges against the
-// light. It lives in the world, not painted on the sky, so it is a ceiling on the low
-// passes, a sea of cloud beneath the high ones, and the climbs punch through it.
-const cloudLayer = (() => {
-  const CB = 4200, CT = 6500;
-  const m = mat(`varying vec3 vW; void main(){ vec3 p=position; p.xz+=uCam.xz; vW=p; gl_Position=projectionMatrix*viewMatrix*vec4(p,1.); }`, `
-  varying vec3 vW;
-  const float CB=${CB}., CT=${CT}.;
-  float dens(vec3 p){
-    vec2 w=p.xz*.000030+uTime*vec2(.0030,.0010);
-    float hf=clamp((p.y-CB)/(CT-CB),0.,1.);
-    // Weather at the 100 km scale: clouds gather in banks and streets with clear gaps
-    // between them, rather than an even scatter of identical puffs.
-    float bank=smoothstep(.30,.72,texture2D(uNoise,w*.18+.61).a);
-    float base=texture2D(uNoise,w).r*.55+texture2D(uNoise,w*2.7+.31).g*.30+bank*.15;
-    float prof=smoothstep(0.,.18,hf)*smoothstep(1.,.4,hf);
-    float cov=uCloud*1.05*(.55+.75*bank);
-    return (base-(1.-cov))*prof*3.4-texture2D(uNoise,w*9.+hf*.4).b*.34*(1.-hf*.6)-texture2D(uNoise,w*23.).a*.12;
-  }
-  void main(){
-    vec3 d=normalize(vW-uCam); float tp=length(vW-uCam);
-    if(abs(d.y)<1e-4) discard;
-    float tA=(CB-uCam.y)/d.y, tB=(CT-uCam.y)/d.y;
-    float t0=max(min(tA,tB),0.), t1=max(tA,tB);
-    t0=max(t0,tp-14000.); t1=min(t1,tp+14000.);
-    if(t1<=t0) discard;
-    const int NC=22;
-    float stp=(t1-t0)/float(NC);
-    vec3 L=normalize(uLightDir); float mu=dot(d,L);
-    float g=.62; float hg=(1.-g*g)/(4.*PI*pow(1.+g*g-2.*g*mu,1.5));
-    float ph=mix(.09,hg*4.,.55)+.35;
-    vec3 amb=skyCol(vec3(0.,1.,0.))*1.1+uAmb*.4;
-    float Tr=1.; vec3 Ls=vec3(0.); float tHit=-1.;
-    float jit=hash12(gl_FragCoord.xy+fract(uTime)*37.);
-    for(int i=0;i<NC;i++){
-      float tt=t0+stp*(float(i)+jit);
-      vec3 p=uCam+d*tt;
-      float den=dens(p);
-      if(den>.001){
-        den=min(den,1.);
-        if(tHit<0.) tHit=tt;
-        float dl=max(dens(p+L*300.),0.)+max(dens(p+L*900.),0.)*.6;
-        float hf=clamp((p.y-CB)/(CT-CB),0.,1.);
-        float sun=exp(-dl*5.)*(1.-exp(-den*4.));
-        vec3 S=uLightCol*3.4*sun*ph+amb*(.3+.7*hf);
-        float a=1.-exp(-den*stp*.0055);
-        Ls+=Tr*a*S; Tr*=1.-a;
-        if(Tr<.02) break;
-      }
-    }
-    float A=1.-Tr;
-    if(A<.004) discard;
-    // Fade out toward the far edge of the layer, then let the air sit in front of it.
-    float edge=1.-smoothstep(160000.,260000.,length(vW.xz-uCam.xz));
-    vec3 C=applyFog(Ls/max(A,1e-3),uCam+d*max(tHit,t0));
-    A*=edge;
-    gl_FragColor=vec4(C*A,A);
-  }`, {}, { transparent: true, depthWrite: false, side: T.DoubleSide, blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor });
-  const g = new T.PlaneGeometry(560000, 560000, 1, 1); g.rotateX(-Math.PI / 2); g.translate(0, (CB + CT) / 2, 0);
-  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 4; scene.add(mesh);
-  return m;
-})();
+// The previous thick procedural cloud bank produced repeated, flat-topped shapes.
+// Keep the measured landscape visible through restrained high cirrus and the
+// physically integrated atmospheric haze above; no synthetic cumulus geometry.
 
 const mapGroup = new T.Group(); mapGroup.visible = false; scene.add(mapGroup);
 
@@ -1057,17 +1047,9 @@ function buildWorld() {
             col=mix(col,texture2D(uDetail2,du).rgb,w);
           }
         }
-        // Satellite imagery is flat and hazy. Lift contrast, warm the greens slightly,
-        // and let real relief shading do the modelling.
-        // Satellite imagery is flat and hazy: restore contrast, but keep the colour
-        // natural. Relief shading and real shadows do the modelling.
-        col=pow(col,vec3(1.18))*1.42*uLandLift;
-        col=mix(vec3(dot(col,vec3(.299,.587,.114))),col,1.04);
-        // Close up, imagery pixels are tens of metres across. Fine texture breaks
-        // them up so the ground reads as fields and scrub rather than blur.
-        float nearG=1.-smoothstep(600.,9000.,length(P-uCam));
-        col*=mix(1.,.86+.28*texture2D(uNoise,P.xz*.0021).a*texture2D(uNoise,P.xz*.013).b*1.6,nearG);
-        col*=.95+.10*texture2D(uNoise,P.xz*.00011).g;
+        // Imagery is already decoded from sRGB by the texture sampler. Preserve
+        // its measured surface detail; procedural noise cannot restore resolution.
+        col*=uLandLift;
       } else {
         // No imagery: shade the real elevation as Irish land cover.
         vec2 q=P.xz/vec2(3800.,2900.); q+=(vnoise(P.xz*.00009)-.5)*1.3;
@@ -1120,8 +1102,8 @@ function buildWorld() {
       lit+=col*lamp*lights*uNight*2.6*uNightLights;
       lit+=lamp*pow(lights,3.)*uNight*.28*uNightLights;
       lit+=inside*TEAL*.05*uNight*(1.-smoothstep(.3,.5,slope));
-      lit+=inside*lights*TEAL*.9*uNight;
-      lit+=scanRing(P.xz)*GOLD*4.;
+      lit+=inside*lights*TEAL*.08*uNight;
+      lit+=scanRing(P.xz)*GOLD*.65;
       gl_FragColor=vec4(applyFog(lit,P),1.);
     }`, (() => {
       const boxOf = (i) => {
@@ -1245,113 +1227,15 @@ function buildWorld() {
       // Harbour and estuary light on the water.
       float lights=texture2D(uLights,fieldUV(P.xz)).r;
       col+=vec3(1.,.62,.3)*lights*uNight*1.0*(.4+.6*pow(vnoise(P.xz*.02+uTime*.3),4.));
-      col+=scanRing(P.xz)*GOLD*5.;
+      col+=scanRing(P.xz)*GOLD*.6;
 
       gl_FragColor=vec4(applyFog(col,P),1.);
     }`);
     const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; scene.add(mesh);
   }
 
-  // ------------------------------------------------ towns and cities
-  {
-    seedN = 7;
-    const inst = [];
-    const dockCentre = [gx(PLACES.docklands[0]), gz(PLACES.docklands[1])];
-    for (const [name, lon, lat, radius, weight] of CITIES) {
-      const cx = gx(lon), cz = gz(lat);
-      const step = radius > 4000 ? 90 : 110;
-      const isDublin = name === 'Dublin';
-      for (let bx = -radius; bx < radius; bx += step) for (let bz = -radius; bz < radius; bz += step) {
-        const rr = Math.hypot(bx, bz) / radius;
-        if (rr > 1) continue;
-        if (rnd() > (1 - rr * .75) * (.55 + weight * .45)) continue;
-        const x = cx + bx + rnd() * step * .5, z = cz + bz + rnd() * step * .5;
-        if (heightAt(x, z) < 3) continue;              // real ground only, never on water
-        const core = 1 - smooth(0, radius * .45, Math.hypot(bx, bz));
-        const w = 14 + rnd() * 22, d = 14 + rnd() * 22;
-        let h = 10 + rnd() * 10 + core * (6 + rnd() * 14 * weight);
-        let type = rnd() < .6 ? 0 : 1;
-        if (isDublin) {
-          const dock = 1 - smooth(1200, 4200, Math.hypot(x - dockCentre[0], z - dockCentre[1]));
-          if (dock > .4 && rnd() < .7) { type = 2; h = 26 + rnd() * 44 * dock; }
-        }
-        inst.push([x, z, w, d, h, type, 0]);
-      }
-    }
-    for (let i = 0; i < 90; i++) {
-      const a = rnd() * 6.2832, r = 400 + rnd() * 2600;
-      const x = dockCentre[0] + Math.cos(a) * r, z = dockCentre[1] + Math.sin(a) * r * .55;
-      if (heightAt(x, z) < 3) continue;
-      const w = 20 + rnd() * 16;
-      inst.push([x, z, w, w * (.7 + rnd() * .5), 55 + rnd() * 95, 2, 1]);
-    }
-    for (let c = 0; c < 5; c++) {
-      const a = 2.4 + c * .42, r = 11000 + rnd() * 5000;
-      const nx = gx(PLACES.dublin[0]) + Math.cos(a) * r, nz = gz(PLACES.dublin[1]) + Math.sin(a) * r;
-      for (let row = 0; row < 8; row++) for (let k = 0; k < 7; k++) {
-        const x = nx + k * 32 + (row % 2) * 10, z = nz + row * 26;
-        if (heightAt(x, z) < 4) continue;
-        inst.push([x, z, 22, 12, 9 + rnd() * 7, 3, 1]);
-      }
-    }
-
-    const geo = new T.BoxGeometry(1, 1, 1); geo.translate(0, .5, 0);
-    const seeds = new Float32Array(Math.max(1, inst.length) * 4);
-    const m = mat(`attribute vec4 aSeed; varying vec3 vW; varying vec3 vN; varying vec4 vS; varying float vBase; varying float vTop; varying float vRise;
-    void main(){
-      vec4 o=modelMatrix*instanceMatrix*vec4(0.,0.,0.,1.);
-      float rise=1.;
-      if(aSeed.w>.5){ float d=length(o.xz-uScanC); rise=smoothstep(0.,1.,clamp((uScanR-d-1200.)/9000.,0.,1.)); }
-      vec3 p=position; p.y*=max(rise,.0001);
-      vec4 w=modelMatrix*instanceMatrix*vec4(p,1.);
-      vW=w.xyz; vN=normalize(mat3(modelMatrix*instanceMatrix)*normal); vS=aSeed; vBase=o.y;
-      vTop=(modelMatrix*instanceMatrix*vec4(0.,1.,0.,1.)).y; vRise=rise;
-      gl_Position=projectionMatrix*viewMatrix*w; }`, `
-    varying vec3 vW; varying vec3 vN; varying vec4 vS; varying float vBase; varying float vTop; varying float vRise;
-    void main(){
-      if(vRise<.002) discard;
-      vec3 N=normalize(vN); vec3 P=vW; vec3 V=normalize(P-uCam);
-      float type=vS.y; bool fut=vS.w>.5;
-      vec3 fac = type<.5? vec3(.42,.22,.15) : (type<1.5? vec3(.62,.6,.55) : (type<2.5? vec3(.16,.22,.26) : vec3(.7,.68,.63)));
-      fac*=.85+.3*vS.x;
-      bool roof=N.y>.5;
-      float along=abs(N.x)>.5?P.z:P.x;
-      vec2 wc=vec2(along/(type>1.5&&type<2.5?2.4:3.2),(P.y-vBase)/3.3);
-      vec2 wf=fract(wc); vec2 wid=floor(wc);
-      float win=roof?0.:step(.16,wf.x)*step(wf.x,.84)*step(.22,wf.y)*step(wf.y,.82)*step(1.,wid.y);
-      vec3 col=fac;
-      if(type>1.5&&type<2.5){ col=mix(fac,skyCol(reflect(V,N))*.7,.55*(1.-float(roof))); win=roof?0.:step(.08,wf.x)*step(.3,wf.y); }
-      // Glass reflects the sky with a Fresnel term rather than reading as flat black.
-      float fr=.04+.96*pow(1.-max(dot(-V,N),0.),5.);
-      col=mix(col,mix(vec3(.04,.05,.06),skyCol(reflect(V,N))*.8,.25+.75*fr),win*.8);
-      // Contact darkening where walls meet the ground, and a little weathering.
-      col*=.62+.38*smoothstep(0.,14.,P.y-vBase);
-      col*=.92+.16*texture2D(uNoise,vec2(along,P.y)*.02).a;
-      float inside=scanInside(P.xz);
-      if(roof){ col=vec3(.1,.1,.11); if(inside>.5){ col=vS.z<.5?vec3(.16,.34,.13):vec3(.04,.06,.13); } }
-      vec3 lit=col*(uLightCol*max(dot(N,uLightDir),0.)+uAmb*(.55+.45*N.y));
-      float lh=hash12(wid+vS.x*91.+N.xz*13.);
-      float litFrac=mix(.04,fut?.75:.55,uNight);
-      vec3 wcol=fut?vec3(.75,.9,1.):mix(vec3(1.,.72,.4),vec3(1.,.85,.6),lh);
-      lit+=win*step(lh,litFrac)*wcol*(1.2+uNight*1.6)*(.4+.6*uNight);
-      if(fut){ lit+=GOLD*smoothstep(vTop-2.5,vTop-.3,P.y)*(1.-float(roof))*2.5*uNight; }
-      if(roof&&inside>.5&&vS.z>=.5){ lit+=uLightCol*pow(max(dot(reflect(V,N),uLightDir),0.),30.)*.8+vec3(.15,.3,.7)*.12*uNight; }
-      lit+=scanRing(P.xz)*GOLD*2.;
-      gl_FragColor=vec4(applyFog(lit,P),1.);
-    }`);
-    const im = new T.InstancedMesh(geo, m, Math.max(1, inst.length));
-    const M = new T.Matrix4();
-    inst.forEach((b, i) => {
-      const y = heightAt(b[0], b[1]) - 1.5;
-      M.makeScale(b[2], b[4] + 1.5, b[3]); M.setPosition(b[0], y, b[1]);
-      im.setMatrixAt(i, M);
-      seeds.set([rnd(), b[5], rnd(), b[6]], i * 4);
-      if (b[6] && b[5] === 2 && b[4] > 90) BEACONS.push([b[0], y + b[4] + 3, b[1], 0, 1]);
-    });
-    im.count = inst.length;
-    geo.setAttribute('aSeed', new T.InstancedBufferAttribute(seeds, 4));
-    im.frustumCulled = false; scene.add(im);
-  }
+  // Satellite imagery carries the built environment. Random box buildings were
+  // removed: they obscured real streets and invented a false Dublin skyline.
 
   // ------------------------------------------------ landmarks, at their true coordinates
   {
@@ -1411,15 +1295,12 @@ function buildWorld() {
         spots.push([x, z]);
       }
     }
-    // A 15 MW turbine is 150 m to the hub with a 118 m blade and a chord of about
-    // six metres. At the altitude this show flies over the wind farms, that blade
-    // renders 0.14 px wide -- mathematically invisible, which is why they could not
-    // be seen. These are drawn at roughly twice real scale so they read as turbines
-    // in the room. Positions, spacing and site boundaries remain the real ones.
-    const HUB = 300, ROT = 210, T_TOP = 26, T_BOT = 40, CHORD = 20;
+    // Representative 15 MW proportions. Layouts illustrate possible development,
+    // not a surveyed or consented turbine arrangement.
+    const HUB = 150, ROT = 118, T_TOP = 4, T_BOT = 7, CHORD = 6;
     const tower = new T.CylinderGeometry(T_TOP, T_BOT, HUB, 18); tower.translate(0, HUB / 2, 0);
-    const nac = new T.BoxGeometry(60, 26, 26); nac.translate(6, HUB + 4, 0);
-    const blade = new T.BoxGeometry(CHORD, ROT, 11); blade.translate(0, ROT / 2, 0);
+    const nac = new T.BoxGeometry(22, 8, 8); nac.translate(6, HUB + 4, 0);
+    const blade = new T.BoxGeometry(CHORD, ROT, 2); blade.translate(0, ROT / 2, 0);
     // Taper the blade toward the tip so it still reads as an aerofoil, not a plank.
     const bp = blade.attributes.position;
     for (let i = 0; i < bp.count; i++) {
@@ -1629,8 +1510,8 @@ function captionTexture(c) {
   const W = 2048, H = 640, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const x = cv.getContext('2d');
   const bg = x.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * .48);
-  bg.addColorStop(0, 'rgba(2,6,10,.5)'); bg.addColorStop(.6, 'rgba(2,6,10,.28)'); bg.addColorStop(1, 'rgba(2,6,10,0)');
-  x.save(); x.scale(1, H / W * 1.6); x.fillStyle = bg; x.fillRect(0, 0, W, W); x.restore();
+  bg.addColorStop(0, 'rgba(2,6,10,.24)'); bg.addColorStop(.6, 'rgba(2,6,10,.08)'); bg.addColorStop(1, 'rgba(2,6,10,0)');
+  x.save(); x.translate(W/2,H/2); x.scale(1,H/W); x.translate(-W/2,-H/2); x.fillStyle=bg; x.fillRect(0,-W/2,W,W*2); x.restore();
   x.textAlign = 'center'; x.textBaseline = 'alphabetic';
   x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 28;
   x.fillStyle = '#f2c14e'; x.font = '600 40px "IBM Plex Sans Condensed", "Arial Narrow", sans-serif';
@@ -1645,11 +1526,13 @@ function captionTexture(c) {
   const t = new T.CanvasTexture(cv); t.anisotropy = 8; t.generateMipmaps = true; return t;
 }
 // floor canvas texture, repainted as the show clock moves
+const atlasTex = new T.CanvasTexture(atlasCv);
+atlasTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 const floorTex = new T.CanvasTexture(floorCv);
-floorTex.anisotropy = 8;
+floorTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 let floorPaintedT = -1;
 function drawFloor(t, force) {
-  if (!force && Math.abs(t - floorPaintedT) < 1 / 30) return;   // the film room paints at 30 fps
+  if (!force && Math.abs(t - floorPaintedT) < 1 / 20) return;   // the film room paints at 30 fps
   floorPaintedT = t; paintFloor(t, ctrl.fsea); floorTex.needsUpdate = true;
 }
 
@@ -1657,27 +1540,28 @@ let capTextures = [];
 function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures = CAPTIONS.map(captionTexture); }
 
 // ---------------------------------------------------------------- final projection pass
-// Every output pixel is resolved to a point in the physical room (wall s/t or floor x/z).
-// Footage wraps the four walls as one seamless mirrored panorama; the floor becomes a rippling
-// vortex reflection of it. Scenes without footage fall back to the live 3D world (cube map).
+// Every output pixel is resolved into metres in the physical room. The atlas,
+// photographic world and light transport share that coordinate system. Genuine
+// 360 media uses spherical rays; ordinary footage remains explicitly planar.
 const BLANK = new T.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); BLANK.needsUpdate = true;
 const post = (() => {
   const m = new T.ShaderMaterial({
     uniforms: {
       uCube: { value: null }, uYaw: { value: 0 }, uMode: { value: 0 }, uRect: { value: new T.Vector4(0, 0, 1, 1) },
       uRoom: { value: new T.Vector3(6, 6, 3) }, uEye: { value: 1.6 }, uPrev: { value: new T.Vector3(0, 0, Math.tan(40 * Math.PI / 180)) },
-      uFade: { value: 1 }, uExp: { value: 1 }, uBloom: { value: halfOK ? 1 : 0 }, uTime: U.uTime, uFloorRot: { value: 0 },
+      uFade: { value: 1 }, uExp: { value: 1 }, uBloom: { value: halfOK ? .22 : 0 }, uTime: U.uTime, uFloorRot: { value: 0 },
       uA: { value: BLANK }, uB: { value: BLANK }, uHasA: { value: 0 }, uHasB: { value: 0 }, uAspA: { value: 1.7778 }, uAspB: { value: 1.7778 },
       uMix: { value: 0 }, uDrift: { value: 0 }, uZoomA: { value: 1 }, uZoomB: { value: 1 }, uSwirl: { value: 0 },
-      uFuture: { value: 0 }, uScan: { value: 0 },
+      uFuture: { value: 0 }, uScan: { value: 0 }, uBridge: { value: 1 }, uSeamCheck: { value: 0 },
+      uPanA: { value: 0 }, uPanB: { value: 0 },
       uCap: { value: BLANK }, uCapA: { value: 0 }, uCapRev: { value: 0 },
-      uFloorMap: { value: BLANK },
+      uFloorMap: { value: BLANK }, uAtlas: { value: atlasTex }, uFloorSea: { value: .38 },
       // Live operator controls. Every one of these is driven by the control panel
       // and saved per machine, so the room can be tuned on site without editing code.
       uMapBright: { value: 1 },
       uFloorInset: { value: 0 }, uFloorScale: { value: 1 }, uFloorTilt: { value: new T.Vector2(0, 0) },
       uDialScale: { value: 1 }, uDialOff: { value: new T.Vector2(0, 0) },
-      uGradeAmt: { value: .45 }, uGradeWarm: { value: 1 },
+      uGradeAmt: { value: .16 }, uGradeWarm: { value: .12 },
     },
     vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
     fragmentShader: `
@@ -1685,9 +1569,10 @@ const post = (() => {
     uniform float uFade; uniform float uExp; uniform float uBloom; uniform float uTime; uniform int uFloorRot;
     uniform sampler2D uA; uniform sampler2D uB; uniform float uHasA; uniform float uHasB; uniform float uAspA; uniform float uAspB;
     uniform float uMix; uniform float uDrift; uniform float uZoomA; uniform float uZoomB; uniform float uSwirl;
-    uniform float uFuture; uniform float uScan;
+    uniform float uFuture; uniform float uScan; uniform float uBridge; uniform int uSeamCheck;
+    uniform float uPanA; uniform float uPanB;
     uniform sampler2D uCap; uniform float uCapA; uniform float uCapRev;
-    uniform sampler2D uFloorMap;
+    uniform sampler2D uFloorMap; uniform sampler2D uAtlas; uniform float uFloorSea;
     uniform float uMapBright;
     uniform float uFloorInset; uniform float uFloorScale; uniform vec2 uFloorTilt;
     uniform float uDialScale; uniform vec2 uDialOff;
@@ -1706,17 +1591,53 @@ const post = (() => {
       if(abs(n.y)>=abs(n.x)){ return n.y<0.? xz.x+W*.5 : W+D+(W*.5-xz.x); }
       return n.x>0.? W+(xz.y+D*.5) : 2.*W+D+(D*.5-xz.y);
     }
-    // footage sample: mirrored tiles around the perimeter so every seam matches; v is height (0 floor edge, 1 wall top)
-    vec3 foot(sampler2D tex, float asp, float P, float v, float zoom){
-      float n=max(2.,floor(PER/(H*asp)*.5+.5)*2.);
-      float x=P/PER*n+uDrift;
-      float u=1.-abs(fract(x*.5)*2.-1.);
-      vec2 uv=(vec2(u,v)-.5)/zoom+.5;
-      uv.y=clamp(uv.y,.002,.998);
-      return textureLod(tex,uv,0.).rgb;
+    // Ordinary footage occupies a correctly proportioned view on each wall.
+    // Only footage explicitly marked equirectangular is projected as true 360.
+    vec3 foot(sampler2D tex, float asp, float ws, float v, float wallL, vec3 ray, float panorama){
+      if(panorama>.5){
+        vec2 uv=vec2(atan(ray.x,-ray.z)/6.2831853+.5,asin(clamp(ray.y,-1.,1.))/3.1415927+.5);
+        return textureLod(tex,uv,0.).rgb;
+      }
+      float fit=wallL/(H*asp);
+      vec2 uv=vec2((ws-.5)*max(fit,1.)+.5,(v-.5)*max(1./fit,1.)+.5);
+      vec3 c=textureLod(tex,clamp(uv,vec2(.001),vec2(.999)),0.).rgb;
+      // A dark architectural edge avoids stretched or mirrored landmarks.
+      float edge=smoothstep(0.,.045,ws)*smoothstep(0.,.045,1.-ws);
+      return c*edge;
+    }
+    vec2 perimeterPoint(float P){
+      P=mod(P,PER);
+      if(P<W) return vec2(P-W*.5,-D*.5);
+      if(P<W+D) return vec2(W*.5,P-W-D*.5);
+      if(P<2.*W+D) return vec2(W*.5-(P-W-D),D*.5);
+      return vec2(-W*.5,D*.5-(P-2.*W-D));
+    }
+    // Surface distance continues without resetting at the wall-foot intersection.
+    // All light phase, colour and width are functions of this same room metric.
+    vec3 roomLight(vec2 xz,float height,float clock){
+      float radial=length(xz), path=radial+height;
+      float angle=atan(xz.y,xz.x);
+      float aa=max(fwidth(path),.0025), aaAngle=max(fwidth(angle)*radial,.003);
+      float crest=mod(path-clock*.68+12.,12.);
+      float dist=min(crest,12.-crest);
+      float ring=exp(-pow(dist/.13,2.))*.30+exp(-pow(dist/.032,2.))*.62;
+      float rails=0.;
+      for(int i=0;i<12;i++){
+        float a=float(i)*6.2831853/12.+.261799;
+        float delta=atan(sin(angle-a),cos(angle-a));
+        float lateral=abs(delta)*max(radial,.1);
+        float core=1.-smoothstep(.009,.009+aaAngle*1.5,lateral);
+        float halo=exp(-lateral*55.);
+        float phase=mod(path-clock*.48-float(i)*.43+12.,12.);
+        float packet=exp(-pow(min(phase,12.-phase)/.24,2.));
+        rails+=(core*.16+halo*.11)*(0.24+packet*2.5);
+      }
+      float reveal=smoothstep(.4,1.35,radial);
+      float opening=smoothstep(0.,4.,clock);
+      return mix(vec3(.64,.79,.80),vec3(1.,.82,.48),uFuture*.8)*(rails+ring)*reveal*opening*uBridge;
     }
     vec3 cubeDisp(vec3 d){
-      vec3 c=textureLod(uCube,d,0.).rgb;
+      vec3 c=textureCube(uCube,d).rgb;
       if(uBloom>0.){ c+=(max(textureLod(uCube,d,2.5).rgb-1.,0.)*.35+max(textureLod(uCube,d,4.).rgb-.85,0.)*.45+max(textureLod(uCube,d,5.5).rgb-.7,0.)*.6+max(textureLod(uCube,d,7.).rgb-.6,0.)*.5)*uBloom; }
       return pow(aces(c*uExp),vec3(1./2.2));
     }
@@ -1769,37 +1690,29 @@ const post = (() => {
           if(kz<kx){ wallL=W; ws=d.z<0.?(p.x+W*.5)/W:(W*.5-p.x)/W; } else { wallL=D; ws=d.x>0.?(p.z+D*.5)/D:(D*.5-p.z)/D; }
         }
       }
-      // floor: square-polar reflection with a slow vortex toward the centre
-      float r=0.,fv=0.;
+      // Reflect the exact incident scene ray in the floor plane. No vortex or
+      // video zoom: at y=0 the reflected ray equals the ray at the wall foot.
+      vec3 videoRay=d; float r=0.,fv=0.;
       if(onFloor){
         r=max(abs(q.x)/(W*.5),abs(q.y)/(D*.5));
-        float sw=pow(1.-r,2.)*(uSwirl+.06*sin(uTime*.2));
-        float ca=cos(sw*6.2831),sa=sin(sw*6.2831); vec2 qs=vec2(q.x*ca-q.y*sa,q.x*sa+q.y*ca);
-        P=perim(qs/max(r,1e-4));
-        float rip=sin(r*46.-uTime*2.2)*.006+(vnoise(q*2.6+uTime*.35)-.5)*.018;
-        fv=clamp((1.-r)+rip,0.,1.);
+        vec2 hit=q/max(r,1e-5); P=perim(hit);
+        float travel=1./max(r,1e-5);
+        fv=uEye*(travel-1.)/H;
+        videoRay=normalize(vec3(q.x,-uEye,q.y));
+        float wp=mod(P,PER);
+        if(wp<W){ws=wp/W;wallL=W;}
+        else if(wp<W+D){ws=(wp-W)/D;wallL=D;}
+        else if(wp<2.*W+D){ws=(wp-W-D)/W;wallL=W;}
+        else {ws=(wp-2.*W-D)/D;wallL=D;}
       }
-      float v=onFloor?fv:(t<=1.?max(t,0.):2.-min(t,2.));
+      float v=onFloor?fv:clamp(t,0.,1.);
       bool needCube=uHasA<.5||(uMix<.999&&uHasB<.5);
       vec3 cub=needCube?cubeDisp(rotY(d,uYaw)):vec3(0.);
-      // liquid dissolve from B (outgoing) to A (incoming)
-      vec2 nc=onFloor?q*.9:vec2(P,t*H)*.55;
-      float n=fbm(nc+vec2(uTime*.05,0.));
-      float edgeP=uMix*1.25-.12;
-      float warp=(1.-abs(uMix*2.-1.))*.05*(n-.5);
-      vec3 ca=uHasA>.5?foot(uA,uAspA,P+warp*PER*.3,v+warp,uZoomA):cub;
-      vec3 cb=uHasB>.5?foot(uB,uAspB,P-warp*PER*.3,v-warp,uZoomB):cub;
-      float m=smoothstep(n-.06,n+.06,edgeP);
-      vec3 col=mix(cb,ca,m);
-      float edge=exp(-abs(edgeP-n)*42.)*step(.001,uMix)*step(uMix,.999);
+      vec3 ca=uHasA>.5?foot(uA,uAspA,ws,v,wallL,videoRay,uPanA):cub;
+      vec3 cb=uHasB>.5?foot(uB,uAspB,ws,v,wallL,videoRay,uPanB):cub;
+      vec3 col=mix(cb,ca,uMix);
       if(!onFloor&&t>1.) col*=1.-.55*smoothstep(1.,1.8,t);
-      col+=mix(GOLD,TEAL,uFuture)*edge*.9;
-      if(onFloor){
-        col*=vec3(.82,.9,1.)*(.8+.2*r);
-        float caust=pow(vnoise(q*3.2+vec2(uTime*.4,-uTime*.3))*vnoise(q*4.1-vec2(uTime*.3,uTime*.2)),2.);
-        col+=vec3(.9,.95,1.)*caust*.25;
-        col+=GOLD*exp(-abs(r-1.)*60.)*.25;
-      }
+      if(onFloor) col*=mix(.34,1.,pow(clamp(r,0.,1.),3.));
       // Ireland 2036: colour grade, scan sweep (floor, then up the walls), holographic grid, rising light
       if(uFuture>0.&&uGradeAmt>0.001){
         // The old grade replaced colour with a luminance ramp into warm sand, which
@@ -1811,45 +1724,45 @@ const post = (() => {
         vec3 g=tint*(l*1.18+.04)+chroma*.85;
         col=mix(col,g,uGradeAmt*uFuture);
       }
-      if(uScan>0.){
-        float sf=min(uScan,1.05), sh=uScan-1.;
-        if(onFloor){
-          col+=GOLD*exp(-abs(r-sf)*22.)*step(uScan,1.4)*2.;
-          float inside=step(r,sf);
-          vec2 g=abs(fract(q/.5)-.5); float gl=smoothstep(.47,.5,max(g.x,g.y));
-          col+=TEAL*gl*inside*.35*uFuture;
-        } else {
-          col+=GOLD*exp(-abs(t-sh)*28.)*step(0.,sh)*step(sh,1.15)*1.8;
-          float inside=step(t,sh);
-          vec2 cell=floor(vec2(P,t*H)/.32); float rn=hash12(cell);
-          vec2 lc=fract(vec2(P,t*H)/.32);
-          float py=fract(uTime*.18*(.5+rn)+rn*7.);
-          float dd=length(lc-vec2(.5+.3*sin(rn*40.+uTime*.7),py));
-          col+=GOLD*(smoothstep(.05,.0,dd)*.9+smoothstep(.16,.0,dd)*.15)*step(.62,rn)*inside*uFuture;
-          vec2 g=abs(fract(vec2(P,t*H)/.75)-.5); col+=TEAL*smoothstep(.492,.5,max(g.x,g.y))*inside*.06*uFuture;
-        }
-      }
       // captions, one per wall
       if(!onFloor&&uCapA>0.){
-        float cw=min(wallL*.88,H*2.9), ch=cw/3.2;
+        float cw=min(wallL*.80,H*2.65), ch=cw/3.2;
         vec2 cu=vec2((ws-.5)*wallL/cw+.5,(t*H-H*.64)/ch+.5);
         if(cu.x>0.&&cu.x<1.&&cu.y>0.&&cu.y<1.){
           vec4 c=texture2D(uCap,cu); float dd=abs(cu.x-.5)*2.; float rr=uCapRev*1.2;
           float vis=smoothstep(dd-.12,dd,rr);
           col=mix(col,c.rgb*1.08,c.a*vis*uCapA);
-          col+=GOLD*exp(-abs(rr-dd)*30.)*step(rr,1.1)*smoothstep(.25,.45,cu.y)*smoothstep(.8,.6,cu.y)*.6*uCapA;
+
         }
       }
       // floor: the film-room floor canvas over the live floor, which keeps moving underneath.
-      // The square canvas is centred on the floor (the dial controls move and size it); its
-      // edge is clamped outward so a non-square room carries the dark sea edge to the walls.
+      // The square atlas sits inside the physical room. Outside it the floor
+      // remains live, preserving the shared imagery and light at every wall join.
       if(onFloor){
         float S=min(W,D)*uDialScale;
-        vec2 fu=clamp(vec2(.5+(qDial.x-uDialOff.x)/S,.5-(qDial.y-uDialOff.y)/S),0.,1.);
-        vec4 c=texture2D(uFloorMap,fu);
+        vec2 fu=vec2(.5+(qDial.x-uDialOff.x)/S,.5-(qDial.y-uDialOff.y)/S);
+        float inside=step(0.,fu.x)*step(fu.x,1.)*step(0.,fu.y)*step(fu.y,1.);
+        float wash=(1.-smoothstep(.34,.5,length(fu-.5)))*clamp(uFloorSea,0.,1.);
+        col=mix(col,vec3(.012,.035,.046),wash*inside);
+        vec4 atlas=texture2D(uAtlas,clamp(fu,0.,1.));
+        col=mix(col,atlas.rgb*uMapBright,atlas.a*inside);
+        vec4 c=texture2D(uFloorMap,clamp(fu,0.,1.));
+        c.a*=step(0.,fu.x)*step(fu.x,1.)*step(0.,fu.y)*step(fu.y,1.);
         col=mix(col,c.rgb*uMapBright,c.a);
       }
-      col+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)*.016;
+      vec2 roomXZ=onFloor?q:perimeterPoint(P);
+      float roomHeight=onFloor?0.:max(t*H,0.);
+      vec3 light=roomLight(roomXZ,roomHeight,uTime);
+      // Screen blending retains highlights instead of clipping large neon regions.
+      col=1.-(1.-clamp(col,0.,1.))*exp(-light);
+      if(uSeamCheck==1){
+        float path=length(roomXZ)+roomHeight;
+        float angle=atan(roomXZ.y,roomXZ.x);
+        col=vec3(.09)+(.5+.5*cos(angle+vec3(0.,2.094,4.189)))*.35;
+        float line=1.-smoothstep(.025,.025+max(fwidth(path),.002),abs(fract(path)-.5));
+        col+=vec3(line*.5)+light;
+      }
+      col+=(hash12(gl_FragCoord.xy)-.5)/1024.;
       gl_FragColor=vec4(clamp(col,0.,1.)*uFade,1.);
     }`,
     depthTest: false, depthWrite: false,
@@ -1911,10 +1824,10 @@ const CAM = CAM_LL.map(([t, lon, lat, alt]) => [t, gx(lon), alt, gz(lat)]);
 
 // atmosphere keys: t, sunElev, sunAz, zenith, horizon, sunCol, night, cloud, aurora, fog, exposure
 const ATM = [
-  [0,   1,  86, [.07,.12,.26], [.98,.52,.30], [1.7,.85,.45], .18, .55, 0, .0000080, 1.15],
-  [24,  7,  94, [.11,.22,.46], [.96,.68,.50], [1.8,1.15,.75], .02, .50, 0, .0000055, 1.02],
+  [0,   10, 86, [.09,.17,.29], [.60,.69,.77], [1.25,1.18,1.05], 0, .55, 0, .0000048, 1.0],
+  [24,  17, 94, [.11,.22,.40], [.67,.76,.82], [1.4,1.35,1.24], 0, .50, 0, .0000038, 1.0],
   [50,  20, 130, [.15,.32,.62], [.72,.82,.92], [1.7,1.6,1.4], 0, .42, 0, .0000024, 1.0],
-  [76,  11, 236, [.17,.28,.56], [.95,.66,.40], [1.85,1.15,.6], 0, .44, 0, .0000026, 1.02],
+  [76,  14, 236, [.14,.25,.43], [.74,.76,.79], [1.5,1.36,1.16], 0, .44, 0, .0000026, 1.02],
   [96,  1,  256, [.09,.13,.30], [.78,.42,.34], [1.5,.62,.30], .30, .42, 0, .0000034, 1.12],
   [118, -6, 268, [.03,.05,.13], [.20,.16,.25], [.55,.26,.20], .78, .34, 0, .0000038, 1.25],
   [144, -12, 282, [.008,.016,.042], [.045,.06,.11], [0,0,0], 1, .22, .25, .0000030, 1.33],
@@ -1999,7 +1912,7 @@ function applyTime(t, dt) {
   const el = a[1] * Math.PI / 180, az = a[2] * Math.PI / 180;
   const sun = U.uSunDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).normalize();
   U.uZenith.value.fromArray(a[3]); U.uHorizon.value.fromArray(a[4]); U.uSunCol.value.fromArray(a[5]);
-  U.uNight.value = a[6]; U.uCloud.value = a[7]; U.uAurora.value = a[8]; U.uFogD.value = a[9];
+  U.uNight.value = a[6]; U.uCloud.value = a[7]; U.uAurora.value = a[8] * .12; U.uFogD.value = a[9];
   post.material.uniforms.uExp.value = a[10];
   const sunUp = smooth(-.06, .12, sun.y);
   const moon = tmpV.set(.5, .55, -.65).normalize();
@@ -2011,7 +1924,7 @@ function applyTime(t, dt) {
   // The 2036 sweep leaves Dublin and crosses the island over real kilometres.
   const s = t - SCAN_T0;
   U.uScanR.value = s > 0 ? 6000 * s + 1400 * s * s : 0;
-  cloudDeck.uniforms.uOp.value = smooth(150, 166, t);
+  cloudDeck.uniforms.uOp.value = .09 * (1 - smooth(150, 175, t));
   mapGroup.visible = false;
 
   const P = post.material.uniforms;
@@ -2022,10 +1935,12 @@ function applyTime(t, dt) {
   P.uHasA.value = ma && ma.tex ? 1 : 0; P.uA.value = ma && ma.tex ? ma.tex : BLANK; P.uAspA.value = ma && ma.asp || 1.7778;
   P.uHasB.value = mb && mb.tex ? 1 : 0; P.uB.value = mb && mb.tex ? mb.tex : BLANK; P.uAspB.value = mb && mb.asp || 1.7778;
   P.uMix.value = mix;
-  P.uZoomA.value = 1 + .09 * (t - A.t0) / (A.t1 - A.t0 + XFADE);
-  P.uZoomB.value = 1 + .09 * (t - B.t0) / (B.t1 - B.t0 + XFADE);
-  P.uDrift.value = t * .016;
-  P.uSwirl.value = .08 + .25 * smooth(150, 178, t);
+  P.uPanA.value = ma && ma.projection === 'equirectangular' ? 1 : 0;
+  P.uPanB.value = mb && mb.projection === 'equirectangular' ? 1 : 0;
+  P.uZoomA.value = 1;
+  P.uZoomB.value = 1;
+  P.uDrift.value = 0;
+  P.uSwirl.value = 0;
   syncVideos(t, [si, mix < 1 ? si - 1 : -1]);
 
   P.uFuture.value = smooth(SCAN_T0, SCAN_T0 + 8, t);
@@ -2063,19 +1978,19 @@ function syncVideos(t, live) {
 }
 function loadMedia(id, row) {
   const old = media[id];
-  if (old) { if (old.tex) old.tex.dispose(); if (old.video) { old.video.pause(); old.video.removeAttribute('src'); old.video.load(); } delete media[id]; }
+  if (old) { if (old.tex) old.tex.dispose(); if (old.video) { old.video.pause(); old.video.removeAttribute('src'); old.video.load(); } if(old.local)URL.revokeObjectURL(old.url); delete media[id]; }
   if (!row || !(row.asset || row.url)) { renderSlots(); return; }
   const url = row.url || '/_blob/' + row.asset;
-  const entry = { kind: row.kind, url, name: row.name || '', credit: row.credit || '' };
+  const entry = { local: !!row.local, kind: row.kind, url, name: row.name || '', credit: row.credit || '', projection: row.projection || 'cinema' };
   media[id] = entry;
   if (row.kind === 'video') {
     const v = document.createElement('video');
-    v.src = url; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
-    v.addEventListener('loadeddata', () => { entry.asp = v.videoWidth / v.videoHeight || 1.7778; entry.tex = new T.VideoTexture(v); entry.tex.minFilter = T.LinearFilter; entry.tex.generateMipmaps = false; renderSlots(); });
+    v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous'; v.src = url;
+    v.addEventListener('loadeddata', () => { if(media[id]!==entry)return; entry.width=v.videoWidth;entry.height=v.videoHeight;entry.asp = v.videoWidth / v.videoHeight || 1.7778; entry.tex = new T.VideoTexture(v); entry.tex.minFilter = T.LinearFilter; entry.tex.generateMipmaps = false; renderSlots(); });
     v.addEventListener('error', () => { entry.error = true; renderSlots(); });
     entry.video = v;
   } else {
-    new T.TextureLoader().load(url, (tex) => { entry.tex = tex; entry.asp = tex.image.width / tex.image.height; renderSlots(); },
+    new T.TextureLoader().load(url, (tex) => { if(media[id]!==entry){tex.dispose();return;} entry.width=tex.image.width;entry.height=tex.image.height;entry.tex = tex; entry.asp = tex.image.width / tex.image.height; renderSlots(); },
       undefined, () => { entry.error = true; renderSlots(); });
   }
   renderSlots();
@@ -2092,13 +2007,22 @@ function renderSlots() {
     else th.textContent = m && m.error ? 'Missing' : 'Live 3D';
     const info = document.createElement('div');
     const b = document.createElement('b'); b.textContent = `${fmt(s.t0)} · ${s.name}`;
-    const sm = document.createElement('small'); sm.textContent = m ? (m.name + (m.credit ? ' · ' + m.credit : '')) : s.want;
+    const sm = document.createElement('small'); sm.textContent = m ? (m.name + (m.width ? ` · ${m.width} × ${m.height}` : '') + (m.credit ? ' · ' + m.credit : '')) : s.want;
     const acts = document.createElement('div'); acts.className = 'acts-row';
-    if (assetsApi) {
+    {
       const lab = document.createElement('label'); lab.textContent = m ? 'Replace clip' : 'Add clip';
       const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'video/mp4,video/webm,image/jpeg,image/png,image/webp'; inp.id = 'file-' + s.id;
-      inp.addEventListener('change', () => inp.files[0] && upload(s.id, inp.files[0]));
+      inp.addEventListener('change', () => {
+        const file=inp.files[0]; if(!file)return;
+        if(assetsApi) upload(s.id,file);
+        else { const url=URL.createObjectURL(file);loadMedia(s.id,{url,name:file.name,kind:file.type.startsWith('video')?'video':'image',local:true});note('Playing original file. Reload this clip after reopening the page.'); }
+      });
       lab.appendChild(inp); acts.appendChild(lab);
+      if(m && !m.error){
+        const select=document.createElement('select');select.setAttribute('aria-label','Projection for '+s.name);
+        for(const [value,label] of [['cinema','Standard footage'],['equirectangular','360° equirectangular']]){const o=document.createElement('option');o.value=value;o.textContent=label;select.appendChild(o);}
+        select.value=m.projection;select.addEventListener('change',()=>{m.projection=select.value;if(dbApi&&!m.local)dbApi.doc('media/'+s.id).update({projection:m.projection}).catch(()=>note('Projection changed for this session only.'));});acts.appendChild(select);
+      }
       if (m) { const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.addEventListener('click', () => removeSlot(s.id)); acts.appendChild(rm); }
     }
     info.append(b, sm, acts); row.append(th, info); box.appendChild(row);
@@ -2106,7 +2030,7 @@ function renderSlots() {
 }
 function note(msg, err) { const n = $('media-note'); n.textContent = msg; n.classList.toggle('err', !!err); }
 async function upload(id, file) {
-  if (file.size > 20 * 1024 * 1024) { note('That file is over 20 MB. Export 1920 px wide H.264 MP4 (about 15–20 s) and try again.', true); return; }
+  if (file.size > 20 * 1024 * 1024) { note('Hosted upload limit is 20 MB. Use local playback for full-resolution venue masters.', true); return; }
   note('Uploading ' + file.name + '…');
   try {
     const old = media[id] && media[id].url;
@@ -2121,12 +2045,13 @@ async function upload(id, file) {
 }
 async function removeSlot(id) {
   const m = media[id]; if (!m) return;
+  if(m.local || !dbApi){loadMedia(id,null);note('Local clip removed.');return;}
   try { await dbApi.doc('media/' + id).delete(); if (m.url.startsWith('/_blob/')) await assetsApi.delete(m.url.split('/').pop()); note('Removed. This scene now shows the live 3D world.'); }
   catch (e) { note('Could not remove that clip. Try again.', true); }
 }
 (async () => {
   renderSlots();
-  if (!window.claude || !window.claude.use) { note('The footage library loads from the published link.'); return; }
+  if (!window.claude || !window.claude.use) { note('Local playback ready. Choose your original-resolution clips.'); return; }
   try { dbApi = await window.claude.use('db'); assetsApi = await window.claude.use('assets'); } catch (e) { /* stays null */ }
   if (!dbApi) { note('Footage library is not available in this view. Scenes without footage show the live 3D world.'); return; }
   note(assetsApi ? '' : 'Only editors can change clips. Saved clips still play here.');
@@ -2262,7 +2187,7 @@ const audio = (() => {
 // ---------------------------------------------------------------- operator state + controls
 let showT = 0, playing = false, started = false, blackout = false, mode = 0, last = performance.now();
 const MODES = ['360° Igloo', 'Walls + floor', 'Desk preview'];
-const look = { yaw: 0, pitch: 0, drag: null };
+const look = { yaw: 0, pitch: .24, drag: null };
 const actsEl = $('acts');
 ACTS.forEach((a, i) => {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'act'; b.id = 'act-' + i;
@@ -2270,7 +2195,7 @@ ACTS.forEach((a, i) => {
   b.addEventListener('click', () => seek(a.t + .01)); actsEl.appendChild(b);
 });
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('off'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('off'), 1600); }
-function seek(t) { showT = clamp(t, 0, DURATION - .01); camSmooth.ready = false; }
+function seek(t) { showT = clamp(t, 0, DURATION); camSmooth.ready = false; }
 function currentAct() { let i = 0; ACTS.forEach((a, k) => { if (showT >= a.t) i = k; }); return i; }
 function setMode(m) {
   mode = m; post.material.uniforms.uMode.value = m; resize();
@@ -2299,6 +2224,9 @@ $('b-restart').addEventListener('click', () => { seek(0); setPlaying(true); });
 $('b-mode').addEventListener('click', () => setMode((mode + 1) % 3));
 $('b-audio').addEventListener('click', () => { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; });
 $('b-full').addEventListener('click', fullscreen);
+function toggleSeams(){ const u=post.material.uniforms.uSeamCheck;u.value=1-u.value;$('b-seam').setAttribute('aria-pressed',String(!!u.value));toast(u.value?'Seam calibration on':'Seam calibration off'); }
+$('b-seam').addEventListener('click',toggleSeams);
+$('b-detail').addEventListener('click',()=>{qualityLocked=!qualityLocked;$('b-detail').textContent=qualityLocked?'Detail locked':'Adaptive detail';$('b-detail').setAttribute('aria-pressed',String(qualityLocked));});
 const openMedia = () => { $('media').hidden = false; poke(); };
 $('b-media').addEventListener('click', () => { $('media').hidden = !$('media').hidden; });
 $('open-media').addEventListener('click', openMedia);
@@ -2321,6 +2249,7 @@ addEventListener('keydown', (e) => {
   else if (k === 'h' || k === 'H') { if (document.body.classList.contains('show-hidden')) poke(); else document.body.classList.add('show-hidden'); return; }
   else if (k === 'b' || k === 'B' || k === '.') { blackout = !blackout; toast(blackout ? 'Blackout' : 'Picture on'); }
   else if (k === 'q' || k === 'Q') { qIndex = (qIndex + 1) % QUALITY.length; makeCube(); toast('Detail ' + QUALITY[qIndex] + ' px per face'); }
+  else if (k === 'g' || k === 'G') toggleSeams();
   else if (k === 'c' || k === 'C') { openControl(); }
   else if (k === 'o' || k === 'O') { const u = post.material.uniforms.uFloorRot; u.value = (u.value + 1) % 4; toast('Floor rotated ' + u.value * 90 + '°'); saveRoom(); }
   else if (k >= '1' && k <= '4') { seek(ACTS[+k - 1].t + .01); toast(ACTS[+k - 1].name); }
@@ -2347,8 +2276,10 @@ try {
   if (Array.isArray(r) && r.length >= 4) { $('r-w').value = r[0]; $('r-d').value = r[1]; $('r-h').value = r[2]; $('r-e').value = r[3]; post.material.uniforms.uFloorRot.value = (r[4] | 0) % 4; }
 } catch (e) {}
 function resize() {
-  const w = innerWidth, h = innerHeight;
-  renderer.setSize(w, h, false);
+  const pixelScale = Math.min(devicePixelRatio || 1, 2, Math.sqrt(33554432 / (innerWidth * innerHeight)));
+  renderer.setPixelRatio(pixelScale);
+  renderer.setSize(innerWidth, innerHeight, false);
+  const w = canvas.width, h = canvas.height;
   let rx = 0, ry = 0, rw = w, rh = h;
   if (mode === 1) {
     const R = post.material.uniforms.uRoom.value, asp = (3 * R.x + 2 * R.y) / Math.max(R.z, R.y);
@@ -2363,16 +2294,18 @@ addEventListener('resize', resize);
 // without touching the file. Settings persist per machine; content edits persist too
 // and can be exported as JSON so a tuned show can be moved to the venue PC.
 const CTRL_DEFAULTS = {
-  fmapb: 1, fsea: 1, grade: .45, warm: .35, nlight: .55, land: 1,
+  bridge: 1, fmapb: 1, fsea: .38, grade: .16, warm: .12, nlight: .4, land: 1.1,
   inset: 0, fscale: 1, tiltx: 0, tilty: 0, dscale: 1, dx: 0, dy: 0,
-  vol: .9, harp: 1, arp: 1, sea: 1,
+  vol: .48, harp: .7, arp: .18, sea: .4,
 };
 const ctrl = Object.assign({}, CTRL_DEFAULTS);
-try { Object.assign(ctrl, JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}')); } catch (e) {}
+try { Object.assign(ctrl, JSON.parse(localStorage.getItem('ire2036-atlas-ctrl-v2') || '{}')); } catch (e) {}
 
 function applyCtrl() {
   const P = post.material.uniforms;
   P.uMapBright.value = ctrl.fmapb;
+  P.uBridge.value = ctrl.bridge;
+  P.uFloorSea.value = ctrl.fsea;
   drawFloor(floorPaintedT < 0 ? 0 : floorPaintedT, true);
   P.uGradeAmt.value = ctrl.grade;
   P.uGradeWarm.value = ctrl.warm;
@@ -2387,11 +2320,11 @@ function applyCtrl() {
   audio.setLevel('pad', ctrl.harp);
   audio.setLevel('chime', ctrl.arp);
   audio.setLevel('ocean', ctrl.sea);
-  try { localStorage.setItem('ire2036-ctrl', JSON.stringify(ctrl)); } catch (e) {}
+  try { localStorage.setItem('ire2036-atlas-ctrl-v2', JSON.stringify(ctrl)); } catch (e) {}
 }
 
 const SLIDERS = [
-  ['c-mapb', 'fmapb'], ['c-mapd', 'fsea'], ['c-grade', 'grade'], ['c-warm', 'warm'],
+  ['c-bridge', 'bridge'], ['c-mapb', 'fmapb'], ['c-mapd', 'fsea'], ['c-grade', 'grade'], ['c-warm', 'warm'],
   ['c-nlight', 'nlight'], ['c-land', 'land'],
   ['c-inset', 'inset'], ['c-fscale', 'fscale'], ['c-tiltx', 'tiltx'], ['c-tilty', 'tilty'],
   ['c-dscale', 'dscale'], ['c-dx', 'dx'], ['c-dy', 'dy'],
@@ -2523,15 +2456,16 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && st
 // one size after a few slow seconds. Q still overrides it by hand.
 let slowSecs = 0;
 function adaptQuality(fps) {
-  if (!started || !playing || softGPU) { slowSecs = 0; return; }
+  if (qualityLocked || !started || !playing || softGPU) { slowSecs = 0; return; }
   slowSecs = fps < 28 ? slowSecs + 1 : 0;
   if (slowSecs >= 4 && qIndex > 2) { qIndex--; makeCube(); slowSecs = 0; toast('Detail ' + QUALITY[qIndex] + ' px per face (auto)'); }
 }
 function frame(now) {
-  const dt = Math.min(.1, (now - last) / 1000); last = now;
-  if (playing) { showT += dt; if (showT >= DURATION) { showT = 0; camSmooth.ready = false; } }
+  const elapsed = Math.max(0, (now - last) / 1000);
+  const dt = Math.min(.1, elapsed); last = now;
+  if (playing) { showT += elapsed; if (showT >= DURATION) { showT = 0; camSmooth.ready = false; } }
   const idleT = started ? showT : 40 + (now / 1000) % 30;
-  U.uTime.value = now / 1000; U.uShow.value = idleT;
+  U.uTime.value = idleT; U.uShow.value = idleT;
   applyTime(idleT, Math.max(dt, 1 / 120));
   post.material.uniforms.uPrev.value.set(look.yaw, look.pitch, Math.tan(40 * Math.PI / 180));
   if (needsWorld()) { skyLUT.update(); cubeCam.update(renderer, scene); }
@@ -2550,13 +2484,13 @@ function frame(now) {
       el.querySelector('i').style.width = (clamp((showT - a.t) / (end - a.t), 0, 1) * 100).toFixed(1) + '%';
     });
   }
-  fpsAcc += dt; fpsN++;
-  if (fpsAcc > 1) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; adaptQuality(fpsShown); $('stat').textContent = `${fpsShown} fps · ${QUALITY[qIndex]} px/face · ${IMAGERY_NOTE || FIELD_SOURCE} · Q to change`; }
+  fpsAcc += elapsed; fpsN++;
+  if (fpsAcc > 1) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; adaptQuality(fpsShown); $('stat').textContent = `${fpsShown} fps · ${canvas.width} × ${canvas.height} · ${QUALITY[qIndex]} px/face · ${IMAGERY_NOTE || FIELD_SOURCE} · Q to change`; }
   requestAnimationFrame(frame);
 }
-window.__ireland = { seek: (t) => { started = true; seek(t); camSmooth.ready = false; }, pause: () => setPlaying(false), mode: setMode, media: loadMedia };
+window.__ireland = { diagnostics: () => ({time:showT,playing,mode,buffer:[canvas.width,canvas.height],cube:QUALITY[qIndex],atlasReady,room:post.material.uniforms.uRoom.value.toArray(),programs:renderer.info.programs.map(p=>({name:p.name,runnable:p.diagnostics?.runnable ?? true}))}), seek: (t) => { started = true; seek(t); camSmooth.ready = false; }, pause: () => setPlaying(false), mode: setMode, media: loadMedia };
 
-let savedMode = 0; try { savedMode = +(localStorage.getItem('ire2036-mode') || 0) || 0; } catch (e) {}
+let savedMode = 2; try { savedMode = +(localStorage.getItem('ire2036-mode') ?? 2) || 0; } catch (e) {}
 setMode(clamp(savedMode, 0, 2));
 applyRoom();
 const fontsReady = document.fonts && document.fonts.load
@@ -2577,6 +2511,7 @@ keepAwake();
 
   async function load() {
     startBtn.disabled = true; retry.hidden = true;
+    document.querySelectorAll('#quality-seg button').forEach(b=>b.disabled=true);
     try {
       say('Loading real elevation and sea-floor depth for Ireland…');
       const field = await realField((p) => say(`Loading real elevation and sea-floor depth… ${pct(p)}%`));
@@ -2611,15 +2546,19 @@ keepAwake();
       await new Promise((r) => setTimeout(r, 20));
       lightsTex = buildLights();
 
+      bakeAtlas(); atlasTex.needsUpdate=true;
+      drawFloor(0, true);
       buildWorld();
 
       say(`Ready. Real terrain, real bathymetry and satellite imagery — ${IMAGERY_NOTE}.`);
       startBtn.disabled = false;
+      document.querySelectorAll('#quality-seg button').forEach(b=>b.disabled=false);
       requestAnimationFrame(frame);
     } catch (e) {
       FIELD = null;
       say(`Could not load the real world: ${e.message}. This build renders measured terrain and sea-floor data, so it will not start without it. Check the network, any proxy or content filter, then try again.`, true);
       retry.hidden = false;
+      document.querySelectorAll('#quality-seg button').forEach(b=>b.disabled=false);
     }
   }
   // Quality picker. A venue machine that cannot hold the Ultra textures should not
@@ -2634,10 +2573,10 @@ keepAwake();
     $('quality-note').textContent = `${tierTiles(QUALITY_KEY)} tiles to download`;
   }
   seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
-    if (FIELD && imageryTex) return;            // already loaded; changing now would do nothing
+    if (b.dataset.q === QUALITY_KEY) return;
     QUALITY_KEY = b.dataset.q;
     try { localStorage.setItem('ire2036-quality', QUALITY_KEY); } catch (e) {}
-    labelTiers();
+    location.reload();
   }));
   try { const sq = localStorage.getItem('ire2036-quality'); if (sq && QUALITY_TIERS[sq]) QUALITY_KEY = sq; } catch (e) {}
   labelTiers();
