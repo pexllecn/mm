@@ -18,7 +18,14 @@ const server=http.createServer((req,res)=>{
   const file=path.resolve(root,relative);
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)){res.writeHead(404);res.end();return;}
   let data=fs.readFileSync(file);
-  if(file.endsWith('.html'))data=Buffer.from(data.toString().replace('const ELEV_Z = 10;','const ELEV_Z = 6;').replace('const FW = 2560,','const FW = 256,').replace(/z: (1[1-5]), px:/g,'z: 7, px:'));
+  if(file.endsWith('.html'))data=Buffer.from(data.toString()
+    .replace('const ELEV_Z = 10;','const ELEV_Z = 6;')
+    .replace('const FW = 2560,','const FW = 256,')
+    .replace(/z: (1[1-5]), px:/g,'z: 7, px:')
+    // CI has a CPU rasterizer. Exercise every shader at a bounded raster cost;
+    // physical projector sizing and adaptation are covered by the runtime tests.
+    .replace('const QUALITY = [384, 512, 768, 1024, 1536, 2048]', 'const QUALITY = [128, 160, 192, 256, 384, 512]')
+    .replace('Runtime.outputSize(innerWidth, innerHeight, devicePixelRatio,', 'Runtime.outputSize(innerWidth / 2, innerHeight / 2, devicePixelRatio,'));
   const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.mp3':'audio/mpeg'};
   res.writeHead(200,{'content-type':types[path.extname(file)]||'application/octet-stream'});res.end(data);
 });
@@ -27,7 +34,7 @@ const server=http.createServer((req,res)=>{
   const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   try{
     const page=await browser.newPage({viewport:{width:1280,height:800},deviceScaleFactor:1});
-    const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&/shader|WebGL|THREE|ReferenceError|TypeError/.test(m.text()))errors.push(m.text());});
+    const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('Browser:',e.message);});page.on('crash',()=>console.error('Browser crashed'));page.on('console',m=>{if(m.type()==='error'&&/shader|WebGL|THREE|ReferenceError|TypeError/.test(m.text()))errors.push(m.text());});
     await page.route('**/three.min.js',route=>route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(path.dirname(require.resolve('three')),'three.min.js'))}));
     await page.route('https://fonts.googleapis.com/**',route=>route.fulfill({contentType:'text/css',body:''}));
     await page.route('**/terrarium/**',route=>route.fulfill({contentType:'image/png',body:heightPNG}));
@@ -68,7 +75,7 @@ const server=http.createServer((req,res)=>{
     assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).speaking,false);
     await page.locator('#v-offset').evaluate(el=>{el.value='.5';el.dispatchEvent(new Event('input',{bubbles:true}));});
     assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).settings.offset,.5);
-    console.log('PASS: male/female playback, seek, pause, ducking and offset');
+    console.log('PASS: male/female playback, seek, pause, ducking and offset',JSON.stringify(await page.evaluate(()=>window.__ireland.metrics())));
     await page.waitForTimeout(250);
     await page.screenshot({path:path.join(out,'06-voice-controls.png')});
     await page.locator('[data-pane="sound"] [data-voice="off"]').click();
@@ -121,7 +128,7 @@ const server=http.createServer((req,res)=>{
     await page.waitForTimeout(400);
     await page.screenshot({path:path.join(out,'05-finale.png')});
     const metrics=await page.evaluate(()=>window.__ireland.metrics());
-    fs.writeFileSync(path.join(out,'smoke-results.json'),JSON.stringify({fixture:'Synthetic map tiles, reduced dataset, software WebGL. Not a venue FPS benchmark.',metrics,errors},null,2));
+    fs.writeFileSync(path.join(out,'smoke-results.json'),JSON.stringify({fixture:'Synthetic map tiles, reduced dataset and raster dimensions, software WebGL. Not a venue FPS benchmark.',metrics,errors},null,2));
     assert.deepEqual(errors,[]);
     console.log('PASS: shader warm-up, playback, held pause, chapter seek, packed output, calibration, local media, mobile layout finale, both real narration recordings, audio clock sync, voice switching, ducking, offset, mute and restart.');
   }finally{await browser.close();server.close();}

@@ -209,7 +209,7 @@
     <button type="button" class="primary" id="b-play">Pause</button>
     <button type="button" id="b-restart">Restart</button>
     <button type="button" id="b-mode">360° Igloo</button>
-    <button type="button" id="b-voice" aria-pressed="true">Voice · Female</button>
+    <button type="button" id="b-voice" aria-controls="control">Voice · Female</button>
     <button type="button" id="b-audio">Music on</button>
     <button type="button" id="b-chapters">Chapters</button>
     <button type="button" id="b-media">Footage</button>
@@ -3277,7 +3277,6 @@ function syncVoiceControls(){
   if(v.voice!=='off')lastNarrator=v.voice;
   document.querySelectorAll('[data-voice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.voice===v.voice)));
   $('b-voice').textContent='Voice · '+(v.voice==='off'?'Off':v.voice==='male'?'Male':'Female');
-  $('b-voice').setAttribute('aria-pressed',String(v.voice!=='off'));
   $('b-voice').setAttribute('aria-label','Narration controls, '+(v.voice==='off'?'off':v.voice+' voice'));
   [['v-volume','volume'],['v-offset','offset'],['v-ducklevel','duckLevel']].forEach(([id,key])=>{
     const el=$(id);el.value=v[key];
@@ -3292,7 +3291,7 @@ function updateVoiceStatus(now,force=false){
   const text=v.voice==='off'?'Narration is off. The music and picture continue together.':v.state==='error'?v.error+'. You can reload the recording or choose the other voice.':!v.ready?'Preparing the '+v.label.toLowerCase()+' recording…':v.context!=='running'&&started&&playing?'Tap Play to enable audio on this device.':v.speaking?(v.muted?'Muted · ':'Speaking · ')+v.cue:!started?'Ready · synced to the story':!playing?'Paused with the picture':'Listening to the landscape · next cue follows automatically';
   if($('voice-state').textContent!==text)$('voice-state').textContent=text;
   $('voice-badge').textContent=v.speaking?(v.muted?'Muted':'Speaking'):v.voice==='off'?'Off':v.state==='error'?'Unavailable':v.ready?'Ready':'Loading';
-  $('voice-badge').dataset.active=String(v.speaking);
+  $('voice-badge').dataset.active=String(v.speaking&&!v.muted);
   $('voice-retry').hidden=v.state!=='error';
   const ready=Object.values(voice.states).filter(x=>x==='ready').length;
   $('gate-voice-status').textContent=ready===2?'Two voices · chapter synced':v.state==='error'?'Narration unavailable · open Sound controls to retry':v.voice==='off'?'Narration off':'Preparing narration…';
