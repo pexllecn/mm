@@ -2462,6 +2462,10 @@ const post = (() => {
       float revF=ringM+(it-1.9)*2.4;                 // how far it has spread across the floor
       float worldA=onFloor?step(1.9,it)*smoothstep(-.15,.15,revF-length(qDial-uDialOff)):smoothstep(-.35,0.,rev-hW);
       col*=worldA;
+      // The outro lifts the island off the floor: the floor's own picture (the real island seen
+      // straight down, which the map dissolved into) fades as the map rises, so nothing of it
+      // is left behind. The ring and the light lines stay, to draw themselves away later.
+      if(onFloor) col*=1.-uOut.x;
       vec3 add=vec3(0.);                             // light added over everything, display space
       if(it<7.) add+=GOLD*exp(-abs(onFloor?revF-length(qDial-uDialOff):rev-hW)/.035)*step(0.,it-1.9)*(1.-smoothstep(3.6,5.5,it))*.45*(onFloor?step(ringM,length(qDial-uDialOff)):step(0.,rev))*uLines;
 
