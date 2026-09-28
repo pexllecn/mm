@@ -261,7 +261,7 @@
     <div class="eyebrow"><span class="dot"></span>Igloo immersive · four walls + floor</div>
     <h1 id="gate-title">Ireland <em>2036</em></h1>
     <p>The real island. Terrain and sea-floor depth from satellite survey data, satellite imagery draped over it, and every place — the Cliffs of Moher, the Liffey, Arklow Bank — at its true longitude and latitude. Underfoot, the same island as a lit relief map inside a ring that counts 2026 to 2036, and lines of light that run from the floor straight up the walls. The flight is slow and always forward. A wave of light leaves Dublin, and Ireland 2036 takes shape around you; in the last seconds the map settles onto the real island below.</p>
-    <div class="spec"><span><b>3:12</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> live render</span><span id="gpu-note">Checking graphics…</span></div>
+    <div class="spec"><span><b>2:42</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> live render</span><span id="gpu-note">Checking graphics…</span></div>
     <div class="loader" id="loader">
       <svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle class="bg" cx="22" cy="22" r="18"/><circle class="fg" id="load-ring" cx="22" cy="22" r="18"/></svg>
       <div class="note" id="load-note" role="status">Starting up…</div>
@@ -315,14 +315,14 @@
 </section>
 
 <div id="hud" hidden>
-  <div class="tl" id="tl" role="slider" aria-label="Show position" aria-valuemin="0" aria-valuemax="192" aria-valuenow="0">
+  <div class="tl" id="tl" role="slider" aria-label="Show position" aria-valuemin="0" aria-valuemax="162" aria-valuenow="0">
     <div class="tl-track" id="tl-track"><div class="tl-fill" id="tl-fill"></div><div class="tl-head" id="tl-head"></div></div>
     <div class="tl-tip" id="tl-tip"></div>
   </div>
   <div class="acts" id="acts"></div>
   <div class="ctl">
     <button type="button" class="icon primary" id="b-play" aria-label="Pause" data-tip="Pause (Space)"><svg class="i main"><use href="#i-pause"/></svg><svg class="i alt"><use href="#i-play"/></svg></button>
-    <span class="clock" id="clock">0:00 <small>/ 3:12</small></span>
+    <span class="clock" id="clock">0:00 <small>/ 2:42</small></span>
     <button type="button" class="icon" id="b-restart" aria-label="Restart" data-tip="Restart (R)"><svg class="i"><use href="#i-restart"/></svg></button>
     <span class="spacer"></span>
     <span class="stat" id="stat"></span>
@@ -389,9 +389,8 @@
   <div class="tabpane" data-pane="sound" hidden>
     <div class="subhead">Voiceover</div>
     <div class="seg seg-wide" id="voice-seg" role="group" aria-label="Voiceover">
+      <button type="button" data-voice="female" aria-pressed="true">On</button>
       <button type="button" data-voice="off" aria-pressed="false">Off</button>
-      <button type="button" data-voice="female" aria-pressed="true">Female</button>
-      <button type="button" data-voice="male" aria-pressed="false">Male</button>
     </div>
     <div class="sl"><label for="c-vvol">Voice level</label><input id="c-vvol" type="range" min="0" max="1.6" step="0.02"><output></output></div>
     <div class="sl"><label for="c-duck">Music under the voice</label><input id="c-duck" type="range" min="0" max="1" step="0.02"><output></output></div>
@@ -431,10 +430,26 @@ if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the netwo
 
 
 // ---------------------------------------------------------------- show data
-const DURATION = 192;
-// The outro, after the finale: the map lifts off the floor and folds onto a wall (OUT_MAP0 to
-// OUT_MAP1), then the opening plays backwards, the world sinking into the floor and the ring
-// drawing itself away (OUT_REV0 to OUT_END), leaving the island alone on the wall.
+// Two clocks. The show clock (captions, voice, music, the years on the dial) runs 0 to
+// DURATION and then holds on the thank-you page. The world clock is the flight as authored,
+// 0 to W_END: it follows the show clock through WARP, running level with it at the Cliffs,
+// jumping ahead under a flash of light on "...start right now" (T_CUT), and running slower
+// where the story needs more room (energy and sustainability; Dublin at night and health).
+const DURATION = 162, W_END = 192;
+const T_CUT = 16.0, T_THANK = 156;
+const WARP = [[T_CUT, 74.5], [33.4, 92], [65, 110], [81, 126], [97, 142], [113, 150], [128, 164], [142, 178], [156, 192]];
+function worldAt(T) {
+  if (T < T_CUT) return T;
+  for (let i = 0; i < WARP.length - 1; i++) { const a = WARP[i], b = WARP[i + 1]; if (T <= b[0]) return lerp(a[1], b[1], (T - a[0]) / (b[0] - a[0])); }
+  return W_END;
+}
+// The dial counts 2026 to 2036 from the moment the next ten years start to the finale.
+const T_YEARS = 130;
+const dialAt = (T) => (T < T_CUT ? 0 : clamp((T - T_CUT) / (T_YEARS - T_CUT), 0, 1) * 166);
+// The outro, after the finale, on the world clock: the map lifts off the floor and folds onto
+// a wall (OUT_MAP0 to OUT_MAP1), then the opening plays backwards, the world sinking into the
+// floor and the ring drawing itself away (OUT_REV0 to OUT_END), leaving the island on the
+// wall, which then gives way to the thank-you page.
 const OUT_SHOW = 177.6, OUT_MAP0 = 179.4, OUT_MAP1 = 185, OUT_REV0 = 185, OUT_END = 191;
 const introAt = (t) => (t < OUT_REV0 ? t : Math.max(0, OUT_END - t));
 // The dial reaches 2036 here, the moment the finale begins, not on the last frame.
@@ -452,27 +467,27 @@ const SCENES = [
   { id: 's09', t0: 144, name: 'Housing',         want: 'New homes and construction, aerial; modern sustainable architecture' },
   { id: 's10', t0: 162, name: 'Together',        want: 'Ireland at night from above, or starry sky over the coast' },
 ];
-SCENES.forEach((s, i) => { s.t1 = i < SCENES.length - 1 ? SCENES[i + 1].t0 : DURATION; });
+SCENES.forEach((s, i) => { s.t1 = i < SCENES.length - 1 ? SCENES[i + 1].t0 : W_END; });
 const XFADE = 3.2; // seconds of liquid dissolve into each scene
 
 const ACTS = [
   { name: 'Today', t: 0 },
-  { name: 'Momentum', t: 40 },
-  { name: 'Ireland 2036', t: 78 },
-  { name: 'Together', t: 144 },
+  { name: 'Ireland 2036', t: 16 },
+  { name: 'Momentum', t: 65 },
+  { name: 'Together', t: 113 },
 ];
 
 const CAPTIONS = [
-  { t0: 5,   t1: 16,  eb: 'Ireland \u00b7 2026',     ti: 'Where we stand today',         sub: 'The Wild Atlantic Way at first light' },
-  { t0: 22,  t1: 34,  eb: 'Our coast',            ti: 'Where the Atlantic meets us',  sub: 'The Cliffs of Moher, County Clare' },
-  { t0: 40,  t1: 54,  eb: 'Our people',           ti: '5.4 million people',           sub: 'One of the youngest populations in Europe' },
-  { t0: 60,  t1: 74,  eb: 'Open economy',         ti: 'Connected to the world',       sub: 'European home to many of the world\u2019s leading companies' },
-  { t0: 78,  t1: 90,  eb: '2026 \u2192 2036',        ti: 'The next ten years start now', sub: '' },
-  { t0: 94,  t1: 108, eb: 'Energy',               ti: 'Powered by the Atlantic',      sub: 'National offshore wind targets: 5 GW by 2030, 20 GW by 2040' },
-  { t0: 112, t1: 124, eb: 'Transport',            ti: 'Connected by MetroLink',       sub: 'Airport to city centre by metro, regions linked by rail' },
-  { t0: 128, t1: 140, eb: 'Dublin \u00b7 the capital', ti: 'A capital on the move',     sub: 'Talent, technology and trade along the Liffey' },
-  { t0: 144, t1: 156, eb: 'Housing',              ti: 'Homes for a growing nation',   sub: 'New communities, built at pace and powered cleanly' },
-  { t0: 162, t1: 177.5, eb: 'Ireland 2036',       ti: 'Ambition, delivered together', sub: '' },
+  { t0: 2,     t1: 8.2,   eb: 'Our coast',            ti: 'Where the Atlantic meets us',  sub: 'The Cliffs of Moher, County Clare' },
+  { t0: 9,     t1: 14.6,  eb: 'Our people',           ti: '5.4 million people',           sub: 'One of the youngest populations in Europe' },
+  { t0: 17,    t1: 28.5,  eb: '2026 \u2192 2036',        ti: 'The next ten years start now', sub: '' },
+  { t0: 34.5,  t1: 48,    eb: 'Energy',               ti: 'Powered by the Atlantic',      sub: 'National offshore wind targets: 5 GW by 2030, 20 GW by 2040' },
+  { t0: 52.5,  t1: 63.5,  eb: 'Sustainability',       ti: 'A cleaner, greener island',    sub: 'Emissions halved by 2030, climate neutral by 2050' },
+  { t0: 66.5,  t1: 78.5,  eb: 'Transport',            ti: 'Connected by MetroLink',       sub: 'Airport to city centre by metro, regions linked by rail' },
+  { t0: 82.5,  t1: 94.5,  eb: 'Dublin \u00b7 the capital', ti: 'A capital on the move',     sub: 'Talent, technology and trade along the Liffey' },
+  { t0: 98.5,  t1: 110.5, eb: 'Health \u00b7 HSE',        ti: 'Care for every generation',    sub: 'Sl\u00e1intecare: universal healthcare, closer to home' },
+  { t0: 114.5, t1: 126,   eb: 'Housing',              ti: 'Homes for a growing nation',   sub: 'New communities, built at pace and powered cleanly' },
+  { t0: 130,   t1: 141.5, eb: 'Ireland 2036',         ti: 'Ambition, delivered together', sub: '' },
 ];
 
 // ---------------------------------------------------------------- real-world geography
@@ -811,7 +826,7 @@ const lonLatOf = (x, z) => [LON0 + x / M_LON, LAT0 - z / M_LAT];
 // The flight, as the map draws it: the same path the camera flies, sampled every half second.
 function trackPoints() {
   const pts = [];
-  for (let t = 0; t <= DURATION + 1e-6; t += .5) { const c = rawCamXZ(t); const [lon, lat] = lonLatOf(c[0], c[1]); pts.push([...mapXY(lon, lat), t]); }
+  for (let t = 0; t <= W_END + 1e-6; t += .5) { const c = rawCamXZ(t); const [lon, lat] = lonLatOf(c[0], c[1]); pts.push([...mapXY(lon, lat), t]); }
   return pts;
 }
 // R: the island. G: Northern Ireland. B: the flight track, drawn thin.
@@ -836,7 +851,7 @@ function buildTrackTime() {
   x.lineWidth = 6; x.lineCap = 'round';
   const pts = trackPoints();
   for (let i = 1; i < pts.length; i++) {
-    const v = Math.round(pts[i][2] / DURATION * 255);
+    const v = Math.round(pts[i][2] / W_END * 255);
     x.strokeStyle = `rgb(${v},0,0)`; x.beginPath(); x.moveTo(pts[i - 1][0], pts[i - 1][1]); x.lineTo(pts[i][0], pts[i][1]); x.stroke();
   }
   return canvasTex(cv, false);
@@ -2066,8 +2081,14 @@ function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures 
 // Shown on the feature wall before the show, while the guest comes in. Editable under
 // Controls > Content. The EY mark above it is drawn in the projection pass itself.
 const WELCOME = { eb: 'F\u00e1ilte \u00b7 Welcome', pre: 'Taoiseach', name: 'Mich\u00e9al Martin', line: 'Welcome to Wilton Park', foot: 'Ireland 2036' };
-let welTex = null;
+const THANKS = { eb: 'Go raibh maith agat \u00b7 Thank you', pre: 'Taoiseach', name: 'Mich\u00e9al Martin', line: 'Thank you for your visit', foot: 'Wilton Park \u00b7 Ireland 2036' };
+let welTex = null, thankTex = null;
 function buildWelcome() {
+  if (welTex) welTex.dispose(); if (thankTex) thankTex.dispose();
+  welTex = pageTexture(WELCOME); thankTex = pageTexture(THANKS);
+  post.material.uniforms.uWelTex.value = welTex;
+}
+function pageTexture(WELCOME) {
   const W = 3200, H = 1000, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const x = cv.getContext('2d');
   x.textAlign = 'center'; x.textBaseline = 'alphabetic';
@@ -2080,9 +2101,8 @@ function buildWelcome() {
   x.fillStyle = '#ffffff'; fit(WELCOME.name, (z) => `400 ${z}px ${SERIF_F}`, 320, W - 160); x.fillText(WELCOME.name, W / 2, 610);
   x.fillStyle = '#ece7db'; fit(WELCOME.line, (z) => `400 ${z}px ${SANS_F}`, 92, W - 200); x.fillText(WELCOME.line, W / 2, 790);
   x.fillStyle = '#93a7aa'; x.font = `500 44px ${SANS_F}`; sp(16); x.fillText(WELCOME.foot.toUpperCase(), W / 2, 925); sp(0);
-  if (welTex) welTex.dispose();
-  welTex = new T.CanvasTexture(cv); welTex.anisotropy = 8; welTex.generateMipmaps = true; welTex.minFilter = T.LinearMipmapLinearFilter;
-  post.material.uniforms.uWelTex.value = welTex;
+  const tex = new T.CanvasTexture(cv); tex.anisotropy = 8; tex.generateMipmaps = true; tex.minFilter = T.LinearMipmapLinearFilter;
+  return tex;
 }
 
 // ---------------------------------------------------------------- final projection pass
@@ -2122,7 +2142,7 @@ const post = (() => {
       uMapC: { value: new T.Vector2(0, 0) }, uMapK: { value: 1 }, uMapAng: { value: 0 },
       uMapL: { value: new T.Vector3(0, 1, 0) }, uSunEl: { value: 0 }, uSunAz: { value: new T.Vector2(0, -1) },
       uCamXZ: { value: new T.Vector2(0, 0) }, uCamM: { value: new T.Vector2(512, 512) }, uNight: { value: 0 },
-      uShowT: { value: 0 }, uProgress: { value: 0 }, uYearA: { value: 0 }, uYearMix: { value: 0 },
+      uShowT: { value: 0 }, uDialT: { value: 0 }, uFlash: { value: 0 }, uProgress: { value: 0 }, uYearA: { value: 0 }, uYearMix: { value: 0 },
       uLabelA: { value: 1 }, uLock: { value: 0 }, uCoast: { value: 0 }, uAurora: { value: 0 },
       // The light that joins floor and walls.
       uCove: { value: new T.Vector3(.6, .55, .45) },
@@ -2158,7 +2178,7 @@ const post = (() => {
     uniform sampler2D uMask; uniform sampler2D uTrackT; uniform sampler2D uText; uniform sampler2D uYears;
     uniform vec2 uMapC; uniform float uMapK; uniform float uMapAng;
     uniform vec3 uMapL; uniform float uSunEl; uniform vec2 uSunAz; uniform vec2 uCamXZ; uniform vec2 uCamM; uniform float uNight;
-    uniform float uShowT; uniform float uProgress; uniform float uYearA; uniform float uYearMix;
+    uniform float uShowT; uniform float uDialT; uniform float uFlash; uniform float uProgress; uniform float uYearA; uniform float uYearMix;
     uniform float uLabelA; uniform float uLock; uniform float uCoast; uniform float uAurora;
     uniform vec3 uCove; uniform vec4 uMerA[11]; uniform vec4 uMerB[11]; uniform vec4 uStemA[4]; uniform vec4 uStemB[4]; uniform float uStemT;
     uniform vec2 uWaveO; uniform float uWaveR; uniform float uIntro;
@@ -2484,7 +2504,7 @@ const post = (() => {
           }
           // The flight so far, and the flight still to come, drawn on the map.
           vec4 mk=mkM;
-          float tr=textureGrad(uTrackT,cM/1024.,mdx/1024.,mdy/1024.).r*${g(DURATION)};
+          float tr=textureGrad(uTrackT,cM/1024.,mdx/1024.,mdy/1024.).r*${g(W_END)};
           float flown=step(tr,uShowT);
           float dash=step(.45,fract(tr/1.4));
           lines+=WARM*mk.b*(flown*.95+(1.-flown)*dash*.16)*uLabelA;
@@ -2528,8 +2548,8 @@ const post = (() => {
         float tickLit=step(ti/100.,prog+1e-4);
         dial+=mix(vec3(.30,.40,.45)*.8,WARM*1.2,tickLit)*tick*dialA*step(ti/100.,ringDraw+.001);
         // the year that has just arrived rings out from its mark
-        float yA=min(floor(uShowT/${g(YEAR_END / 10)}+1e-4),10.);
-        float since=uShowT-yA*${g(YEAR_END / 10)};
+        float yA=min(floor(uDialT/${g(YEAR_END / 10)}+1e-4),10.);
+        float since=uDialT-yA*${g(YEAR_END / 10)};
         if(yA>=1.&&since>=0.&&since<2.4){
           float k=since/2.4; vec2 yp=vec2(cos(A0+SWEEP*yA/10.),sin(A0+SWEEP*yA/10.))*RING;
           dial+=vec3(1.,.88,.5)*exp(-abs(length(cv-yp)-8.-k*52.)/max(.8,pxC))*(1.-k)*1.2;
@@ -2765,6 +2785,8 @@ const post = (() => {
       // The top of every wall dissolves into the dark room above: world, light lines and
       // captions all fade to black over the upper third, and nothing is drawn above the walls.
       if(!onFloor){ float tf=smoothstep(.66,1.,t); col*=1.-tf*(.35+.65*tf); }
+      // "...start right now": a flash of warm light fills the room and the flight jumps ahead under it.
+      col=mix(col,vec3(1.,.93,.8),uFlash*.94)+vec3(1.,.8,.5)*uFlash*uFlash*.2;
       col+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)/255.;
       gl_FragColor=black?vec4(0.,0.,0.,1.):vec4(clamp(col,0.,1.)*uFade,1.);
     }`,
@@ -3239,7 +3261,7 @@ function rawCam(t) {
 let lastHeading = 0;
 function travelHeading(t) {
   const d = .75;
-  const a = rawCam(Math.max(0, t - d)), b = rawCam(Math.min(DURATION, t + d));
+  const a = rawCam(Math.max(0, t - d)), b = rawCam(Math.min(W_END, t + d));
   const dx = b[0] - a[0], dz = b[2] - a[2];
   if (Math.hypot(dx, dz) < 2) return lastHeading;       // climbing straight up: hold the heading
   return (lastHeading = Math.atan2(dx, -dz));           // 0 = north, +x = east
@@ -3351,7 +3373,13 @@ const CANV_M = (M_LON / 87 + M_LAT / 144) / 2;           // metres per map canva
 const rot2 = (a, v) => [Math.cos(a) * v[0] - Math.sin(a) * v[1], Math.sin(a) * v[0] + Math.cos(a) * v[1]];
 
 const tmpV = new T.Vector3();
-function applyTime(t, dt) {
+// T is the show clock; t, the world clock, drives the flight, the sky and the map. A jump
+// in the world clock (the cut, or a seek) snaps the camera rather than gliding across Ireland.
+let lastW = -1;
+function applyTime(T, dt, wOverride) {
+  const t = wOverride === undefined ? worldAt(T) : wOverride;
+  if (Math.abs(t - lastW) > 3) camSmooth.ready = false;
+  lastW = t;
   const c = stepCamera(t, dt);
   const x = c.x, y = c.y, z = c.z;
   U.uCam.value.set(x, y, z);
@@ -3406,8 +3434,10 @@ function applyTime(t, dt) {
   P.uMapL.value.set(Ld.x / lh * Math.cos(lel), Math.sin(lel), Ld.z / lh * Math.cos(lel));
   P.uNight.value = a[6]; P.uAurora.value = a[8]; P.uCoast.value = U.uCoast.value;
   P.uShowT.value = t;
-  P.uProgress.value = clamp(t / YEAR_END, 0, 1);
-  const yk = Math.min(10, Math.floor(t / (YEAR_END / 10) + 1e-6)), since = t - yk * YEAR_END / 10;
+  const dT = dialAt(T);
+  P.uDialT.value = dT;
+  P.uProgress.value = clamp(dT / YEAR_END, 0, 1);
+  const yk = Math.min(10, Math.floor(dT / (YEAR_END / 10) + 1e-6)), since = dT - yk * YEAR_END / 10;
   if (yk >= 1 && since < .9) { P.uYearA.value = yk - 1; P.uYearMix.value = since / .9; }
   else { P.uYearA.value = yk; P.uYearMix.value = 0; }
 
@@ -3417,14 +3447,14 @@ function applyTime(t, dt) {
     const Tk = k * YEAR_END / 10;
     let tau = -1;
     if (t < 7 && t >= 1.9) tau = t - 1.9;                       // the opening: every line at once
-    if (k >= 1 && t >= Tk && t - Tk < 4.5) tau = t - Tk;        // a year arrives
-    if (t >= YEAR_END && t - YEAR_END < 4.5) tau = t - YEAR_END; // 2036: every line again
+    if (k >= 1 && dT >= Tk && T - T_CUT >= 0 && dT - Tk < 4.5 * 166 / (T_YEARS - T_CUT)) tau = (dT - Tk) * (T_YEARS - T_CUT) / 166; // a year arrives
+    if (dT >= YEAR_END && T - T_YEARS < 4.5) tau = T - T_YEARS;  // 2036: every line again
     { const it = introAt(t); if (t >= OUT_REV0 && it >= 1.9 && it < 7) tau = it - 1.9; } // the outro: every line runs home
     P.uMerB.value[k].z = tau;
-    P.uMerB.value[k].w = t >= Tk ? 1 : 0;
+    P.uMerB.value[k].w = dT >= Tk ? 1 : 0;
   }
   let stemT = -1;
-  for (const k of CAPTIONS) { const u = (t - (k.t0 - 1.1)) / 1.1; if (u >= 0 && u < 3.5) { stemT = u; break; } }
+  for (const k of CAPTIONS) { const u = (T - (k.t0 - 1.1)) / 1.1; if (u >= 0 && u < 3.5) { stemT = u; break; } }
   P.uStemT.value = stemT;
   P.uWaveR.value = s > 0 ? 1.1 * s + .28 * s * s : -1;
   let ci = 0; while (ci < COVE.length - 2 && COVE[ci + 1][0] <= t) ci++;
@@ -3451,13 +3481,14 @@ function applyTime(t, dt) {
   P.uLock.value = world ? smooth(DISS0, DISS1, t) : 0;
   P.uLabelA.value = 1 - smooth(FIN_ROT0 - 4, FIN_ROT0 + 1, t);
 
-  const cap = CAPTIONS.findIndex((k) => t >= k.t0 - .1 && t <= k.t1 + 1.2);
+  const cap = CAPTIONS.findIndex((k) => T >= k.t0 - .1 && T <= k.t1 + 1.2);
   if (cap < 0) P.uCapA.value = 0;
   else {
     const k = CAPTIONS[cap];
-    P.uCap.value = capTextures[cap]; P.uCapRev.value = smooth(k.t0, k.t0 + 1.6, t);
-    P.uCapA.value = 1 - smooth(k.t1, k.t1 + 1.1, t);
+    P.uCap.value = capTextures[cap]; P.uCapRev.value = smooth(k.t0, k.t0 + 1.6, T);
+    P.uCapA.value = 1 - smooth(k.t1, k.t1 + 1.1, T);
   }
+  P.uFlash.value = wOverride !== undefined ? 0 : (T < T_CUT ? smooth(T_CUT - .35, T_CUT, T) : Math.exp(-(T - T_CUT) / .45));
   // ---- the outro
   {
     const a = smooth(OUT_SHOW, OUT_MAP0, t), e = smooth(OUT_MAP0, OUT_MAP1, t);
@@ -3465,7 +3496,7 @@ function applyTime(t, dt) {
     P.uOut.value.set(a, e, lerp(O.a0, O.a0 + O.da, e), lerp(1, O.k, e));
     P.uOutC0.value.set(O.c0[0], O.c0[1]); P.uOutC1.value.set(O.c1[0], O.c1[1]); P.uOutK.value = O.wall;
   }
-  P.uFade.value = (1 - smooth(DURATION - 1.4, DURATION, t)) * (blackout ? 0 : 1);
+  P.uFade.value = blackout ? 0 : 1;           // the show ends held on the thank-you page, not in black
 }
 function needsWorld() { const u = post.material.uniforms; return u.uHasA.value < .5 || (u.uMix.value < .999 && u.uHasB.value < .5); }
 // ---------------------------------------------------------------- footage library (assets + db)
@@ -3569,28 +3600,29 @@ async function removeSlot(id) {
 // show clock. So it starts the moment the show does, and seeking, pausing and skipping between
 // acts keep it in time.
 // ---------------------------------------------------------------- voiceover
-// Two recorded readings of the script (female and male). Each is cut at its natural pauses into
-// phrases, and every phrase is cued to the moment its caption appears, so the words stay with
-// the pictures however the show is paused, skipped or scrubbed. Columns: show second, then the
-// phrase's start and end in the female take, then in the male take.
+// The recorded reading of the script (the female voice supplied for the show), cut at its
+// natural pauses into phrases, and every phrase cued to the moment its caption appears, so
+// the words stay with the pictures however the show is paused, skipped or scrubbed.
+// Columns: show second, then the phrase's start and end in the recording.
 const VOICE_CUES = [
-  [  3.0,   0.00,   7.37,   0.00,   7.54],  // Welcome. As we stand here in 2026...
-  [ 11.0,   7.37,  14.58,   7.54,  14.37],  // The sun rising over the Wild Atlantic Way...
-  [ 20.5,  14.58,  27.02,  14.37,  26.21],  // The Cliffs of Moher. This coast has always been our edge...
-  [ 33.6,  27.02,  31.57,  26.21,  30.64],  // But our greatest asset... is our people.
-  [ 39.0,  31.57,  40.80,  30.64,  39.85],  // A nation 5.4 million strong...
-  [ 57.5,  40.80,  53.91,  39.85,  52.30],  // An incredibly open economy...
-  [ 71.4,  53.91,  58.54,  52.30,  57.09],  // Yet everything we've achieved is simply the foundation.
-  [ 77.2,  58.54,  61.11,  57.09,  59.82],  // The next ten years start right now.
-  [ 80.9,  61.11,  64.25,  59.82,  62.61],  // Let's look ahead to Ireland 2036.
-  [ 90.5,  64.25,  81.90,  62.61,  79.95],  // Powered by the very ocean... offshore wind...
-  [110.0,  81.90,  96.25,  79.95,  93.34],  // MetroLink... the airport to the city centre... rail...
-  [125.5,  96.25, 109.48,  93.34, 105.90],  // Here in Dublin, a capital on the move...
-  [141.0, 109.48, 123.64, 105.90, 119.53],  // Homes for a growing nation...
-  [159.5, 123.64, 137.00, 119.53, 132.76],  // Ireland 2036 is not just a projection...
-  [174.6, 137.00, 138.00, 132.76, 133.68],  // Thank you.
+  [  1.2,  14.58,  17.29],  // Surrounding us are the Cliffs of Moher.
+  [  4.3,  17.29,  22.05],  // This coast has always been our edge, the place where the Atlantic meets us,
+  [  9.3,  27.02,  31.57],  // but our greatest asset isn't just our landscape: it is our people.
+  [ 14.0,  58.54,  61.11],  // The next ten years start right now.   ("now" lands on the cut, T_CUT)
+  [ 17.3,  61.11,  64.25],  // Let's look ahead to Ireland 2036.
+  [ 34.5,  64.25,  81.90],  // By 2036... powered by the very ocean we just saw... offshore wind...
+  [ 52.8,   0.00,  11.00, 'sustainability'],  // new line, played when its file is present
+  [ 66.0,  81.90,  96.25],  // MetroLink... the airport to the city centre... rail...
+  [ 82.0,  96.25, 109.48],  // And here in Dublin, a capital on the move...
+  [ 98.6,   0.00,  11.00, 'health'],          // new line, played when its file is present
+  [113.8, 109.48, 123.64],  // Homes for a growing nation...
+  [129.3, 123.64, 137.00],  // Ireland 2036 is not just a projection...
+  [157.0, 137.00, 138.00],  // Thank you.
 ];
-const VOICE_FILES = { female: 'voice-female.mp3', male: 'voice-male.mp3' };
+const VOICE_FILES = { female: 'voice-female.mp3' };
+// New lines recorded in the same voice for the chapters the first reading does not cover. Each
+// is optional: drop the file into assets/voice and it plays on its cue.
+const VOICE_EXTRA = { sustainability: 'voice-sustainability.mp3', health: 'voice-health.mp3' };
 // The page runs from igloo/ and from the repository root, so the voice is looked for beside
 // it first and then in the igloo folder.
 const VOICE_DIRS = ['assets/voice/', 'igloo/assets/voice/'];
@@ -3608,7 +3640,7 @@ const audio = (() => {
   // starts; an AudioBuffer can be played by any context.
   function loadVoice(name) {
     if (!VOICE_FILES[name] || voiceBuf[name] || voiceLoading[name]) return voiceLoading[name];
-    voiceNote('Loading the ' + name + ' voice…');
+    voiceNote('Loading the voiceover…');
     voiceLoading[name] = (async () => {
       for (const dir of VOICE_DIRS) {
         try {
@@ -3619,7 +3651,7 @@ const audio = (() => {
           const dc = new Off(1, 1, 44100);
           voiceBuf[name] = await new Promise((res, rej) => { const p = dc.decodeAudioData(data, res, rej); if (p && p.catch) p.catch(rej); });
           voiceDirty = true;
-          voiceNote(name === 'female' ? 'Female voice ready.' : 'Male voice ready.');
+          voiceNote('Voiceover ready.');
           return voiceBuf[name];
         } catch (e) { /* try the next place */ }
       }
@@ -3629,11 +3661,23 @@ const audio = (() => {
     })();
     return voiceLoading[name];
   }
+  async function loadExtra(name) {
+    if (voiceBuf[name] || voiceLoading[name]) return;
+    voiceLoading[name] = true;
+    for (const dir of VOICE_DIRS) {
+      try {
+        const r = await fetch(dir + VOICE_EXTRA[name]); if (!r.ok) continue;
+        const data = await r.arrayBuffer(), Off = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        voiceBuf[name] = await new Promise((res, rej) => { const p = new Off(1, 1, 44100).decodeAudioData(data, res, rej); if (p && p.catch) p.catch(rej); });
+        voiceDirty = true; return;
+      } catch (e) { /* not there: that chapter stays captions only */ }
+    }
+  }
+  const cueBuf = (c) => (c[3] ? voiceBuf[c[3]] : voiceBuf[voiceSel]);
   // Is a phrase being spoken (or about to be) at show time t? The music dips just before it.
   function speaking(t) {
     if (voiceSel === 'off' || !voiceBuf[voiceSel]) return false;
-    const k = voiceSel === 'female' ? 1 : 3;
-    for (const c of VOICE_CUES) { const A = c[0] + settings.voiceOffset; if (t >= A - .5 && t <= A + (c[k + 1] - c[k]) + .7) return true; }
+    for (const c of VOICE_CUES) { const b = cueBuf(c); if (!b) continue; const A = c[0] + settings.voiceOffset; if (t >= A - .5 && t <= A + Math.min(c[2], b.duration) - c[1] + .7) return true; }
     return false;
   }
   function endVoice() {
@@ -3648,11 +3692,12 @@ const audio = (() => {
   // time s0). A phrase already under way picks up mid-way, as a film's soundtrack would.
   function startVoice(t) {
     endVoice(); voiceDirty = false;
-    const buf = voiceBuf[voiceSel]; if (!buf) return;
+    if (!voiceBuf[voiceSel]) return;
     const g = ctx.createGain(); g.connect(voiceOut); vsess = { gain: g, srcs: [] };
-    const k = voiceSel === 'female' ? 1 : 3, now = ctx.currentTime;
+    const now = ctx.currentTime;
     for (const c of VOICE_CUES) {
-      const A = c[0] + settings.voiceOffset, from = c[k], to = Math.min(c[k + 1], buf.duration), dur = to - from;
+      const buf = cueBuf(c); if (!buf) continue;
+      const A = c[0] + settings.voiceOffset, from = c[1], to = Math.min(c[2], buf.duration), dur = to - from;
       if (dur <= 0 || A + dur <= t + .05) continue;
       const into = Math.max(0, t - A), when = Math.max(now + .02, a0 + (A + into) - s0), len = dur - into;
       const src = ctx.createBufferSource(), eg = ctx.createGain();
@@ -3689,22 +3734,22 @@ const audio = (() => {
     [74, 1], [78, 1], [83, 1.5], [81, .5], [79, 1], [83, 1], [86, 2], [83, 1], [79, 1], [76, 1], [79, 1], [81, 2], [83, 1], [85, 1]];
   const MEL_C = [[83, 2], [81, 1], [79, 1], [78, 2], [81, 2], [76, 1], [81, 1], [85, 1.5], [83, .5], [83, 3], [78, 1],
     [79, 1], [83, 1], [86, 2], [81, 1.5], [78, .5], [81, 2], [85, 1], [83, 1], [81, 1], [76, 1], [86, 4]];
-  // The running order follows the show: harp alone at dawn, the tune with a pulse under it,
-  // drums as the flight climbs, the lift, and the first full chorus landing on the 2036 sweep
-  // (1:15). Energy and transport keep driving, the city at night softens, and the last chorus
-  // carries the finale. drums: 0 none, 1 pulse, 2 full.
+  // The running order follows the show: harp alone at dawn over the Cliffs, a two-bar lift,
+  // and the first full chorus landing on the flash at "...start right now" (T_CUT). Energy,
+  // sustainability and transport keep driving, the city at night and health soften, and the
+  // last chorus carries the finale. bars: a shortened section. drums: 0 none, 1 pulse, 2 full.
   const FORM = [
-    { ch: CH_V, mel: null, lead: 0, pad: .5, bass: 0, drums: 0 },
-    { ch: CH_V, mel: MEL_V, lead: .9, pad: .6, bass: 1, drums: 0 },
-    { ch: CH_V, mel: MEL_V, lead: 1, pad: .7, bass: 1, drums: 1 },
-    { ch: CH_B, mel: MEL_B, lead: 1, pad: .9, bass: 1, drums: 1 },
-    { ch: CH_C, mel: MEL_C, lead: 1.15, pad: 1.2, bass: 1, drums: 2 },
-    { ch: CH_V, mel: MEL_V, lead: 1, pad: .9, bass: 1, drums: 2 },
-    { ch: CH_B, mel: MEL_B, lead: 1, pad: 1, bass: 1, drums: 1 },
-    { ch: CH_C, mel: MEL_C, lead: 1.15, pad: 1.2, bass: 1, drums: 2 },
-    { ch: CH_V, mel: MEL_V, lead: .75, pad: .8, bass: 1, drums: 0, soft: true },
-    { ch: CH_C, mel: MEL_C, lead: 1.2, pad: 1.3, bass: 1, drums: 2, last: true },
+    { ch: CH_V, bars: 4, mel: null, lead: 0, pad: .5, bass: 0, drums: 0 },                   // dawn at the Cliffs
+    { ch: CH_B, bars: 2, mel: MEL_B, lead: .9, pad: .8, bass: 1, drums: 1 },                  // the lift into...
+    { ch: CH_C, mel: MEL_C, lead: 1.15, pad: 1.2, bass: 1, drums: 2 },                        // ...the flash: 2036
+    { ch: CH_V, mel: MEL_V, lead: 1, pad: .9, bass: 1, drums: 2 },                            // energy
+    { ch: CH_B, mel: MEL_B, lead: 1, pad: 1, bass: 1, drums: 1 },                             // sustainability
+    { ch: CH_C, mel: MEL_C, lead: 1.15, pad: 1.2, bass: 1, drums: 2 },                        // transport
+    { ch: CH_V, mel: MEL_V, lead: .75, pad: .8, bass: 1, drums: 0, soft: true },              // Dublin at night, health
+    { ch: CH_B, mel: MEL_B, lead: 1, pad: 1, bass: 1, drums: 1 },                             // housing
+    { ch: CH_C, mel: MEL_C, lead: 1.2, pad: 1.3, bass: 1, drums: 2, last: true },             // the finale
   ];
+
 
   function impulse(c, sec) {
     const n = Math.floor(c.sampleRate * sec), b = c.createBuffer(2, n, c.sampleRate);
@@ -3788,11 +3833,12 @@ const audio = (() => {
   // Every note of the piece, in order: [start in seconds, play(ctx, session, when)].
   const EVENTS = [];
   {
-    const t0 = 1.2;                                     // a breath of silence before the first note
-    FORM.forEach((sec, p) => {
-      const ps = t0 + p * 8 * BAR;
-      sec.ch.forEach((chd, b) => {
-        const bs = ps + b * BAR, lastBar = sec.last && b === 7;
+    const t0 = T_CUT - 6 * BAR;                          // so the chorus's downbeat is the flash
+    let ps = t0;
+    FORM.forEach((sec) => {
+      const bars = sec.bars || 8;
+      sec.ch.slice(0, bars).forEach((chd, b) => {
+        const bs = ps + b * BAR, lastBar = sec.last && b === bars - 1;
         // harp: eight quavers to the bar, up through the chord and back
         const pat = [chd[0] - 12, chd[0], chd[2], chd[0] + 12, chd[1] + 12, chd[0] + 12, chd[2], chd[1]];
         if (lastBar) [chd[0] - 12, chd[0], chd[2], chd[1] + 12, chd[2] + 12, chd[0] + 24].forEach((m, i) =>
@@ -3817,21 +3863,28 @@ const audio = (() => {
       if (sec.mel) {
         let bt = 0;
         sec.mel.forEach(([m, d]) => {
+          if (bt >= bars * 4 - 1e-6) return;
           const final = sec.last && bt + d >= 32;
           EVENTS.push([ps + bt * BEAT, (c, S, w) => whistle(c, S.lead, S.noise, w, (final ? 5 : d) * BEAT * .94, m - (sec.soft ? 12 : 0), .065 * sec.lead)]);
           bt += d;
         });
       }
+      ps += bars * BAR;
     });
     // Coda for the outro: the harp falls back down through D major, two octaves, the opening's
     // rising figure in reverse, onto a low D as the room goes dark.
     {
-      const cs = t0 + FORM.length * 8 * BAR;
+      const cs = ps;
       EVENTS.push([cs, (c, S, w) => strings(c, S.pad, w, 2 * BAR, I, .009)]);
       [86, 81, 78, 74, 81, 78, 74, 69, 78, 74, 69, 66, 74, 69, 66, 62].forEach((m, i) =>
         EVENTS.push([cs + i * BEAT / 2, (c, S, w) => harp(c, S.dry, S.wave, w, m, .08 - i * .002)]));
       EVENTS.push([cs + 8 * BEAT, (c, S, w) => harp(c, S.dry, S.wave, w, 38, .11)]);
       EVENTS.push([cs + 8 * BEAT, (c, S, w) => bass(c, S.bass, w, 3, 38, .12)]);
+      // The thank-you page: the harp rises through D major once more, as it did at the start,
+      // over a held chord, and the room rests on it.
+      [62, 66, 69, 74, 78, 81, 86].forEach((m, i) => EVENTS.push([T_THANK + .4 + i * BEAT / 2, (c, S, w) => harp(c, S.dry, S.wave, w, m, .07 + i * .004)]));
+      EVENTS.push([T_THANK + .4, (c, S, w) => strings(c, S.pad, w, 5, I, .009)]);
+      EVENTS.push([T_THANK + .4 + 3.5 * BEAT, (c, S, w) => harp(c, S.dry, S.wave, w, 50, .09)]);
     }
     EVENTS.sort((a, b) => a[0] - b[0]);
   }
@@ -3884,11 +3937,12 @@ const audio = (() => {
     get voice() { return voiceSel; },
     settings,
     setLevel(k, v) { if (k === 'voiceOffset' && v !== settings[k]) voiceDirty = true; settings[k] = v; },
-    // 'off', 'female' or 'male'. The chosen reading is decoded straight away.
+    // 'off', or on (any other value, including a 'male' saved by an earlier build, plays the
+    // one recording there is). It is decoded straight away.
     setVoice(name) {
-      name = VOICE_FILES[name] ? name : 'off';
+      name = name === 'off' ? 'off' : 'female';
       if (name !== voiceSel) { voiceSel = name; voiceDirty = true; }
-      if (name !== 'off') loadVoice(name); else voiceNote('Voiceover off. The music plays alone.');
+      if (name !== 'off') { loadVoice(name); Object.keys(VOICE_EXTRA).forEach(loadExtra); } else voiceNote('Voiceover off. The music plays alone.');
     },
     onVoiceNote(fn) { voiceListener = fn; },
     voiceReady(name) { return !!voiceBuf[name || voiceSel]; },
@@ -3903,14 +3957,17 @@ const audio = (() => {
       return on;
     },
     // Keep the music where the show clock is; fade in and out with play and pause.
-    update(t, playing) {
+    update(t, playing, ended) {
       if (!ctx) return;
-      const now = ctx.currentTime, live = on && playing && ctx.state === 'running';
+      const now = ctx.currentTime;
+      // At the end the show holds: nothing new is scheduled and the last chord rings away.
+      if (ended && anchored) { master.gain.setTargetAtTime(0, now, 3); voiceOut.gain.setTargetAtTime(0, now, 3); return; }
+      const live = on && playing && ctx.state === 'running';
       // With a voice chosen the music sits a little lower throughout, and dips further, just
       // ahead of each phrase, to the "music under the voice" level, rising again after it.
       const withVoice = voiceSel !== 'off' && !!voiceBuf[voiceSel];
       const duck = !withVoice ? 1 : speaking(t) ? settings.duck : Math.min(1, .8, settings.duck + .4);
-      master.gain.setTargetAtTime(live ? settings.master * duck * Math.min(1, (DURATION - t) / 2.5) : 0, now, live ? .22 : .15);
+      master.gain.setTargetAtTime(live ? settings.master * duck : 0, now, live ? .22 : .15);
       voiceOut.gain.setTargetAtTime(live ? settings.voice : 0, now, live ? .05 : .08);
       if (!live) { if (anchored) { endSession(); endVoice(); anchored = false; } return; }
       if (!anchored || Math.abs(now - a0 + s0 - t) > .25) {
@@ -3931,6 +3988,7 @@ const audio = (() => {
 // ---------------------------------------------------------------- operator state + controls
 let showT = 0, playing = false, started = false, blackout = false, mode = 0, last = performance.now();
 let standby = false, welT0 = 0, welOut = -1;         // the welcome page before the show
+let ended = false, thankT0 = -1;                      // the show holds on the thank-you page
 const MODES = ['360° Igloo', 'Walls + floor', 'Desk preview'];
 // Desk-preview look: where the operator is pointing (target) and where the view is (eased
 // toward it every frame, so dragging and zooming glide rather than jump).
@@ -3966,7 +4024,7 @@ layoutActs();
 })();
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('off'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('off'), 1800); }
 // Any jump in the show from the welcome page leaves it (the page fades away).
-function seek(t) { if (standby) { standby = false; welOut = -2; } showT = clamp(t, 0, DURATION - .01); camSmooth.ready = false; }
+function seek(t) { ended = false; thankT0 = -1; if (standby) { standby = false; welOut = -2; } showT = clamp(t, 0, DURATION - .01); camSmooth.ready = false; }
 function currentAct() { let i = 0; ACTS.forEach((a, k) => { if (showT >= a.t) i = k; }); return i; }
 function setMode(m) {
   mode = m; post.material.uniforms.uMode.value = m; resize();
@@ -4013,7 +4071,7 @@ function start() {
 }
 $('start').addEventListener('click', start);
 document.querySelectorAll('#mode-seg button').forEach((b) => b.addEventListener('click', () => setMode(+b.dataset.mode)));
-$('b-play').addEventListener('click', () => { if (standby) begin(); else setPlaying(!playing); });
+$('b-play').addEventListener('click', () => { if (standby) begin(); else if (ended) { seek(0); setPlaying(true); } else setPlaying(!playing); });
 $('b-restart').addEventListener('click', () => { standby = false; seek(0); setPlaying(true); });
 $('b-mode').addEventListener('click', () => setMode((mode + 1) % 3));
 $('b-audio').addEventListener('click', () => { setAudioButton(audio.toggle()); });
@@ -4031,6 +4089,7 @@ addEventListener('keydown', (e) => {
   const k = e.key;
   if (!started && (k === 'Enter' || k === ' ')) { e.preventDefault(); if (!$('start').disabled) start(); return; }
   if ((k === ' ' || k === 'k') && standby) { e.preventDefault(); begin(); toast('The show begins'); }
+  else if ((k === ' ' || k === 'k') && ended) { e.preventDefault(); toast('The show has ended. W for the welcome page, R to play it again'); }
   else if (k === ' ' || k === 'k') { e.preventDefault(); setPlaying(!playing); toast(playing ? 'Playing' : 'Paused'); }
   else if (k === 'w' || k === 'W') { enterWelcome(); }
   else if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); const i = currentAct(); if (i < ACTS.length - 1) seek(ACTS[i + 1].t + .01); toast(ACTS[currentAct()].name); }
@@ -4119,6 +4178,7 @@ try {
   const saved = JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}');
   // Settings saved before the female reading became the default take it up once.
   if (saved.cv !== CTRL_DEFAULTS.cv) { delete saved.voice; saved.cv = CTRL_DEFAULTS.cv; }
+  if (saved.voice && saved.voice !== 'off') saved.voice = 'female';   // there is one voice
   Object.assign(ctrl, saved);
 } catch (e) {}
 
@@ -4173,18 +4233,21 @@ SLIDERS.forEach(([id, key]) => {
 // ---------------------------------------------------------------- content editor
 // The acts, their captions and their timings, editable live. CAPTIONS is rebuilt in
 // place so the running show picks up an edit on the next frame.
-const CONTENT_KEY = 'ire2036-content';
+// Versioned: captions saved for an earlier running order must not overwrite this one.
+const CONTENT_KEY = 'ire2036-content-v3';
 function contentSnapshot() {
   return {
     acts: ACTS.map((a) => ({ name: a.name, t: a.t })),
     captions: CAPTIONS.map((c) => ({ t0: c.t0, t1: c.t1, eb: c.eb, ti: c.ti, sub: c.sub })),
     welcome: Object.assign({}, WELCOME),
+    thanks: Object.assign({}, THANKS),
   };
 }
 function applyContent(data, rebuild = true) {
   if (!data) return;
   if (Array.isArray(data.acts)) data.acts.forEach((a, i) => { if (ACTS[i]) { ACTS[i].name = String(a.name ?? ACTS[i].name); ACTS[i].t = clamp(+a.t || 0, 0, DURATION - 1); } });
   if (data.welcome && typeof data.welcome === 'object') Object.keys(WELCOME).forEach((k) => { if (data.welcome[k] != null) WELCOME[k] = String(data.welcome[k]); });
+  if (data.thanks && typeof data.thanks === 'object') Object.keys(THANKS).forEach((k) => { if (data.thanks[k] != null) THANKS[k] = String(data.thanks[k]); });
   if (Array.isArray(data.captions)) data.captions.forEach((c, i) => {
     if (!CAPTIONS[i]) return;
     CAPTIONS[i].eb = String(c.eb ?? CAPTIONS[i].eb);
@@ -4204,17 +4267,18 @@ function queueRebuild() { clearTimeout(capRebuild); capRebuild = setTimeout(() =
 function buildEditor() {
   const box = $('act-editor'); if (!box) return;
   box.textContent = '';
-  {
+  [[WELCOME, 'Welcome page', 'before the show'], [THANKS, 'Thank-you page', 'at the end']].forEach(([obj, title, when]) => {
     const d = document.createElement('div'); d.className = 'ed';
-    const head = document.createElement('div'); head.className = 't'; head.innerHTML = '<span>Welcome page</span><span>before the show</span>';
+    const head = document.createElement('div'); head.className = 't'; head.innerHTML = '<span></span><span></span>';
+    head.children[0].textContent = title; head.children[1].textContent = when;
     d.appendChild(head);
-    [['eb', 'Eyebrow'], ['pre', 'Title line'], ['name', 'Name'], ['line', 'Welcome line'], ['foot', 'Footer']].forEach(([key, label]) => {
-      const inp = document.createElement('input'); inp.type = 'text'; inp.value = WELCOME[key]; inp.placeholder = label; inp.setAttribute('aria-label', label + ', welcome page');
-      inp.addEventListener('input', () => { WELCOME[key] = inp.value; try { localStorage.setItem(CONTENT_KEY, JSON.stringify(contentSnapshot())); } catch (e) {} clearTimeout(capRebuild); capRebuild = setTimeout(buildWelcome, 300); });
+    [['eb', 'Eyebrow'], ['pre', 'Title line'], ['name', 'Name'], ['line', 'Main line'], ['foot', 'Footer']].forEach(([key, label]) => {
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = obj[key]; inp.placeholder = label; inp.setAttribute('aria-label', label + ', ' + title.toLowerCase());
+      inp.addEventListener('input', () => { obj[key] = inp.value; try { localStorage.setItem(CONTENT_KEY, JSON.stringify(contentSnapshot())); } catch (e) {} clearTimeout(capRebuild); capRebuild = setTimeout(buildWelcome, 300); });
       d.appendChild(inp);
     });
     box.appendChild(d);
-  }
+  });
   CAPTIONS.forEach((c, i) => {
     const act = ACTS.filter((a) => a.t <= c.t0).pop();
     const d = document.createElement('div'); d.className = 'ed';
@@ -4284,7 +4348,7 @@ $('c-import').addEventListener('click', async () => {
 audio.onVoiceNote((m) => { const n = $('voice-note'); if (n) n.textContent = m; });
 document.querySelectorAll('#voice-seg button').forEach((b) => b.addEventListener('click', () => {
   ctrl.voice = b.dataset.voice; applyCtrl();
-  toast(ctrl.voice === 'off' ? 'Voiceover off' : (ctrl.voice === 'female' ? 'Female voiceover' : 'Male voiceover'));
+  toast(ctrl.voice === 'off' ? 'Voiceover off' : 'Voiceover on');
 }));
 document.querySelectorAll('#owall-seg button').forEach((b) => b.addEventListener('click', () => {
   ctrl.owall = +b.dataset.w; applyCtrl(); toast('Feature wall: wall ' + (ctrl.owall + 1));
@@ -4308,28 +4372,41 @@ function frame(now) {
   const P = post.material.uniforms;
   gpuPoll();
   const q = gpuBegin();
-  if (playing) { showT += dt; if (showT >= DURATION) { showT = 0; camSmooth.ready = false; } }
-  let t = showT, idleFade = 1;
+  // The show plays once and holds on its last moment, the thank-you page. It does not loop.
+  if (playing) { showT += dt; if (showT >= DURATION) { showT = DURATION; ended = true; setPlaying(false); } }
+  let idleFade = 1;
+  U.uTime.value = now / 1000;
   if (!started) {
     idleClock += dt * .6; const ph = idleClock % 30;
     if (ph < idlePhase) camSmooth.ready = false;
-    idlePhase = ph; t = 40 + ph; idleFade = smooth(0, 1.5, ph) * (1 - smooth(28.3, 29.9, ph));
+    idlePhase = ph; idleFade = smooth(0, 1.5, ph) * (1 - smooth(28.3, 29.9, ph));
+    U.uShow.value = 40 + ph;
+    applyTime(0, Math.max(dt, 1 / 240), 40 + ph);
+  } else {
+    U.uShow.value = worldAt(showT);
+    applyTime(showT, Math.max(dt, 1 / 240));
   }
-  U.uTime.value = now / 1000; U.uShow.value = t;
-  applyTime(t, Math.max(dt, 1 / 240));
   P.uFade.value *= idleFade;
   // The preview glides: momentum after a flick, then an eased follow of the target.
   if (!look.drag) { look.ty += look.vy * dt; look.tp = clamp(look.tp + look.vp * dt, -1.4, 1.4); const damp = Math.exp(-dt * 3.5); look.vy *= damp; look.vp *= damp; }
   const kl = 1 - Math.exp(-dt / .085);
   look.yaw += (look.ty - look.yaw) * kl; look.pitch += (look.tp - look.pitch) * kl; look.tan += (look.tt - look.tan) * kl;
-  P.uIntro.value = started ? (standby ? 0 : introAt(showT)) : 99;
+  P.uIntro.value = started ? (standby ? 0 : introAt(worldAt(showT))) : 99;
   // The welcome page fades up with the standby and away over the first moments of the show,
   // while the ring begins to draw.
   if (welT0 === -2) welT0 = now;
   if (welOut === -2) welOut = now;
-  let wa = 0, wt = (now - welT0) / 1000;
+  let wa = 0, wt = (now - welT0) / 1000, page = welTex;
   if (standby) wa = smooth(0, 1.2, wt);
   else if (welOut >= 0) { const k = (now - welOut) / 1000; wa = 1 - smooth(0, 1.8, k); if (k > 1.8) welOut = -1; }
+  // The thank-you page takes the same wall at the end, as the island map there dissolves,
+  // and keeps breathing while the show holds.
+  if (started && !standby && showT >= T_THANK) {
+    if (thankT0 < 0) thankT0 = now - (showT - T_THANK) * 1000;
+    wt = (now - thankT0) / 1000; wa = smooth(0, 1.5, wt); page = thankTex;
+    P.uOut.value.x *= 1 - smooth(0, 1.4, wt);
+  } else thankT0 = -1;
+  P.uWelTex.value = page || welTex;
   P.uWel.value.set(wa, Math.max(0, wt), 0, 0); P.uWelK.value = (ctrl.owall | 0) % 4;
   P.uPrev.value.set(look.yaw, look.pitch, look.tan);
   if (needsWorld()) renderWorld();
@@ -4337,7 +4414,7 @@ function frame(now) {
   renderer.render(post.scene, post.cam);
   gpuEnd(q);
   governor(now, interval);
-  audio.update(showT, playing && started);
+  audio.update(showT, playing && started, ended);
   updateHud(now);
   fpsAcc += interval / 1000; fpsN++;
   if (fpsAcc > 1) {
