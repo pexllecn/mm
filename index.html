@@ -2865,17 +2865,19 @@ const post = (() => {
           vec3 mark=vec3(.93,.91,.87)*letA;
           // the greeting, written line by line across the wall
           float line=1.-tb.y;                            // 0 at the top of the text block
-          float st=1.9+line*1.8;
-          float sweep=smoothstep(0.,1.,(tw-st)/1.1);
+          // Each line opens from the centre as the mark's letters land, one close behind the
+          // other, and nothing of a line shows before its turn.
+          float st=1.35+line*.5;
+          float sweep=smoothstep(0.,1.,(tw-st)/.9);
           float dd=abs(tb.x-.5)*2.;
-          float vis=smoothstep(dd-.15,dd,sweep*1.15);
+          float vis=smoothstep(dd-.15,dd,sweep*1.3-.15);
           vec3 cardC=tx.rgb*vis;
           float cardA=tx.a*vis;
           vec3 wc=col*(1.-.35*gl*smoothstep(0.,2.,tw));
           wc=mix(wc,beam,beamA*wa);
           wc=mix(wc,mark,min(letA,1.)*wa);
           wc=mix(wc,cardC/max(cardA,1e-3),cardA*wa);
-          wc+=GOLD*exp(-abs(sweep*1.15-dd)*40.)*step(sweep,.999)*smoothstep(0.,.3,tx.a)*.35;
+          wc+=GOLD*exp(-abs(sweep*1.3-.15-dd)*40.)*step(.001,sweep)*step(sweep,.999)*smoothstep(0.,.3,tx.a)*.35;
           col=mix(col,wc,wa);
         }
         // motes of light drifting down every wall, few and faint: the room is rising
@@ -3863,7 +3865,9 @@ const audio = (() => {
   // position. It is mastered loud, so it is trimmed to sit under the voice. It is decoded
   // ahead of time, like the voice, and a seek or pause fades the old playback and starts it
   // again at the new position.
-  const MUSIC_TRIM = .45, INTRO_MUSIC = .45;
+  // MUSIC_LEAD: the track opens with 1.7 s of silence; skip it so the music is there the
+  // moment the show starts.
+  const MUSIC_TRIM = .45, INTRO_MUSIC = .45, MUSIC_LEAD = 1.7;
   let musicBuf = null, musicLoading = null;
   function loadMusic() {
     if (musicBuf || musicLoading) return;
@@ -3884,12 +3888,12 @@ const audio = (() => {
   // A session is one stretch of uninterrupted playing.
   function newSession(t, when) {
     endSession();
-    if (!musicBuf || t >= musicBuf.duration) return;
+    if (!musicBuf || t + MUSIC_LEAD >= musicBuf.duration) return;
     const g = ctx.createGain(), src = ctx.createBufferSource();
     src.buffer = musicBuf;
     g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(1, when + (t > .05 ? .25 : .02));
     src.connect(g); g.connect(master);
-    src.start(when, t);
+    src.start(when, t + MUSIC_LEAD);
     sess = { g, src };
   }
   function endSession() {
