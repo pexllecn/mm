@@ -81,3 +81,7 @@ Operator controls (`C`): **Look → Light lines** sets the cove line, year lines
 - MetroLink: airport to city centre by metro
 - Climate: emissions halved (51%) by 2030 and climate neutrality by 2050 (Climate Action and Low Carbon Development (Amendment) Act 2021)
 - Health: Sláintecare, the HSE's reform programme for universal healthcare delivered closer to home
+
+## Looking-back topic walls
+
+The root `index.html` and `igloo/9.html` now include the supplied Ireland 2036 slide content: figures on wall 2 (right), smaller contained images on wall 4 (left), and a clear floor map. See [TOPIC-WALLS.md](TOPIC-WALLS.md) for slide mapping, corrected cue times, the importable preset, controls, image provenance and narration requirements.
