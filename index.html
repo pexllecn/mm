@@ -2083,6 +2083,23 @@ function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures 
 const WELCOME = { eb: 'F\u00e1ilte \u00b7 Welcome', pre: 'Taoiseach', name: 'Mich\u00e9al Martin', line: 'Welcome to Wilton Park', foot: 'Ireland 2036' };
 const THANKS = { eb: 'Go raibh maith agat \u00b7 Thank you', pre: 'Taoiseach', name: 'Mich\u00e9al Martin', line: 'Thank you for your visit', foot: 'Wilton Park \u00b7 Ireland 2036' };
 let welTex = null, thankTex = null;
+// The harp, gold on the white floor: a vector trace of the emblem, drawn once at a size that
+// keeps it sharp across the whole floor, with mipmaps for smaller outputs.
+let harpTex = null;
+(async () => {
+  for (const dir of ['assets/', 'igloo/assets/']) {
+    try {
+      const r = await fetch(dir + 'harp.svg'); if (!r.ok) continue;
+      const url = URL.createObjectURL(new Blob([await r.text()], { type: 'image/svg+xml' }));
+      const img = new Image(); img.src = url; await img.decode();
+      const cv = document.createElement('canvas'); cv.width = 1482; cv.height = 2288;
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+      const t = new T.CanvasTexture(cv); t.anisotropy = 8; t.generateMipmaps = true; t.minFilter = T.LinearMipmapLinearFilter;
+      post.material.uniforms.uHarpTex.value = t; harpTex = t;
+      return;
+    } catch (e) { /* try the next place */ }
+  }
+})();
 function buildWelcome() {
   if (welTex) welTex.dispose(); if (thankTex) thankTex.dispose();
   welTex = pageTexture(WELCOME); thankTex = pageTexture(THANKS);
@@ -2159,6 +2176,10 @@ const post = (() => {
       uOutK: { value: 1 }, uMapC0: { value: new T.Vector2() },
       // The welcome page: x strength, y seconds since it went up. uWelK: the wall it is on.
       uWel: { value: new T.Vector4(0, 0, 0, 0) }, uWelK: { value: 1 }, uWelTex: { value: BLANK },
+      // The harp on a white floor: x strength, y seconds; uHarpUp: toward the feature wall.
+      uHarp: { value: new T.Vector2(0, 0) }, uHarpUp: { value: new T.Vector2(1, 0) }, uHarpTex: { value: BLANK },
+      // 1 while the opening's light lines run: they come down the walls rather than going up.
+      uLineDn: { value: 0 },
     },
     vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
     fragmentShader: `
@@ -2184,6 +2205,7 @@ const post = (() => {
     uniform vec2 uWaveO; uniform float uWaveR; uniform float uIntro;
     uniform vec4 uOut; uniform vec2 uOutC0; uniform vec2 uOutC1; uniform int uOutK; uniform vec2 uMapC0;
     uniform vec4 uWel; uniform int uWelK; uniform sampler2D uWelTex;
+    uniform vec2 uHarp; uniform vec2 uHarpUp; uniform sampler2D uHarpTex; uniform float uLineDn;
     // Signed distance to a polygon (after Inigo Quilez): negative inside.
     float sdPoly(vec2 p, vec2 v[12], int n){
       float d=dot(p-v[0],p-v[0]), s=1.;
@@ -2407,6 +2429,7 @@ const post = (() => {
       float hfw=fwidth(textureGrad(uRelief,clamp(uvF,0.,1.),fdx,fdy).b);
       float pxQ=clamp(length(fwidth(q)),1e-4,.03), pxH=clamp(max(fwidth(P),fwidth(hW)),1e-4,.03);
       float pxR=onFloor?pxQ:pxH;                     // metres per pixel on this surface
+      vec2 qdx=dFdx(q), qdy=dFdy(q);
 
       // ---- the world (or footage) on this surface
       float rr=0.,fv=0.;
@@ -2457,13 +2480,20 @@ const post = (() => {
       // ---- the opening: the room assembles itself out of light
       float it=uIntro;
       float ringDraw=smoothstep(.35,1.9,it), dialA=smoothstep(1.2,2.4,it), mapA=smoothstep(.9,3.4,it);
-      float rev=(it-2.15)*2.6;                       // how far the world has risen up the walls
+      // The world comes down the walls from the top, the way the land falls away beneath a
+      // climbing aircraft: we are going up.
+      float rev=H-(it-2.15)*2.6;                     // how far down the walls the world has come
+      float hWc=min(hW,H);
       float ringM=RING/1024.*S;                      // ring radius in metres
       float revF=ringM+(it-1.9)*2.4;                 // how far it has spread across the floor
-      float worldA=onFloor?step(1.9,it)*smoothstep(-.15,.15,revF-length(qDial-uDialOff)):smoothstep(-.35,0.,rev-hW);
+      float worldA=onFloor?step(1.9,it)*smoothstep(-.15,.15,revF-length(qDial-uDialOff)):smoothstep(-.35,0.,hWc-rev)*step(2.15,it);
       col*=worldA;
+      // The outro lifts the island off the floor: the floor's own picture (the real island seen
+      // straight down, which the map dissolved into) fades as the map rises, so nothing of it
+      // is left behind. The ring and the light lines stay, to draw themselves away later.
+      if(onFloor) col*=1.-uOut.x;
       vec3 add=vec3(0.);                             // light added over everything, display space
-      if(it<7.) add+=GOLD*exp(-abs(onFloor?revF-length(qDial-uDialOff):rev-hW)/.035)*step(0.,it-1.9)*(1.-smoothstep(3.6,5.5,it))*.45*(onFloor?step(ringM,length(qDial-uDialOff)):step(0.,rev))*uLines;
+      if(it<7.) add+=GOLD*exp(-abs(onFloor?revF-length(qDial-uDialOff):rev-hWc)/.035)*step(0.,it-1.9)*(1.-smoothstep(3.6,5.5,it))*.45*(onFloor?step(ringM,length(qDial-uDialOff)):step(2.15,it))*uLines;
 
       // ---- the floor: live world beyond the ring, the island inside it
       if(onFloor){
@@ -2585,7 +2615,7 @@ const post = (() => {
       for(int k=0;k<11;k++){
         vec4 A=uMerA[k], B=uMerB[k];
         float tau=B.z; if(tau<0.) continue;
-        float hit=B.y/2.4;                           // pulses run at 2.4 m/s
+        float hit=(uLineDn>.5?H:B.y)/2.4;            // pulses run at 2.4 m/s
         float s2=tau-hit;
         if(s2>0.&&s2<3.) splash+=exp(-abs(wrapP(PF-B.x))/(.25+s2*2.6))*exp(-s2/.9);
       }
@@ -2600,6 +2630,7 @@ const post = (() => {
           dl=length(q-(A.xy+dir*s)); al=s;
           if(dot(q-A.xy,dir)<0.) dl=1e3;
         } else { dl=abs(wrapP(P-B.x)); al=B.y+hW; }
+        if(uLineDn>.5) al=B.y+H-al;                  // the opening: from the top of the wall, down, then in to the ring
         if(dl>.6) continue;
         float fade=onFloor?1.:exp(-hW/.7);
         float base=B.w*.08+.025;                     // a faint rule, gold once the year is reached
@@ -2757,9 +2788,9 @@ const post = (() => {
           wc+=GOLD*exp(-abs(sweep*1.15-dd)*40.)*step(sweep,.999)*smoothstep(0.,.3,tx.a)*.35;
           col=mix(col,wc,wa);
         }
-        // motes of light drifting up every wall, few and faint
+        // motes of light drifting down every wall, few and faint: the room is rising
         if(!onFloor&&t>=0.&&t<=1.2){
-          vec2 mp=vec2(P,hW)*vec2(7.,5.)+vec2(0.,-tw*.35*5.);
+          vec2 mp=vec2(P,hW)*vec2(7.,5.)+vec2(0.,tw*.35*5.);
           vec2 mid=floor(mp), mf=fract(mp)-.5;
           float mh=hash12(mid+13.1);
           vec2 off=vec2(hash12(mid+2.7),hash12(mid+9.3))-.5;
@@ -2785,6 +2816,27 @@ const post = (() => {
       // The top of every wall dissolves into the dark room above: world, light lines and
       // captions all fade to black over the upper third, and nothing is drawn above the walls.
       if(!onFloor){ float tf=smoothstep(.66,1.,t); col*=1.-tf*(.35+.65*tf); }
+      // ---- the harp, gold on a white floor, for the welcome and the opening, and again for the
+      // thank-you. It is drawn from a vector trace of the emblem, so it is sharp at any size,
+      // and stands upright for someone facing the feature wall.
+      // When the show begins the white opens from the centre, where the ring is drawing, out to
+      // the walls behind a rim of gold light; the outro closes it again from the walls inward.
+      float hR=(it-.2)/1.3*(length(vec2(W,D))*.5+.5), hD=length(q)+(n-.5)*.5;
+      float hA=uHarp.x*smoothstep(hR-.06,hR+.06,hD);
+      if(onFloor&&hA>0.){
+        vec2 up=uHarpUp, rt=vec2(-up.y,up.x);
+        float hh=min(W,D)*.74;                       // the harp's height, metres
+        vec2 hp=vec2(dot(q,rt),dot(q,up))/hh;        // harp units: 1 tall, centred
+        vec2 hk=vec2(1760./1140.,1.)/hh;
+        vec2 hu=vec2(hp.x*1760./1140.+.5,hp.y+.5);
+        vec2 hdx=vec2(dot(qdx,rt),dot(qdx,up))*hk, hdy=vec2(dot(qdy,rt),dot(qdy,up))*hk;
+        float ha=textureGrad(uHarpTex,clamp(hu,0.,1.),hdx,hdy).a*step(0.,hu.x)*step(hu.x,1.)*step(0.,hu.y)*step(hu.y,1.);
+        // a slow sheen of light across the gold
+        float sh=exp(-pow(hp.x*.8+hp.y-(mod(uHarp.y*.22,2.6)-1.1),2.)/.006);
+        vec3 hg=vec3(.64,.57,.37)+vec3(.30,.26,.16)*sh;
+        col=mix(col,mix(vec3(1.),hg,ha),hA);
+      }
+      if(onFloor&&uHarp.x>0.&&it>.2&&it<1.6) col+=mix(GOLD,vec3(1.,.93,.8),.4)*(exp(-abs(hD-hR)/.04)*.9+exp(-abs(hD-hR)/.25)*.25)*uHarp.x*(1.-smoothstep(1.3,1.6,it));
       // "...start right now": a flash of warm light fills the room and the flight jumps ahead under it.
       col=mix(col,vec3(1.,.93,.8),uFlash*.94)+vec3(1.,.8,.5)*uFlash*uFlash*.2;
       col+=(hash12(gl_FragCoord.xy+fract(uTime*7.3)*100.)-.5)/255.;
@@ -3443,6 +3495,7 @@ function applyTime(T, dt, wOverride) {
 
   // ---- light lines: year pulses, caption stems, the 2036 wave, the cove line
   updateSeamGeo();
+  { const it = introAt(t); P.uLineDn.value = (t < 7 && t >= 1.9) || (t >= OUT_REV0 && it >= 1.9 && it < 7) ? 1 : 0; }
   for (let k = 0; k <= 10; k++) {
     const Tk = k * YEAR_END / 10;
     let tau = -1;
@@ -4230,6 +4283,9 @@ function frame(now) {
   } else thankT0 = -1;
   P.uWelTex.value = page || welTex;
   P.uWel.value.set(wa, Math.max(0, wt), 0, 0); P.uWelK.value = (ctrl.owall | 0) % 4;
+  // The harp comes up with the welcome; the opening and the outro fade it by the intro clock.
+  P.uHarp.value.set(harpTex ? (standby ? smooth(0, 1.2, (now - welT0) / 1000) : 1) : 0, now / 1000);
+  P.uHarpUp.value.set(...[[0, -1], [1, 0], [0, 1], [-1, 0]][(((ctrl.owall | 0) % 4) + 4) % 4]);
   P.uPrev.value.set(look.yaw, look.pitch, look.tan);
   if (needsWorld()) renderWorld();
   renderer.setRenderTarget(null);
