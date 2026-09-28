@@ -353,6 +353,7 @@
   <div class="seg seg-wide" id="ctab-seg" role="tablist">
     <button type="button" data-tab="look" aria-pressed="true">Look</button>
     <button type="button" data-tab="floor" aria-pressed="false">Floor</button>
+    <button type="button" data-tab="slides" aria-pressed="false">Slides</button>
     <button type="button" data-tab="sound" aria-pressed="false">Sound</button>
     <button type="button" data-tab="content" aria-pressed="false">Content</button>
   </div>
@@ -384,6 +385,31 @@
     <div class="sl"><label for="c-dx">Dial across</label><input id="c-dx" type="range" min="-3" max="3" step="0.02"><output></output></div>
     <div class="sl"><label for="c-dy">Dial up / down</label><input id="c-dy" type="range" min="-3" max="3" step="0.02"><output></output></div>
     <p class="hint">Margin masks a projector that overshoots the floor. Keystone corrects an off-axis mount. <kbd>O</kbd> still rotates the world; the dial stays put. The light lines follow the room, so enter its real size on the start screen and they meet the walls exactly.</p>
+  </div>
+
+  <div class="tabpane" data-pane="slides" hidden>
+    <div class="subhead">Captions, wall by wall</div>
+    <div class="seg seg-wide" role="group" aria-label="Captions on each wall">
+      <button type="button" data-k="capOn">All</button>
+      <button type="button" data-k="wFront">1 · Front</button>
+      <button type="button" data-k="wRight">2 · Right</button>
+      <button type="button" data-k="wBack">3 · Back</button>
+      <button type="button" data-k="wLeft">4 · Left</button>
+    </div>
+    <div class="subhead">Wall 2 · Right: the figures</div>
+    <div class="seg seg-wide" role="group" aria-label="Figures panel on wall 2"><button type="button" data-k="panOn">Figures panel</button></div>
+    <div class="sl"><label for="c-pansize">Size</label><input id="c-pansize" type="range" min="0.3" max="1" step="0.01"><output></output></div>
+    <div class="sl"><label for="c-pany">Height on the wall</label><input id="c-pany" type="range" min="0.25" max="0.75" step="0.01"><output></output></div>
+    <div class="sl"><label for="c-panfill">Dark glass</label><input id="c-panfill" type="range" min="0" max="1" step="0.02"><output></output></div>
+    <div class="subhead">Wall 4 · Left: the picture</div>
+    <div class="seg seg-wide" role="group" aria-label="Picture on wall 4"><button type="button" data-k="lwOn">Picture</button></div>
+    <div class="sl"><label for="c-lwsize">Size</label><input id="c-lwsize" type="range" min="0.3" max="1" step="0.01"><output></output></div>
+    <div class="sl"><label for="c-lwy">Height on the wall</label><input id="c-lwy" type="range" min="0.25" max="0.75" step="0.01"><output></output></div>
+    <div class="sl"><label for="c-lwop">Opacity</label><input id="c-lwop" type="range" min="0" max="1" step="0.02"><output></output></div>
+    <div class="sl"><label for="c-lwfeather">Soft edge</label><input id="c-lwfeather" type="range" min="0" max="0.5" step="0.01"><output></output></div>
+    <div class="sl"><label for="c-lwradius">Rounded corners</label><input id="c-lwradius" type="range" min="0" max="0.5" step="0.01"><output></output></div>
+    <div class="sl"><label for="c-lwshadow">Shadow</label><input id="c-lwshadow" type="range" min="0" max="1" step="0.02"><output></output></div>
+    <p class="hint">While a topic's caption is up, wall 2 shows its figures and wall 4 its picture, and those two walls give up that caption. Slides follow the topic named in each caption's eyebrow (for example <b>01 · Economy</b>), so they move with the caption's timing. <b>Size</b> 1 is the largest that fits the wall.</p>
   </div>
 
   <div class="tabpane" data-pane="sound" hidden>
@@ -488,16 +514,18 @@ const ACTS = [
 ];
 
 const CAPTIONS = [
-  { t0: 2,     t1: 8.2,   eb: 'Our coast',            ti: 'Where the Atlantic meets us',  sub: 'The Cliffs of Moher, County Clare' },
-  { t0: 9,     t1: 14.6,  eb: 'Our people',           ti: '5.4 million people',           sub: 'One of the youngest populations in Europe' },
-  { t0: 17,    t1: 28.5,  eb: '2026 \u2192 2036',        ti: 'The next ten years start now', sub: '' },
-  { t0: 34.5,  t1: 48,    eb: 'Energy',               ti: 'Powered by the Atlantic',      sub: 'National offshore wind targets: 5 GW by 2030, 20 GW by 2040' },
-  { t0: 52.5,  t1: 63.5,  eb: 'Sustainability',       ti: 'A cleaner, greener island',    sub: 'Emissions halved by 2030, climate neutral by 2050' },
-  { t0: 66.5,  t1: 78.5,  eb: 'Transport',            ti: 'Connected by MetroLink',       sub: 'Airport to city centre by metro, regions linked by rail' },
-  { t0: 82.5,  t1: 94.5,  eb: 'Dublin \u00b7 the capital', ti: 'A capital on the move',     sub: 'Talent, technology and trade along the Liffey' },
-  { t0: 98.5,  t1: 110.5, eb: 'Health \u00b7 HSE',        ti: 'Care for every generation',    sub: 'Sl\u00e1intecare: universal healthcare, closer to home' },
-  { t0: 114.5, t1: 126,   eb: 'Housing',              ti: 'Homes for a growing nation',   sub: 'New communities, built at pace and powered cleanly' },
-  { t0: 130,   t1: 141.5, eb: 'Ireland 2036',         ti: 'Ambition, delivered together', sub: '' },
+  { t0: 2,     t1: 8.2,   eb: 'Our coast',             ti: 'Where the Atlantic meets us',                sub: 'The Cliffs of Moher, County Clare' },
+  { t0: 9,     t1: 14.6,  eb: 'Our people',            ti: '5.4 million people',                         sub: 'One of the youngest populations in Europe' },
+  { t0: 17,    t1: 20,    eb: '2026 \u2192 2036',        ti: 'Eight ambitions. One decade. One country.',  sub: 'In 2026 we set out bold goals. This is what we delivered.' },
+  { t0: 34.5,  t1: 48,    eb: '01 \u00b7 Economy',        ti: 'A global hub, thriving in every region',      sub: '3m+ people in work \u00b7 \u20ac100bn Future Ireland Fund \u00b7 2x indigenous exports' },
+  { t0: 52.5,  t1: 63.5,  eb: '02 \u00b7 Health',         ti: 'Care when needed, close to home',            sub: '10 weeks maximum wait \u00b7 100% with a digital health record \u00b7 84+ years' },
+  { t0: 66.5,  t1: 78.5,  eb: '03 \u00b7 Transport',      ti: 'Connected, low-carbon, on time, everywhere', sub: '1m electric vehicles \u00b7 +600k journeys a day \u00b7 \u221260% transport emissions' },
+  { t0: 82.5,  t1: 94.5,  eb: '04 \u00b7 Energy',         ti: 'Powered by Irish wind, sun and sea',         sub: '85%+ renewable electricity \u00b7 10 GW offshore wind \u00b7 12 GW solar' },
+  { t0: 98.5,  t1: 110.5, eb: '05 \u00b7 Sustainability', ti: 'Net zero within reach, nature restored',     sub: '\u221260% emissions on 2018 \u00b7 700k homes retrofitted to B2 \u00b7 13% forest cover' },
+  { t0: 114.5, t1: 126,   eb: '06 \u00b7 Housing',        ti: 'A secure, affordable home for everyone',     sub: '500k new homes since 2026 \u00b7 50k+ a year \u00b7 30k+ cost-rental' },
+  { t0: 130,   t1: 141.5, eb: 'Ireland 2036',          ti: 'We didn\u2019t wait for 2036. We built it.',   sub: 'The ambitions were bold. The delivery was shared.' },
+  { t0: 143,   t1: 149.5, eb: '07 \u00b7 Education',      ti: 'Every learner ready for an AI world',        sub: '95% complete the Leaving Cert \u00b7 25% of adults learning \u00b7 Top 5 OECD for reading' },
+  { t0: 150,   t1: 156.5, eb: '08 \u00b7 Defence',        ti: 'Secure seas, skies and cyberspace',          sub: '\u20ac2bn a year \u00b7 11,500 personnel \u00b7 100% primary radar coverage' },
 ];
 
 // ---------------------------------------------------------------- real-world geography
@@ -2164,13 +2192,127 @@ function captionTexture(c) {
   const t = new T.CanvasTexture(cv); t.anisotropy = 8; t.generateMipmaps = true; return t;
 }
 let capTextures = [];
-function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures = CAPTIONS.map(captionTexture); buildWelcome(); }
+function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures = CAPTIONS.map(captionTexture); buildSlides(); buildWelcome(); }
+
+// ---------------------------------------------------------------- the topic slides on the side walls
+// From the "Ireland 2036: Looking back" deck. While a topic's caption is up, wall 2 (right)
+// carries its figures on a dark see-through panel, and wall 4 (left) its picture, held smaller
+// than the wall so the world stays in view round it. A caption finds its slide by the topic
+// named in its eyebrow ("01 · Economy"), so the slides follow the captions' timings and order.
+// Sustainability has no picture of its own in the deck and shares Energy's; Education has no
+// figures slide, so its panel carries the three figures from its caption.
+const SLIDE_WALL = 1, PHOTO_WALL = 3;
+const SLIDES = {
+  economy: { img: 'economy.jpg',
+    did: ['Scaled Irish-owned champions in AI, semiconductors and life sciences', 'Balanced regional growth: Cork, Limerick, Galway and Waterford as engines', 'Future Ireland Fund built from windfall surpluses for long-term resilience'],
+    got: [['3m+', 'people in work, a record high'], ['€100bn', 'Future Ireland Fund reserves'], ['2x', 'growth in indigenous exports']] },
+  health: { img: 'health.jpg',
+    did: ['Sláintecare delivered universal, single-tier access to care', 'Dedicated elective hospitals in Dublin, Cork and Galway', 'A shared electronic health record for every patient'],
+    got: [['10 wks', 'maximum outpatient wait'], ['100%', 'of citizens with a digital health record'], ['84+', 'years average life expectancy']] },
+  transport: { img: 'transport.jpg',
+    did: ['MetroLink carrying passengers from Swords to the city centre', 'DART+ and BusConnects running across all five cities', 'A national active-travel network of safe walking and cycling routes'],
+    got: [['1m', 'electric vehicles on Irish roads'], ['+600k', 'extra sustainable journeys every day'], ['−60%', 'transport emissions vs 2018']] },
+  energy: { img: 'energy.jpg',
+    did: ['Offshore wind at scale off the east and south coasts', 'Celtic Interconnector linking Ireland to the European grid', 'Green hydrogen and long-duration storage balancing the system'],
+    got: [['85%+', 'renewable electricity'], ['10 GW', 'offshore wind connected'], ['12 GW', 'solar on roofs and farms']] },
+  sustainability: { img: 'energy.jpg',
+    did: ['Carbon budgets met through successive Climate Action Plans', 'National retrofit programme upgrading homes to B2 or better', 'Nature Restoration Plan reviving bogs, rivers and native woodland'],
+    got: [['−60%', 'national emissions vs 2018'], ['700k', 'homes retrofitted to B2'], ['13%', 'forest cover, up from 11.6%']] },
+  housing: { img: 'housing.jpg',
+    did: ['50,000+ homes delivered every year, sustained for a decade', 'Land Development Agency and cost-rental at national scale', 'Modern methods of construction cutting build times and costs'],
+    got: [['500k', 'new homes built since 2026'], ['50k+', 'homes completed per year'], ['30k+', 'cost-rental homes']] },
+  education: { img: 'education.jpg', did: [],
+    got: [['95%', 'complete the Leaving Cert'], ['25%', 'of adults learning'], ['Top 5', 'OECD for reading']] },
+  defence: { img: 'defence.jpg',
+    did: ['Commission on the Defence Forces’ Level of Ambition 2 delivered', 'Maritime security strategy protecting subsea cables and energy', 'National Cyber Security Centre scaled to protect critical services'],
+    got: [['€2bn', 'annual defence investment'], ['11,500', 'Defence Forces personnel'], ['100%', 'primary radar coverage of Irish airspace']] },
+};
+const slideOf = (c) => Object.keys(SLIDES).find((k) => c.eb.toLowerCase().includes(k)) || null;
+// The panel: 16:9, the deck's layout, drawn over a transparent ground; the dark glass behind it
+// is drawn in the projection pass so its depth can be set live.
+const PAN_W = 2400, PAN_H = 1350;
+function panelTexture(c, key) {
+  const S = SLIDES[key], W = PAN_W, H = PAN_H, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  const sp = (v) => { if ('letterSpacing' in x) x.letterSpacing = v + 'px'; };
+  const wrap = (txt, maxW) => { const out = []; let ln = ''; txt.split(' ').forEach((w) => { const t = ln ? ln + ' ' + w : w; if (x.measureText(t).width > maxW && ln) { out.push(ln); ln = w; } else ln = t; }); if (ln) out.push(ln); return out; };
+  const YEL = '#ffe600', M = 110, LW = 800;
+  x.textBaseline = 'alphabetic'; x.textAlign = 'left';
+  // the topic column, a shade deeper than the rest, with the gold bar down its edge
+  x.fillStyle = 'rgba(0,0,0,.28)'; x.fillRect(0, 0, LW, H);
+  x.fillStyle = YEL; x.fillRect(0, 0, 10, H);
+  const m = /^\s*(\d+)/.exec(c.eb), name = key.toUpperCase();
+  const ebT = (m ? m[1] + '   ' : '') + name; let ez = 44, es = 14;
+  x.fillStyle = YEL; x.font = `600 ${ez}px ${SANS_F}`; sp(es);
+  while (x.measureText(ebT).width > LW - M - 50 && ez > 28) { ez -= 2; es = Math.max(6, es - 1); x.font = `600 ${ez}px ${SANS_F}`; sp(es); }
+  x.fillText(ebT, M, 250); sp(0);
+  x.fillRect(M, 285, 90, 4);
+  x.fillStyle = '#ffffff'; let z = 118; x.font = `400 ${z}px ${SERIF_F}`;
+  let lines = wrap(c.ti, LW - M - 70);
+  while (lines.length > 4 && z > 70) { z -= 6; x.font = `400 ${z}px ${SERIF_F}`; lines = wrap(c.ti, LW - M - 70); }
+  lines.forEach((l, i) => x.fillText(l, M, 420 + i * z * 1.04));
+  x.fillStyle = 'rgba(236,231,219,.55)'; x.font = `500 30px ${SANS_F}`; sp(8);
+  x.fillText('IRELAND 2036  |  LOOKING BACK', M, H - 100); sp(0);
+  // what we did, then what we achieved
+  const X0 = LW + 110, X1 = W - 110, CW = X1 - X0;
+  let y = S.did.length ? 200 : 470;
+  const label = (t, yy) => { x.fillStyle = 'rgba(236,231,219,.85)'; x.font = `600 36px ${SANS_F}`; sp(12); x.fillText(t, X0, yy); sp(0); };
+  // a soft shadow under every letter keeps them clear over a bright sky behind the glass
+  x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 14;
+  if (S.did.length) {
+    label('WHAT WE DID', y); y += 50;
+    S.did.forEach((d, i) => {
+      x.font = `500 48px ${SANS_F}`; const dl = wrap(d, CW - 110).slice(0, 2);
+      const rowH = 48 * 1.2 * dl.length + 42;
+      x.fillStyle = YEL; x.beginPath(); x.arc(X0 + 30, y + 38, 30, 0, Math.PI * 2); x.fill();
+      x.fillStyle = '#17191e'; x.font = `600 34px ${SANS_F}`; x.textAlign = 'center'; x.fillText(String(i + 1), X0 + 30, y + 50); x.textAlign = 'left';
+      x.fillStyle = '#ffffff'; x.font = `500 48px ${SANS_F}`;
+      dl.forEach((l, k) => x.fillText(l, X0 + 100, y + 54 + k * 58));
+      y += rowH;
+    });
+    y += 40;
+  }
+  label('WHAT WE ACHIEVED', y); y += 50;
+  const gap = 44, bw = (CW - gap * 2) / 3, bh = Math.min(400, H - 110 - y);
+  S.got.forEach(([v, l], i) => {
+    const bx = X0 + i * (bw + gap);
+    x.fillStyle = 'rgba(255,255,255,.07)'; x.fillRect(bx, y, bw, bh);
+    x.fillStyle = YEL; x.fillRect(bx, y, bw, 8);
+    x.fillStyle = '#ffffff'; let vz = 132; x.font = `400 ${vz}px ${SERIF_F}`;
+    while (x.measureText(v).width > bw - 80 && vz > 60) { vz -= 6; x.font = `400 ${vz}px ${SERIF_F}`; }
+    x.fillText(v, bx + 40, y + 60 + vz * .8);
+    x.fillStyle = '#eef1f2'; x.font = `500 40px ${SANS_F}`;
+    wrap(l, bw - 80).slice(0, 3).forEach((ll, k) => x.fillText(ll, bx + 40, y + 60 + vz * .8 + 70 + k * 48));
+  });
+  const t = new T.CanvasTexture(cv); t.anisotropy = 8; t.generateMipmaps = true; t.minFilter = T.LinearMipmapLinearFilter; return t;
+}
+let panTextures = [];
+function buildSlides() {
+  panTextures.forEach((t) => t && t.dispose());
+  CAPTIONS.forEach((c) => { c.slide = slideOf(c); });
+  panTextures = CAPTIONS.map((c) => (c.slide ? panelTexture(c, c.slide) : null));
+}
+// The pictures, loaded once, looked for beside the page and then in the igloo folder.
+const photoTex = {};
+(async () => {
+  const files = [...new Set(Object.values(SLIDES).map((v) => v.img))];
+  for (const f of files) {
+    for (const dir of ['assets/slides/', 'igloo/assets/slides/']) {
+      try {
+        const img = new Image(); img.src = dir + f; await img.decode();
+        const t = new T.Texture(img); t.anisotropy = 8; t.generateMipmaps = true; t.minFilter = T.LinearMipmapLinearFilter; t.needsUpdate = true;
+        photoTex[f] = { tex: t, asp: img.naturalWidth / img.naturalHeight };
+        break;
+      } catch (e) { /* try the next place */ }
+    }
+  }
+})();
 
 // ---------------------------------------------------------------- the welcome page
 // Shown on the feature wall before the show, while the guest comes in. Editable under
 // Controls > Content. The EY mark above it is drawn in the projection pass itself.
-const WELCOME = { eb: 'F\u00e1ilte \u00b7 Welcome', pre: 'Taoiseach', name: 'Mich\u00e9al Martin', line: 'Welcome to Wilton Park', foot: '' };
-const THANKS = { eb: 'Go raibh maith agat', pre: 'Taoiseach', name: 'Mich\u00e9al Martin', line: 'Thank you for your visit', foot: 'Wilton Park' };
+const WELCOME = { eb: 'F\u00e1ilte \u00b7 Welcome', pre: 'An Taoiseach', name: 'Mich\u00e9al Martin', line: 'Welcome to Wilton Park', foot: '' };
+const THANKS = { eb: 'Go raibh maith agat', pre: 'An Taoiseach', name: 'Mich\u00e9al Martin', line: 'Thank you for your visit', foot: 'Wilton Park' };
 let welTex = null, thankTex = null;
 // The harp, gold on the white floor: a vector trace of the emblem, drawn once at a size that
 // keeps it sharp across the whole floor, with mipmaps for smaller outputs.
@@ -2237,6 +2379,12 @@ const post = (() => {
       uMix: { value: 0 }, uDrift: { value: 0 }, uZoomA: { value: 1 }, uZoomB: { value: 1 }, uSwirl: { value: 0 },
       uFuture: { value: 0 },
       uCap: { value: BLANK }, uCapA: { value: 0 }, uCapRev: { value: 0 },
+      // Captions per wall (front, right, back, left), and the topic slides on the side walls:
+      // uPanG size, height, glass depth; uImgG size, height, corner radius, feather; uImgS shadow, opacity.
+      uCapW: { value: new T.Vector4(1, 1, 1, 1) },
+      uPan: { value: BLANK }, uPanA: { value: 0 }, uPanRev: { value: 0 }, uPanG: { value: new T.Vector3(.86, .5, .5) },
+      uImg: { value: BLANK }, uImgA: { value: 0 }, uImgRev: { value: 0 }, uImgAsp: { value: 1.7778 },
+      uImgG: { value: new T.Vector4(.62, .5, .08, .16) }, uImgS: { value: new T.Vector2(.45, 1) },
       // Live operator controls, driven by the control panel and saved per machine.
       uMapBright: { value: 1 }, uLines: { value: 1 },
       uFloorInset: { value: 0 }, uFloorScale: { value: 1 }, uFloorTilt: { value: new T.Vector2(0, 0) },
@@ -2280,6 +2428,9 @@ const post = (() => {
     uniform float uMix; uniform float uDrift; uniform float uZoomA; uniform float uZoomB; uniform float uSwirl;
     uniform float uFuture;
     uniform sampler2D uCap; uniform float uCapA; uniform float uCapRev;
+    uniform vec4 uCapW;
+    uniform sampler2D uPan; uniform float uPanA; uniform float uPanRev; uniform vec3 uPanG;
+    uniform sampler2D uImg; uniform float uImgA; uniform float uImgRev; uniform float uImgAsp; uniform vec4 uImgG; uniform vec2 uImgS;
     uniform float uMapBright; uniform float uLines;
     uniform float uFloorInset; uniform float uFloorScale; uniform vec2 uFloorTilt;
     uniform float uDialScale; uniform vec2 uDialOff;
@@ -2895,19 +3046,64 @@ const post = (() => {
       }
 
       // ---- captions, one per wall
-      if(!onFloor&&uCapA>0.){
+      int wkS; if(abs(wb.x)/(W*.5)>=abs(wb.y)/(D*.5)) wkS=wb.x>0.?1:3; else wkS=wb.y<0.?0:2;
+      // Each wall's caption can be turned off; the side walls give theirs up to a topic's slides,
+      // and the feature wall to the outro map and the thank-you page.
+      float capK=uCapA*(wkS==0?uCapW.x:wkS==1?uCapW.y:wkS==2?uCapW.z:uCapW.w)
+                *(1.-(wkS==uOutK?uOut.x:0.))*(1.-(wkS==uWelK?uWel.x:0.));
+      if(!onFloor&&capK>0.){
         float cw=min(wallL*.88,H*2.9), ch=cw/3.2;
         vec2 cu=vec2((ws-.5)*wallL/cw+.5,(t*H-H*.64)/ch+.5);
         if(cu.x>0.&&cu.x<1.&&cu.y>0.&&cu.y<1.){
           vec4 c=texture(uCap,cu); float dd=abs(cu.x-.5)*2.; float rr2=uCapRev*1.2;
           float vis=smoothstep(dd-.12,dd,rr2);
-          col=mix(col,c.rgb,c.a*vis*uCapA);
-          col+=GOLD*exp(-abs(rr2-dd)*60.)*step(rr2,1.1)*smoothstep(.3,.45,cu.y)*(1.-smoothstep(.6,.75,cu.y))*.14*uCapA;
+          col=mix(col,c.rgb,c.a*vis*capK);
+          col+=GOLD*exp(-abs(rr2-dd)*60.)*step(rr2,1.1)*smoothstep(.3,.45,cu.y)*(1.-smoothstep(.6,.75,cu.y))*.14*capK;
         }
       }
       // The top of every wall dissolves into the dark room above: world, light lines and
       // captions all fade to black over the upper third, and nothing is drawn above the walls.
       if(!onFloor){ float tf=smoothstep(.66,1.,t); col*=1.-tf*(.35+.65*tf); }
+      // ---- the topic slides, held clear of the dark above the walls. Wall 2: the figures on a
+      // pane of dark glass, the world still moving behind it. Wall 4: the picture, smaller than
+      // the wall and feathered at its edges, so the world shows all round it. Both open from the
+      // centre outwards, as the captions do.
+      if(!onFloor&&t>=0.&&t<=1.){
+        float sideK=(1.-(wkS==uOutK?uOut.x:0.))*(1.-(wkS==uWelK?uWel.x:0.));
+        if(wkS==${SLIDE_WALL}&&uPanA>0.){
+          float a=uPanA*sideK, ph=min(wallL*.94/(16./9.),H*.9)*uPanG.x, pw=ph*16./9.;
+          vec2 pm=vec2((ws-.5)*wallL,t*H-H*uPanG.y);
+          vec2 pu=pm/vec2(pw,ph)+.5;
+          float rr=ph*.025; vec2 qd=abs(pm)-vec2(pw,ph)*.5+rr;
+          float sd=length(max(qd,0.))+min(max(qd.x,qd.y),0.)-rr;
+          float aa=max(fwidth(sd),1e-4);
+          float dd=abs(pu.x-.5)*2., rv=uPanRev*1.2, vis=smoothstep(dd-.08,dd,rv);
+          float inP=(1.-smoothstep(-aa,aa,sd))*vis*a;
+          col*=1.-.4*a*vis*exp(-max(sd,0.)/(ph*.05))*step(0.,sd);            // a soft shadow round the pane
+          col=mix(col,mix(vec3(.010,.018,.028),col*.25,.3),inP*min(1.,uPanG.z*1.3));   // the dark glass
+          col+=GOLD*beam(abs(sd),.0015,pxR,.012)*.25*vis*a;                   // a hairline of light at its edge
+          if(pu.x>0.&&pu.x<1.&&pu.y>0.&&pu.y<1.){
+            vec4 c=texture(uPan,pu);
+            col=mix(col,c.rgb,c.a*inP);
+          }
+          col+=GOLD*exp(-abs(rv-dd)*50.)*step(rv,1.1)*(1.-smoothstep(-aa,aa,sd))*.18*a;
+        }
+        if(wkS==${PHOTO_WALL}&&uImgA>0.){
+          float a=uImgA*sideK*uImgS.y;
+          float ih=min(wallL*.9/uImgAsp,H*.9)*uImgG.x, iw=ih*uImgAsp, mn=min(iw,ih);
+          vec2 im=vec2((ws-.5)*wallL,t*H-H*uImgG.y);
+          vec2 iu=im/vec2(iw,ih)+.5;
+          float rr=mn*uImgG.z; vec2 qd=abs(im)-vec2(iw,ih)*.5+rr;
+          float sd=length(max(qd,0.))+min(max(qd.x,qd.y),0.)-rr;
+          float fe=max(mn*uImgG.w*.5,max(fwidth(sd),1e-4));
+          float dd=abs(iu.x-.5)*2., rv=uImgRev*1.2, vis=smoothstep(dd-.1,dd,rv);
+          float inI=(1.-smoothstep(-fe,0.,sd))*vis*a;
+          col*=1.-uImgS.x*.7*a*vis*exp(-max(sd+fe*.5,0.)/(mn*.08));      // it sits a little off the wall
+          vec3 ic=textureGrad(uImg,clamp(iu,0.,1.),dFdx(iu),dFdy(iu)).rgb;
+          col=mix(col,ic,inI);
+          col+=GOLD*exp(-abs(rv-dd)*50.)*step(rv,1.1)*(1.-smoothstep(-fe,0.,sd))*.15*a;
+        }
+      }
       // ---- the harp, gold on a white floor, for the welcome and the opening, and again for the
       // thank-you. It is drawn from a vector trace of the emblem, so it is sharp at any size,
       // and stands upright for someone facing the feature wall.
@@ -3634,6 +3830,19 @@ function applyTime(T, dt, wOverride) {
     P.uCap.value = capTextures[cap]; P.uCapRev.value = smooth(k.t0, k.t0 + 1.6, T);
     P.uCapA.value = 1 - smooth(k.t1, k.t1 + 1.1, T);
   }
+  // The topic slides ride with their captions: the figures open a moment after the words, the
+  // picture a moment after that, and both go with the caption.
+  const sl = cap >= 0 && CAPTIONS[cap].slide ? cap : -1;
+  const slideOut = sl < 0 ? 0 : 1 - smooth(CAPTIONS[sl].t1, CAPTIONS[sl].t1 + 1.1, T);
+  const panOn = sl >= 0 && ctrl.panOn > 0 && panTextures[sl];
+  P.uPanA.value = panOn ? slideOut : 0;
+  if (panOn) { P.uPan.value = panTextures[sl]; P.uPanRev.value = smooth(CAPTIONS[sl].t0 + .3, CAPTIONS[sl].t0 + 2, T); }
+  const ph = sl >= 0 && ctrl.lwOn > 0 ? photoTex[SLIDES[CAPTIONS[sl].slide].img] : null;
+  P.uImgA.value = ph ? slideOut : 0;
+  if (ph) { P.uImg.value = ph.tex; P.uImgAsp.value = ph.asp; P.uImgRev.value = smooth(CAPTIONS[sl].t0 + .7, CAPTIONS[sl].t0 + 2.6, T); }
+  // A wall carrying a slide gives up its caption for as long as the slide is there.
+  const cw = (k) => (ctrl.capOn > 0 ? +ctrl[k] : 0);
+  P.uCapW.value.set(cw('wFront'), panOn ? 0 : cw('wRight'), cw('wBack'), ph ? 0 : cw('wLeft'));
   P.uFlash.value = wOverride !== undefined ? 0 : (T < T_CUT ? smooth(T_CUT - .35, T_CUT, T) : Math.exp(-(T - T_CUT) / .45));
   // ---- the outro
   {
@@ -3753,11 +3962,14 @@ const VOICE_CUES = [
   [  9.3,  27.02,  31.57],  // but our greatest asset isn't just our landscape: it is our people.
   [ 14.0,  58.54,  61.11],  // The next ten years start right now.   ("now" lands on the cut, T_CUT)
   [ 17.3,  61.11,  64.25],  // Let's look ahead to Ireland 2036.
-  [ 34.5,  64.25,  81.90],  // By 2036... powered by the very ocean we just saw... offshore wind...
-  [ 52.8,   0.00,  11.00, 'sustainability'],  // new line, played when its file is present
+  // The chapters follow the deck's order (economy, health, transport, energy, sustainability,
+  // housing), so each phrase is cued to the caption it speaks to, not to where it falls in the
+  // reading.
+  [ 34.5,  96.25, 109.48],  // And here in Dublin, a capital on the move... (economy)
+  [ 52.8,   0.00,  11.00, 'health'],          // new line, played when its file is present
   [ 66.0,  81.90,  96.25],  // MetroLink... the airport to the city centre... rail...
-  [ 82.0,  96.25, 109.48],  // And here in Dublin, a capital on the move...
-  [ 98.6,   0.00,  11.00, 'health'],          // new line, played when its file is present
+  [ 82.5,  64.25,  81.90],  // By 2036... powered by the very ocean we just saw... offshore wind...
+  [100.4,   0.00,  11.00, 'sustainability'],  // new line, played when its file is present
   [113.8, 109.48, 123.64],  // Homes for a growing nation...
   [129.3, 123.64, 137.00],  // Ireland 2036 is not just a projection...
   [157.0, 137.00, 138.00],  // Thank you.
@@ -4163,11 +4375,17 @@ addEventListener('resize', resize);
 // without touching the file. Settings persist per machine; content edits persist too
 // and can be exported as JSON so a tuned show can be moved to the venue PC.
 const CTRL_DEFAULTS = {
-  fmapb: 1, lines: 1, grade: .45, warm: .35, nlight: .55, land: 1,
-  inset: 0, fscale: 1, tiltx: 0, tilty: 0, dscale: 1, dx: 0, dy: 0,
-  vol: .9,
+  fmapb: 1.02, lines: 1, grade: .12, warm: .35, nlight: .55, land: .58,
+  inset: .38, fscale: 1, tiltx: 0, tilty: 0, dscale: .74, dx: -1.26, dy: .62,
+  vol: 1.24,
   voice: 'female', vvol: 1, duck: .4, voff: 0,
-  owall: 1, cv: 2,
+  owall: 0, cv: 2,
+  // captions: all on, and each wall on its own (front, right, back, left)
+  capOn: 1, wFront: 1, wRight: 1, wBack: 1, wLeft: 1,
+  // wall 2: the figures panel (size, height of its centre on the wall, depth of the dark glass)
+  panOn: 1, panSize: .86, panY: .5, panFill: .5,
+  // wall 4: the picture (size, height, opacity, soft edge, corner radius, shadow)
+  lwOn: 1, lwSize: .62, lwY: .5, lwOp: 1, lwFeather: .16, lwRadius: .08, lwShadow: .45,
 };
 const ctrl = Object.assign({}, CTRL_DEFAULTS);
 try {
@@ -4189,6 +4407,9 @@ function applyCtrl() {
   P.uFloorTilt.value.set(ctrl.tiltx, ctrl.tilty);
   P.uDialScale.value = ctrl.dscale;
   P.uDialOff.value.set(ctrl.dx, ctrl.dy);
+  P.uPanG.value.set(clamp(+ctrl.panSize, .2, 1), clamp(+ctrl.panY, .2, .8), clamp(+ctrl.panFill, 0, 1));
+  P.uImgG.value.set(clamp(+ctrl.lwSize, .2, 1), clamp(+ctrl.lwY, .2, .8), clamp(+ctrl.lwRadius, 0, .5), clamp(+ctrl.lwFeather, 0, .5));
+  P.uImgS.value.set(clamp(+ctrl.lwShadow, 0, 1), clamp(+ctrl.lwOp, 0, 1));
   U.uNightLights.value = ctrl.nlight;
   U.uLandLift.value = ctrl.land;
   audio.setLevel('master', ctrl.vol);
@@ -4196,6 +4417,7 @@ function applyCtrl() {
   audio.setVoice(ctrl.voice);
   document.querySelectorAll('#voice-seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.voice === audio.voice)));
   document.querySelectorAll('#owall-seg button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.w === (ctrl.owall | 0))));
+  document.querySelectorAll('#control button[data-k]').forEach((b) => b.setAttribute('aria-pressed', String(+ctrl[b.dataset.k] > 0)));
   try { localStorage.setItem('ire2036-ctrl', JSON.stringify(ctrl)); } catch (e) {}
 }
 
@@ -4205,6 +4427,8 @@ const SLIDERS = [
   ['c-inset', 'inset'], ['c-fscale', 'fscale'], ['c-tiltx', 'tiltx'], ['c-tilty', 'tilty'],
   ['c-dscale', 'dscale'], ['c-dx', 'dx'], ['c-dy', 'dy'],
   ['c-vol', 'vol'], ['c-vvol', 'vvol'], ['c-duck', 'duck'], ['c-voff', 'voff'],
+  ['c-pansize', 'panSize'], ['c-pany', 'panY'], ['c-panfill', 'panFill'],
+  ['c-lwsize', 'lwSize'], ['c-lwy', 'lwY'], ['c-lwop', 'lwOp'], ['c-lwfeather', 'lwFeather'], ['c-lwradius', 'lwRadius'], ['c-lwshadow', 'lwShadow'],
 ];
 const fillRange = (el) => el.style.setProperty('--p', ((+el.value - +el.min) / ((+el.max - +el.min) || 1) * 100).toFixed(2) + '%');
 const outFor = (el) => (el && el.parentElement) ? el.parentElement.querySelector('output') : null;
@@ -4230,7 +4454,7 @@ SLIDERS.forEach(([id, key]) => {
 // The acts, their captions and their timings, editable live. CAPTIONS is rebuilt in
 // place so the running show picks up an edit on the next frame.
 // Versioned: captions saved for an earlier running order must not overwrite this one.
-const CONTENT_KEY = 'ire2036-content-v3';
+const CONTENT_KEY = 'ire2036-content-v4';
 function contentSnapshot() {
   return {
     acts: ACTS.map((a) => ({ name: a.name, t: a.t })),
@@ -4245,7 +4469,8 @@ function applyContent(data, rebuild = true) {
   if (data.welcome && typeof data.welcome === 'object') Object.keys(WELCOME).forEach((k) => { if (data.welcome[k] != null) WELCOME[k] = String(data.welcome[k]); });
   if (data.thanks && typeof data.thanks === 'object') Object.keys(THANKS).forEach((k) => { if (data.thanks[k] != null) THANKS[k] = String(data.thanks[k]); });
   if (Array.isArray(data.captions)) data.captions.forEach((c, i) => {
-    if (!CAPTIONS[i]) return;
+    if (!c || typeof c !== 'object') return;
+    if (!CAPTIONS[i]) CAPTIONS[i] = { t0: 0, t1: 1, eb: '', ti: '', sub: '' };   // an imported running order may add captions
     CAPTIONS[i].eb = String(c.eb ?? CAPTIONS[i].eb);
     CAPTIONS[i].ti = String(c.ti ?? CAPTIONS[i].ti);
     CAPTIONS[i].sub = String(c.sub ?? CAPTIONS[i].sub);
@@ -4345,6 +4570,10 @@ audio.onVoiceNote((m) => { const n = $('voice-note'); if (n) n.textContent = m; 
 document.querySelectorAll('#voice-seg button').forEach((b) => b.addEventListener('click', () => {
   ctrl.voice = b.dataset.voice; applyCtrl();
   toast(ctrl.voice === 'off' ? 'Voiceover off' : 'Voiceover on');
+}));
+document.querySelectorAll('#control button[data-k]').forEach((b) => b.addEventListener('click', () => {
+  ctrl[b.dataset.k] = +ctrl[b.dataset.k] > 0 ? 0 : 1; applyCtrl();
+  toast(b.textContent + (ctrl[b.dataset.k] ? ' on' : ' off'));
 }));
 document.querySelectorAll('#owall-seg button').forEach((b) => b.addEventListener('click', () => {
   ctrl.owall = +b.dataset.w; applyCtrl(); toast('Feature wall: wall ' + (ctrl.owall + 1));
