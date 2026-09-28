@@ -1,0 +1,190 @@
+{
+  "controls": {
+    "fmapb": 1.02,
+    "lines": 1,
+    "grade": 0.12,
+    "warm": 0.35,
+    "nlight": 0.55,
+    "land": 0.58,
+    "inset": 0.38,
+    "fscale": 1,
+    "tiltx": 0,
+    "tilty": 0,
+    "dscale": 0.74,
+    "dx": -1.26,
+    "dy": 0.62,
+    "vol": 1.24,
+    "voice": "female",
+    "vvol": 1,
+    "duck": 0.4,
+    "voff": 0,
+    "owall": 0,
+    "cv": 2,
+    "lwOn": 1,
+    "lwSize": 0.62,
+    "lwY": 0.5,
+    "lwOp": 1,
+    "lwFeather": 0.16,
+    "lwRadius": 0.08,
+    "lwShadow": 0.45,
+    "lwSpread": 0.5,
+    "lwVignette": 0.25,
+    "lwTint": 0.18,
+    "lwGround": 0.35,
+    "nvUri": "",
+    "nvGender": "female",
+    "nvRate": 0.95,
+    "nvPitch": 1,
+    "nvVol": 1,
+    "nvLead": -0.8,
+    "panOn": 1,
+    "panTitle": 0.68,
+    "panDetail": 0.22,
+    "panFill": 0.5,
+    "panMedia": 1,
+    "panSize": 0.86,
+    "panY": 0.5,
+    "panMat": 0.22,
+    "wFront": 1,
+    "wRight": 1,
+    "wBack": 1,
+    "wLeft": 1,
+    "capOn": 0,
+    "panFlipX": 0,
+    "panFlipY": 1,
+    "film": 1,
+    "mapb": 0.42,
+    "mapd": 0.8,
+    "harp": 0.78,
+    "arp": 1.16,
+    "sea": 0.02
+  },
+  "content": {
+    "acts": [
+      {
+        "name": "Today",
+        "t": 0
+      },
+      {
+        "name": "Ireland 2036",
+        "t": 16
+      },
+      {
+        "name": "Momentum",
+        "t": 65
+      },
+      {
+        "name": "Together",
+        "t": 113
+      }
+    ],
+    "captions": [
+      {
+        "t0": 2,
+        "t1": 8.2,
+        "eb": "Our coast",
+        "ti": "Where the Atlantic meets us",
+        "sub": "The Cliffs of Moher, County Clare"
+      },
+      {
+        "t0": 9,
+        "t1": 14.6,
+        "eb": "Our people",
+        "ti": "5.4 million people",
+        "sub": "One of the youngest populations in Europe"
+      },
+      {
+        "t0": 17,
+        "t1": 20,
+        "eb": "2026 → 2036",
+        "ti": "Eight ambitions. One decade. One country.",
+        "sub": "In 2026 we set out bold goals. This is what we delivered."
+      },
+      {
+        "id": "energy",
+        "t0": 24,
+        "t1": 48,
+        "eb": "01 · Energy",
+        "ti": "Powered by Irish wind, sun and sea",
+        "sub": "85%+ renewable electricity · 10 GW offshore wind connected · 12 GW solar on roofs and farms"
+      },
+      {
+        "id": "sustainability",
+        "t0": 52.5,
+        "t1": 63.5,
+        "eb": "02 · Sustainability",
+        "ti": "Net zero within reach, nature restored",
+        "sub": "−60% national emissions vs 2018 · 700k homes retrofitted to B2 · 13% forest cover"
+      },
+      {
+        "id": "transport",
+        "t0": 66.5,
+        "t1": 78.5,
+        "eb": "03 · Transport",
+        "ti": "Connected, low-carbon, on time, everywhere",
+        "sub": "1m electric vehicles on Irish roads · +600k extra sustainable journeys every day · −60% transport emissions vs 2018"
+      },
+      {
+        "id": "economy",
+        "t0": 82.5,
+        "t1": 94.5,
+        "eb": "04 · Economy",
+        "ti": "A global hub, thriving in every region",
+        "sub": "3m+ people in work · €100bn Future Ireland Fund reserves · 2x growth in indigenous exports"
+      },
+      {
+        "id": "health",
+        "t0": 98.5,
+        "t1": 106,
+        "eb": "05 · Health",
+        "ti": "Care when needed, close to home",
+        "sub": "10 wks maximum outpatient wait · 100% with a digital health record · 84+ years average life expectancy"
+      },
+      {
+        "id": "housing",
+        "t0": 108,
+        "t1": 117,
+        "eb": "06 · Housing",
+        "ti": "A secure, affordable home for everyone",
+        "sub": "500k new homes built since 2026 · 50k+ homes completed per year · 30k+ cost-rental homes"
+      },
+      {
+        "id": "education",
+        "t0": 118,
+        "t1": 128,
+        "eb": "07 · Education",
+        "ti": "Every learner ready for an AI world",
+        "sub": "95% of students complete the Leaving Cert · 25% of adults in learning each year · Top 5 OECD ranking for reading"
+      },
+      {
+        "id": "defence",
+        "t0": 129,
+        "t1": 139,
+        "eb": "08 · Defence",
+        "ti": "Secure seas, skies and cyberspace",
+        "sub": "€2bn annual defence investment · 11,500 Defence Forces personnel · 100% primary radar coverage of Irish airspace"
+      },
+      {
+        "t0": 140,
+        "t1": 145,
+        "eb": "Ireland 2036",
+        "ti": "We didn’t wait for 2036. We built it.",
+        "sub": "The ambitions were bold. The delivery was shared."
+      }
+    ],
+    "welcome": {
+      "eb": "Fáilte · Welcome",
+      "pre": "An Taoiseach",
+      "name": "Micheál Martin",
+      "line": "Welcome to Wilton Park",
+      "foot": ""
+    },
+    "thanks": {
+      "eb": "Go raibh maith agat",
+      "pre": "An Taoiseach",
+      "name": "Micheál Martin",
+      "line": "Thank you for your visit",
+      "foot": "Wilton Park"
+    }
+  }
+}
