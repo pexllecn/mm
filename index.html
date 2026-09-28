@@ -436,7 +436,9 @@ if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the netwo
 // jumping ahead under a flash of light on "...start right now" (T_CUT), and running slower
 // where the story needs more room (energy and sustainability; Dublin at night and health).
 const DURATION = 162, W_END = 192;
-const T_CUT = 16.0, T_THANK = 156;
+// T_THANK: the thank-you page and the harp's return begin together. Half a second before,
+// the island map on the wall has finished giving way (T_MAPOFF).
+const T_CUT = 16.0, T_THANK = 153.4, T_MAPOFF = T_THANK - 1.1;
 const WARP = [[T_CUT, 74.5], [33.4, 92], [65, 110], [81, 126], [97, 142], [113, 150], [128, 164], [142, 178], [156, 192]];
 function worldAt(T) {
   if (T < T_CUT) return T;
@@ -2028,6 +2030,85 @@ function buildWorld() {
   ribbon(ROUTES.ewic, 220, 0xf2c14e, 3400, 22000, 12);
   ribbon(ROUTES.celtic, 220, 0xf2c14e, 3400, 22000, 12);
   ribbon(ROUTES.greenlink, 220, 0xf2c14e, 3400, 22000, 12);
+
+  // ------------------------------------------------ the floor's places, named on the walls at night
+  // Each place named on the floor map glows softly where it stands, and a thread of light
+  // rises from it to its name, written in the floor's lettering. Name and thread keep a
+  // constant size and a constant height above the horizon as the flight moves, so a place
+  // far off (Cork, seen looking back from Dublin) still reads, low over the land where it
+  // really is. They come with the dark and stay faint: light in the air, not signage.
+  {
+    const RW = 2048, RH = 256, n = floorCities.length;
+    const cv = document.createElement('canvas'); cv.width = RW; cv.height = RH * n;
+    const x = cv.getContext('2d');
+    const tex = new T.CanvasTexture(cv); tex.anisotropy = 8; tex.generateMipmaps = true; tex.minFilter = T.LinearMipmapLinearFilter;
+    const draw = () => {
+      x.clearRect(0, 0, cv.width, cv.height);
+      x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#fff';
+      x.font = `500 150px ${SANS_F}`; if ('letterSpacing' in x) x.letterSpacing = '6px';
+      floorCities.forEach((c, i) => x.fillText(c[0], RW / 2, RH * i + RH * .52));
+      tex.needsUpdate = true;
+    };
+    draw(); if (document.fonts) document.fonts.ready.then(draw);
+    const P = [], A = [], idx = [];
+    const quad = (c, kind, row) => {
+      const b = P.length / 3;
+      for (const [u, v] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { P.push(c[0], c[1], c[2]); A.push(u, v, kind, row); }
+      idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
+    };
+    floorCities.forEach((c, i) => {
+      const cx = gx(c[1]), cz = gz(c[2]), c3 = [cx, Math.max(heightAt(cx, cz), 0), cz];
+      quad(c3, 0, i); quad(c3, 1, i); quad(c3, 2, i);
+    });
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.Float32BufferAttribute(P, 3));
+    g.setAttribute('aQ', new T.Float32BufferAttribute(A, 4));
+    g.setIndex(idx);
+    const m = mat(`attribute vec4 aQ; varying vec4 vQ; varying float vA; varying float vDn;
+    const float NROW=${n.toFixed(1)};
+    void main(){
+      vec3 b=position; vec2 to=uCam.xz-b.xz; float dh=max(length(to),1.);
+      vec2 r=vec2(to.y,-to.x)/dh;                    // across the line of sight, level
+      float lift=clamp(dh*.055,450.,12000.);         // the name sits about 3 degrees up
+      vec3 p=b;
+      if(aQ.z<.5){ p+=vec3(aQ.x,0.,aQ.y)*5200.; p.y+=8.; }
+      else if(aQ.z<1.5){
+        float w=max(22.,dh*1.4/uPx);                 // a thread, never under a pixel and a half
+        p+=vec3(r.x,0.,r.y)*aQ.x*w; p.y+=(aQ.y*.5+.5)*lift;
+      } else {
+        vec3 top=b+vec3(0.,lift,0.); float d3=length(top-uCam);
+        float h=d3*.036;                              // the name's cell, a constant angle tall
+        p=top+vec3(r.x,0.,r.y)*aQ.x*h*4.+vec3(0.,(aQ.y*.5+.62)*h,0.);
+      }
+      vQ=aQ; vDn=b.y;
+      // with the dark, away from the place itself, and through all but the thickest haze
+      vA=smoothstep(.3,.8,uNight)*smoothstep(2500.,9000.,dh)*(.35+.65*exp(-dh*uFogD*.35));
+      gl_Position=projectionMatrix*viewMatrix*vec4(p,1.);
+    }`, `uniform sampler2D uNames; varying vec4 vQ; varying float vA; varying float vDn;
+    const float NROW=${n.toFixed(1)};
+    void main(){
+      if(vA<.004) discard;
+      bool home=vQ.w<.5;                              // Dublin in gold, as on the floor
+      vec3 tint=home?vec3(1.,.8,.45):vec3(.82,.93,.9);
+      float k=vQ.w*1.7;
+      vec3 c;
+      if(vQ.z<.5){
+        float d=length(vQ.xy);
+        c=tint*(exp(-d*d*9.)*.22+exp(-d*d*40.)*.25)*(.85+.15*sin(uTime*.8+k));
+      } else if(vQ.z<1.5){
+        float v=vQ.y*.5+.5;
+        float core=exp(-vQ.x*vQ.x*5.);
+        float rise=exp(-pow((v-fract(uTime*.12+k*.13))*9.,2.));   // light travelling up
+        c=tint*core*(pow(1.-v,1.6)*.32+.04+rise*.35)*smoothstep(1.,.9,v);
+      } else {
+        vec2 uv=vec2(vQ.x*.5+.5,(NROW-1.-vQ.w+vQ.y*.5+.5)/NROW);
+        float a=texture2D(uNames,uv).r;
+        c=tint*a*1.35;
+      }
+      gl_FragColor=vec4(c*vA,1.);
+    }`, { uNames: { value: tex } }, { transparent: true, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide });
+    const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 6; scene.add(mesh);
+  }
 
   // ------------------------------------------------ seabirds at the Cliffs of Moher
   {
@@ -4276,10 +4357,12 @@ function frame(now) {
   else if (welOut >= 0) { const k = (now - welOut) / 1000; wa = 1 - smooth(0, 1.8, k); if (k > 1.8) welOut = -1; }
   // The thank-you page takes the same wall at the end, as the island map there dissolves,
   // and keeps breathing while the show holds.
+  if (started && !standby) P.uOut.value.x *= 1 - smooth(T_MAPOFF, T_MAPOFF + .6, showT);
   if (started && !standby && showT >= T_THANK) {
+    // It opens a little way into its own animation, so the words write themselves while the
+    // white closes in over the floor and the harp comes back.
     if (thankT0 < 0) thankT0 = now - (showT - T_THANK) * 1000;
-    wt = (now - thankT0) / 1000; wa = smooth(0, 1.5, wt); page = thankTex;
-    P.uOut.value.x *= 1 - smooth(0, 1.4, wt);
+    wt = (now - thankT0) / 1000 + .9; wa = smooth(.9, 1.4, wt); page = thankTex;
   } else thankT0 = -1;
   P.uWelTex.value = page || welTex;
   P.uWel.value.set(wa, Math.max(0, wt), 0, 0); P.uWelK.value = (ctrl.owall | 0) % 4;
