@@ -354,7 +354,6 @@
     <button type="button" data-tab="look" aria-pressed="true">Look</button>
     <button type="button" data-tab="floor" aria-pressed="false">Floor</button>
     <button type="button" data-tab="sound" aria-pressed="false">Sound</button>
-    <button type="button" data-tab="walls" aria-pressed="false">Topic walls</button>
     <button type="button" data-tab="content" aria-pressed="false">Content</button>
   </div>
 
@@ -402,27 +401,6 @@
     <p class="hint">The music is the supplied track, played in step with the show. Each phrase of the voiceover is cued to its caption, so both stay in step through pauses, skips and scrubbing. <b>Voice timing</b> moves every phrase earlier or later together. While a phrase plays the music dips to the <b>Music under the voice</b> level. <kbd>A</kbd> mutes and unmutes all sound.</p>
   </div>
 
-  <div class="tabpane" data-pane="walls" hidden>
-    <p class="hint">Wall 2 · Right: figures on dark glass. Wall 4 · Left: contained imagery. The floor map stays clear. Figures describe an illustrative 2036 scenario.</p>
-<label style="display:block;margin:10px 0"><input type="checkbox" data-topic-toggle="panOn"> Show topic panels</label>
-<label style="display:block;margin:10px 0"><input type="checkbox" data-topic-toggle="wRight"> Enable wall 2 · Right</label>
-<label style="display:block;margin:10px 0"><input type="checkbox" data-topic-toggle="wLeft"> Enable wall 4 · Left</label>
-<label style="display:block;margin:10px 0"><input type="checkbox" data-topic-toggle="lwOn"> Show left images</label>
-<label style="display:block;margin:10px 0"><input type="checkbox" data-topic-toggle="panMedia"> Enable topic imagery</label>
-<label style="display:block;margin:10px 0"><input type="checkbox" data-topic-toggle="capOn"> Repeat topic captions on all walls</label>
-<label style="display:block;margin:10px 0"><input type="checkbox" data-topic-toggle="panFlipX"> Flip panels horizontally</label>
-<label style="display:block;margin:10px 0"><input type="checkbox" data-topic-toggle="panFlipY"> Flip panels vertically</label>
-<div class="sl"><label for="c-panSize">Right panel size</label><input id="c-panSize" type="range" min="0.25" max="0.92" step=".01"><output></output></div>
-<div class="sl"><label for="c-panY">Right panel height</label><input id="c-panY" type="range" min="0.15" max="0.85" step=".01"><output></output></div>
-<div class="sl"><label for="c-panFill">Dark glass opacity</label><input id="c-panFill" type="range" min="0" max="1" step=".01"><output></output></div>
-<div class="sl"><label for="c-panMat">Mat depth</label><input id="c-panMat" type="range" min="0" max="1" step=".01"><output></output></div>
-<div class="sl"><label for="c-panTitle">Title size</label><input id="c-panTitle" type="range" min="0" max="1" step=".01"><output></output></div>
-<div class="sl"><label for="c-panDetail">Detail size</label><input id="c-panDetail" type="range" min="0" max="1" step=".01"><output></output></div>
-<div class="sl"><label for="c-lwSize">Left image size</label><input id="c-lwSize" type="range" min="0.25" max="0.85" step=".01"><output></output></div>
-<div class="sl"><label for="c-lwY">Left image height</label><input id="c-lwY" type="range" min="0.15" max="0.85" step=".01"><output></output></div>
-<div class="sl"><label for="c-lwOp">Left image opacity</label><input id="c-lwOp" type="range" min="0" max="1" step=".01"><output></output></div>
-<div class="sl"><label for="c-lwFeather">Image edge softness</label><input id="c-lwFeather" type="range" min="0" max="0.4" step=".01"><output></output></div>
-  </div>
   <div class="tabpane" data-pane="content" hidden>
     <p class="hint">Edit what the room says. Changes apply live and are saved on this machine.</p>
     <div id="act-editor"></div>
@@ -439,7 +417,6 @@
 </aside>
 <div id="toast" class="off" role="status"></div>
 
-<script src="assets/topic-walls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 <script>
 if (!window.THREE) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
@@ -448,8 +425,6 @@ if (!window.THREE) document.write('<script src="https://cdnjs.cloudflare.com/aja
 (() => {
 'use strict';
 const T = window.THREE;
-const TopicWalls = window.IrelandTopicWalls;
-const topicAssets = new URL(".", document.querySelector('script[src$="topic-walls.js"]').src);
 const $ = (id) => document.getElementById(id);
 if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the network and reload.'; return; }
 
@@ -512,7 +487,18 @@ const ACTS = [
   { name: 'Together', t: 113 },
 ];
 
-const CAPTIONS = TopicWalls.captions.map(c => ({...c}));
+const CAPTIONS = [
+  { t0: 2,     t1: 8.2,   eb: 'Our coast',            ti: 'Where the Atlantic meets us',  sub: 'The Cliffs of Moher, County Clare' },
+  { t0: 9,     t1: 14.6,  eb: 'Our people',           ti: '5.4 million people',           sub: 'One of the youngest populations in Europe' },
+  { t0: 17,    t1: 28.5,  eb: '2026 \u2192 2036',        ti: 'The next ten years start now', sub: '' },
+  { t0: 34.5,  t1: 48,    eb: 'Energy',               ti: 'Powered by the Atlantic',      sub: 'National offshore wind targets: 5 GW by 2030, 20 GW by 2040' },
+  { t0: 52.5,  t1: 63.5,  eb: 'Sustainability',       ti: 'A cleaner, greener island',    sub: 'Emissions halved by 2030, climate neutral by 2050' },
+  { t0: 66.5,  t1: 78.5,  eb: 'Transport',            ti: 'Connected by MetroLink',       sub: 'Airport to city centre by metro, regions linked by rail' },
+  { t0: 82.5,  t1: 94.5,  eb: 'Dublin \u00b7 the capital', ti: 'A capital on the move',     sub: 'Talent, technology and trade along the Liffey' },
+  { t0: 98.5,  t1: 110.5, eb: 'Health \u00b7 HSE',        ti: 'Care for every generation',    sub: 'Sl\u00e1intecare: universal healthcare, closer to home' },
+  { t0: 114.5, t1: 126,   eb: 'Housing',              ti: 'Homes for a growing nation',   sub: 'New communities, built at pace and powered cleanly' },
+  { t0: 130,   t1: 141.5, eb: 'Ireland 2036',         ti: 'Ambition, delivered together', sub: '' },
+];
 
 // ---------------------------------------------------------------- real-world geography
 // The scene is built in real metres on a local tangent plane centred on Ireland.
@@ -2183,8 +2169,8 @@ function buildCaptions() { capTextures.forEach((t) => t.dispose()); capTextures 
 // ---------------------------------------------------------------- the welcome page
 // Shown on the feature wall before the show, while the guest comes in. Editable under
 // Controls > Content. The EY mark above it is drawn in the projection pass itself.
-const WELCOME = { eb: 'F\u00e1ilte \u00b7 Welcome', pre: 'An Taoiseach', name: 'Miche\u00e1l Martin', line: 'Welcome to Wilton Park', foot: '' };
-const THANKS = { eb: 'Go raibh maith agat', pre: 'An Taoiseach', name: 'Miche\u00e1l Martin', line: 'Thank you for your visit', foot: 'Wilton Park' };
+const WELCOME = { eb: 'F\u00e1ilte \u00b7 Welcome', pre: 'Taoiseach', name: 'Mich\u00e9al Martin', line: 'Welcome to Wilton Park', foot: '' };
+const THANKS = { eb: 'Go raibh maith agat', pre: 'Taoiseach', name: 'Mich\u00e9al Martin', line: 'Thank you for your visit', foot: 'Wilton Park' };
 let welTex = null, thankTex = null;
 // The harp, gold on the white floor: a vector trace of the emblem, drawn once at a size that
 // keeps it sharp across the whole floor, with mipmaps for smaller outputs.
@@ -2250,11 +2236,6 @@ const post = (() => {
       uA: { value: BLANK }, uB: { value: BLANK }, uHasA: { value: 0 }, uHasB: { value: 0 }, uAspA: { value: 1.7778 }, uAspB: { value: 1.7778 },
       uMix: { value: 0 }, uDrift: { value: 0 }, uZoomA: { value: 1 }, uZoomB: { value: 1 }, uSwirl: { value: 0 },
       uFuture: { value: 0 },
-      uTopic: { value: BLANK }, uTopicA: { value: 0 }, uTopicImage: { value: 0 },
-      uPanelFit: { value: new T.Vector4(.86,.5,.62,.5) },
-      uPanelLook: { value: new T.Vector4(.5,.22,1,.16) },
-      uPanelWalls: { value: new T.Vector4(1,1,1,1) },
-      uPanelFlip: { value: new T.Vector2(0,1) },
       uCap: { value: BLANK }, uCapA: { value: 0 }, uCapRev: { value: 0 },
       // Live operator controls, driven by the control panel and saved per machine.
       uMapBright: { value: 1 }, uLines: { value: 1 },
@@ -2291,8 +2272,6 @@ const post = (() => {
     },
     vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
     fragmentShader: `
-    uniform sampler2D uTopic; uniform float uTopicA; uniform float uTopicImage;
-    uniform vec4 uPanelFit; uniform vec4 uPanelLook; uniform vec4 uPanelWalls; uniform vec2 uPanelFlip;
     uniform sampler2D uWorld; uniform sampler2D uWorldF; uniform sampler2D uBloomW; uniform sampler2D uBloomF;
     uniform vec2 uWorldSize; uniform vec2 uWorldMax; uniform float uWorldUp; uniform float uWrapW; uniform float uFloorK;
     uniform float uYaw; uniform float uHead; uniform int uMode; uniform vec4 uRect; uniform vec3 uRoom; uniform float uEye; uniform vec3 uPrev;
@@ -2924,39 +2903,6 @@ const post = (() => {
           float vis=smoothstep(dd-.12,dd,rr2);
           col=mix(col,c.rgb,c.a*vis*uCapA);
           col+=GOLD*exp(-abs(rr2-dd)*60.)*step(rr2,1.1)*smoothstep(.3,.45,cu.y)*(1.-smoothstep(.6,.75,cu.y))*.14*uCapA;
-        }
-      }
-      // Physical surfaces: wall 2 (right) gets figures, wall 4 (left) gets images.
-      // The floor is excluded in every output mode. Cards stay clear of all wall seams.
-      if(!onFloor && uTopicA>0. && t>=0. && t<=1.){
-        int tk; if(abs(wb.x)/(W*.5)>=abs(wb.y)/(D*.5)) tk=wb.x>0.?1:3; else tk=wb.y<0.?0:2;
-        bool right= tk==1, left=tk==3;
-        float enabled=right?uPanelWalls.y:(left?uPanelWalls.w:0.);
-        if(enabled>0. && (right || (left && uTopicImage>0.))){
-          float size=right?uPanelFit.x:uPanelFit.z;
-          float cy=right?uPanelFit.y:uPanelFit.w;
-          // Preserve the 3:2 authored proportions even in an unusually shallow room.
-          float ph=min(H*.84,wallL*.94/1.5)*clamp(size,.25,.92);
-          float pw=ph*1.5;
-          cy=clamp(cy,ph/H*.5+.06,1.-ph/H*.5-.06);
-          vec2 uv=vec2((ws-.5)*wallL/pw+.5,(t*H-H*cy)/ph+.5);
-          if(uv.x>0. && uv.x<1. && uv.y>0. && uv.y<1.){
-            vec2 sampleUV=uv;
-            if(uPanelFlip.x>.5)sampleUV.x=1.-sampleUV.x;
-            if(uPanelFlip.y>.5)sampleUV.y=1.-sampleUV.y;
-            vec4 card=texture(uTopic,vec2((sampleUV.x+(right?0.:1.))*.5,sampleUV.y));
-            float edge=min(min(uv.x,1.-uv.x),min(uv.y,1.-uv.y));
-            float feather=smoothstep(0.,right?.035:max(.005,uPanelLook.w*.2),edge);
-            float alpha=uTopicA*enabled;
-            if(right){
-              // Only the mat is translucent. White/gold lettering keeps full contrast.
-              float glass=clamp(.36+uPanelLook.x*.48+uPanelLook.y*.2,.35,.9);
-              col=mix(col,vec3(.018,.027,.033),glass*alpha*feather);
-              col=mix(col,card.rgb,card.a*alpha*feather);
-            }else{
-              col=mix(col,card.rgb,card.a*alpha*uPanelLook.z*feather);
-            }
-          }
         }
       }
       // The top of every wall dissolves into the dark room above: world, light lines and
@@ -3681,22 +3627,12 @@ function applyTime(T, dt, wOverride) {
   P.uLock.value = world ? smooth(DISS0, DISS1, t) : 0;
   P.uLabelA.value = 1 - smooth(FIN_ROT0 - 4, FIN_ROT0 + 1, t);
 
-  const cue = TopicWalls.activeAt(T, CAPTIONS);
-  const cap = cue ? CAPTIONS.indexOf(cue) : -1;
-  const topic = TopicWalls.topicFor(cue);
-  P.uTopicA.value = 0;
-  if (topic && ctrl.panOn && wOverride === undefined) {
-    const panel = topicRenderer.get(topic, cue, ctrl);
-    P.uTopic.value = panel.texture;
-    P.uTopicA.value = TopicWalls.opacityAt(T, cue);
-    P.uTopicImage.value = panel.hasImage && ctrl.lwOn && ctrl.panMedia ? 1 : 0;
-  }
-  // Story captions remain available for the opening and closing. Topic cards replace
-  // repeated wall captions unless the operator explicitly enables those as well.
-  if (cap < 0 || (topic && !ctrl.capOn)) P.uCapA.value = 0;
+  const cap = CAPTIONS.findIndex((k) => T >= k.t0 - .1 && T <= k.t1 + 1.2);
+  if (cap < 0) P.uCapA.value = 0;
   else {
-    P.uCap.value = capTextures[cap]; P.uCapRev.value = smooth(cue.t0, cue.t0 + .6, T);
-    P.uCapA.value = TopicWalls.opacityAt(T, cue);
+    const k = CAPTIONS[cap];
+    P.uCap.value = capTextures[cap]; P.uCapRev.value = smooth(k.t0, k.t0 + 1.6, T);
+    P.uCapA.value = 1 - smooth(k.t1, k.t1 + 1.1, T);
   }
   P.uFlash.value = wOverride !== undefined ? 0 : (T < T_CUT ? smooth(T_CUT - .35, T_CUT, T) : Math.exp(-(T - T_CUT) / .45));
   // ---- the outro
@@ -3709,8 +3645,6 @@ function applyTime(T, dt, wOverride) {
   P.uFade.value = blackout ? 0 : 1;           // the show ends held on the thank-you page, not in black
 }
 function needsWorld() { const u = post.material.uniforms; return u.uHasA.value < .5 || (u.uMix.value < .999 && u.uHasB.value < .5); }
-const topicRenderer = TopicWalls.createRenderer(T, topicAssets);
-topicRenderer.load().catch(e => console.warn('Topic imagery could not load', e));
 // ---------------------------------------------------------------- footage library (assets + db)
 const media = {}; // sceneId -> {tex, asp, kind, video, url, name}
 function syncVideos(t, live) {
@@ -3824,16 +3758,14 @@ const VOICE_CUES = [
   [ 66.0,  81.90,  96.25],  // MetroLink... the airport to the city centre... rail...
   [ 82.0,  96.25, 109.48],  // And here in Dublin, a capital on the move...
   [ 98.6,   0.00,  11.00, 'health'],          // new line, played when its file is present
-  [108.0, 0, 9, 'housing'],             // updated short reading, optional
-  [118.0, 0, 10, 'education'],          // new topic reading, optional
-  [129.0, 0, 10, 'defence'],            // new topic reading, optional
-  [140.0, 0, 11.5, 'closing'],         // updated looking-back closing, optional
+  [113.8, 109.48, 123.64],  // Homes for a growing nation...
+  [129.3, 123.64, 137.00],  // Ireland 2036 is not just a projection...
   [157.0, 137.00, 138.00],  // Thank you.
 ];
 const VOICE_FILES = { female: 'voice-female.mp3' };
 // New lines recorded in the same voice for the chapters the first reading does not cover. Each
 // is optional: drop the file into assets/voice and it plays on its cue.
-const VOICE_EXTRA = { sustainability: 'voice-sustainability.mp3', health: 'voice-health.mp3', housing: 'voice-housing-2036.mp3', education: 'voice-education-2036.mp3', defence: 'voice-defence-2036.mp3', closing: 'voice-closing-2036.mp3' };
+const VOICE_EXTRA = { sustainability: 'voice-sustainability.mp3', health: 'voice-health.mp3' };
 // The page runs from igloo/ and from the repository root, so the voice is looked for beside
 // it first and then in the igloo folder.
 const VOICE_DIRS = ['assets/voice/', 'igloo/assets/voice/'];
@@ -4230,10 +4162,16 @@ addEventListener('resize', resize);
 // Everything an operator needs to fit this show to a specific room and taste, live,
 // without touching the file. Settings persist per machine; content edits persist too
 // and can be exported as JSON so a tuned show can be moved to the venue PC.
-const CTRL_DEFAULTS = Object.assign({}, TopicWalls.defaults);
+const CTRL_DEFAULTS = {
+  fmapb: 1, lines: 1, grade: .45, warm: .35, nlight: .55, land: 1,
+  inset: 0, fscale: 1, tiltx: 0, tilty: 0, dscale: 1, dx: 0, dy: 0,
+  vol: .9,
+  voice: 'female', vvol: 1, duck: .4, voff: 0,
+  owall: 1, cv: 2,
+};
 const ctrl = Object.assign({}, CTRL_DEFAULTS);
 try {
-  const saved = JSON.parse(localStorage.getItem('ire2036-ctrl-topic-walls-v1') || '{}');
+  const saved = JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}');
   // Settings saved before the female reading became the default take it up once.
   if (saved.cv !== CTRL_DEFAULTS.cv) { delete saved.voice; saved.cv = CTRL_DEFAULTS.cv; }
   if (saved.voice && saved.voice !== 'off') saved.voice = 'female';   // there is one voice
@@ -4242,10 +4180,6 @@ try {
 
 function applyCtrl() {
   const P = post.material.uniforms;
-  P.uPanelFit.value.set(ctrl.panSize,ctrl.panY,ctrl.lwSize,ctrl.lwY);
-  P.uPanelLook.value.set(ctrl.panFill,ctrl.panMat,ctrl.lwOp,ctrl.lwFeather);
-  P.uPanelWalls.value.set(ctrl.wFront,ctrl.wRight,ctrl.wBack,ctrl.wLeft);
-  P.uPanelFlip.value.set(ctrl.panFlipX,ctrl.panFlipY);
   P.uMapBright.value = ctrl.fmapb;
   P.uLines.value = ctrl.lines;
   P.uGradeAmt.value = ctrl.grade;
@@ -4262,12 +4196,10 @@ function applyCtrl() {
   audio.setVoice(ctrl.voice);
   document.querySelectorAll('#voice-seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.voice === audio.voice)));
   document.querySelectorAll('#owall-seg button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.w === (ctrl.owall | 0))));
-  try { localStorage.setItem('ire2036-ctrl-topic-walls-v1', JSON.stringify(ctrl)); } catch (e) {}
+  try { localStorage.setItem('ire2036-ctrl', JSON.stringify(ctrl)); } catch (e) {}
 }
 
 const SLIDERS = [
-  ['c-panSize','panSize'],['c-panY','panY'],['c-panFill','panFill'],['c-panMat','panMat'],
-  ['c-panTitle','panTitle'],['c-panDetail','panDetail'],['c-lwSize','lwSize'],['c-lwY','lwY'],['c-lwOp','lwOp'],['c-lwFeather','lwFeather'],
   ['c-mapb', 'fmapb'], ['c-mapd', 'lines'], ['c-grade', 'grade'], ['c-warm', 'warm'],
   ['c-nlight', 'nlight'], ['c-land', 'land'],
   ['c-inset', 'inset'], ['c-fscale', 'fscale'], ['c-tiltx', 'tiltx'], ['c-tilty', 'tilty'],
@@ -4277,7 +4209,6 @@ const SLIDERS = [
 const fillRange = (el) => el.style.setProperty('--p', ((+el.value - +el.min) / ((+el.max - +el.min) || 1) * 100).toFixed(2) + '%');
 const outFor = (el) => (el && el.parentElement) ? el.parentElement.querySelector('output') : null;
 function syncSliders() {
-  document.querySelectorAll('[data-topic-toggle]').forEach(el=>{el.checked=!!ctrl[el.dataset.topicToggle];});
   SLIDERS.forEach(([id, key]) => {
     const el = $(id); if (!el) return;
     el.value = String(ctrl[key]); fillRange(el);
@@ -4299,11 +4230,11 @@ SLIDERS.forEach(([id, key]) => {
 // The acts, their captions and their timings, editable live. CAPTIONS is rebuilt in
 // place so the running show picks up an edit on the next frame.
 // Versioned: captions saved for an earlier running order must not overwrite this one.
-const CONTENT_KEY = 'ire2036-content-topic-walls-v1';
+const CONTENT_KEY = 'ire2036-content-v3';
 function contentSnapshot() {
   return {
     acts: ACTS.map((a) => ({ name: a.name, t: a.t })),
-    captions: CAPTIONS.map((c) => ({ id: c.id, t0: c.t0, t1: c.t1, eb: c.eb, ti: c.ti, sub: c.sub })),
+    captions: CAPTIONS.map((c) => ({ t0: c.t0, t1: c.t1, eb: c.eb, ti: c.ti, sub: c.sub })),
     welcome: Object.assign({}, WELCOME),
     thanks: Object.assign({}, THANKS),
   };
@@ -4313,20 +4244,14 @@ function applyContent(data, rebuild = true) {
   if (Array.isArray(data.acts)) data.acts.forEach((a, i) => { if (ACTS[i]) { ACTS[i].name = String(a.name ?? ACTS[i].name); ACTS[i].t = clamp(+a.t || 0, 0, DURATION - 1); } });
   if (data.welcome && typeof data.welcome === 'object') Object.keys(WELCOME).forEach((k) => { if (data.welcome[k] != null) WELCOME[k] = String(data.welcome[k]); });
   if (data.thanks && typeof data.thanks === 'object') Object.keys(THANKS).forEach((k) => { if (data.thanks[k] != null) THANKS[k] = String(data.thanks[k]); });
-  if (Array.isArray(data.captions) && data.captions.length) {
-    const incoming = data.captions.slice(0,64).map(c => {
-      const t0 = clamp(Number(c.t0) || 0, 0, DURATION-1);
-      const item = { t0, t1: clamp(Number(c.t1) || t0+1,t0+1,DURATION),
-        eb:String(c.eb || ''),ti:String(c.ti || ''),sub:String(c.sub || '') };
-      const topic = TopicWalls.topicFor({...item,id:c.id});
-      if(topic)item.id=topic.id;
-      return item;
-    });
-    // Trim older overlapping cues at the next cue, without dropping any topic.
-    incoming.sort((a,b)=>a.t0-b.t0);
-    incoming.forEach((c,i)=>{if(incoming[i+1])c.t1=Math.min(c.t1,incoming[i+1].t0);});
-    CAPTIONS.splice(0,CAPTIONS.length,...incoming);
-  }
+  if (Array.isArray(data.captions)) data.captions.forEach((c, i) => {
+    if (!CAPTIONS[i]) return;
+    CAPTIONS[i].eb = String(c.eb ?? CAPTIONS[i].eb);
+    CAPTIONS[i].ti = String(c.ti ?? CAPTIONS[i].ti);
+    CAPTIONS[i].sub = String(c.sub ?? CAPTIONS[i].sub);
+    CAPTIONS[i].t0 = clamp(+c.t0 || 0, 0, DURATION);
+    CAPTIONS[i].t1 = clamp(+c.t1 || 0, CAPTIONS[i].t0 + 1, DURATION);
+  });
   ACTS.forEach((a, i) => { const el = $('act-' + i); if (el) el.querySelector('span').textContent = a.name; });
   layoutActs();
   if (rebuild) buildCaptions();
@@ -4423,9 +4348,6 @@ document.querySelectorAll('#voice-seg button').forEach((b) => b.addEventListener
 }));
 document.querySelectorAll('#owall-seg button').forEach((b) => b.addEventListener('click', () => {
   ctrl.owall = +b.dataset.w; applyCtrl(); toast('Feature wall: wall ' + (ctrl.owall + 1));
-}));
-document.querySelectorAll('[data-topic-toggle]').forEach(el=>el.addEventListener('change',()=>{
-  ctrl[el.dataset.topicToggle]=el.checked?1:0;applyCtrl();
 }));
 applyCtrl();
 syncSliders();
@@ -4524,9 +4446,6 @@ function updateHud() {
 function startLoop() { if (startLoop.on) return; startLoop.on = true; requestAnimationFrame(frame); }
 window.__ireland = { seek: (t) => { started = true; seek(t); camSmooth.ready = false; }, pause: () => setPlaying(false), mode: setMode, media: loadMedia,
   look: (yaw, pitch) => { look.yaw = look.ty = yaw; look.pitch = look.tp = pitch; }, scale: (v) => { RS.manual = v || 0; RS.scale = v || 1; }, rs: RS, gov, audio,
-  topics: { state: () => ({controls:{...ctrl},content:contentSnapshot(),active:TopicWalls.activeAt(showT,CAPTIONS)}),
-    configure: values => {Object.assign(ctrl,values);applyCtrl();syncSliders();},
-    import: data => {applyContent(data);buildEditor();} },
   welcome: (age = 0, now = performance.now()) => { enterWelcome(); welT0 = now - age * 1000; }, begin: () => begin(), state: () => ({ standby, playing, showT }) };
 
 let savedMode = 0; try { savedMode = +(localStorage.getItem('ire2036-mode') || 0) || 0; } catch (e) {}
@@ -4537,7 +4456,7 @@ const fontsReady = document.fonts && document.fonts.load
       '400 100px "Serif Local"', '600 40px "Plex Local"', '500 40px "Plex Local"', '400 56px "Plex Local"'].map((f) => document.fonts.load(f).catch(() => {}))).catch(() => {})
   : Promise.resolve();
 buildCaptions(); buildFloorText();
-Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]).then(() => { buildCaptions(); buildFloorText(); topicRenderer.invalidate(); });
+Promise.race([fontsReady, new Promise((r) => setTimeout(r, 2500))]).then(() => { buildCaptions(); buildFloorText(); });
 keepAwake();
 
 // ---------------------------------------------------------------- bring the real world in
