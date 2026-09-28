@@ -1967,9 +1967,17 @@ const post = (() => {
     // The directional halo is circular and continuous at cubemap boundaries.
     vec3 bloomAt(vec3 d){
       vec3 t1=normalize(cross(d,abs(d.y)<.95?vec3(0.,1.,0.):vec3(1.,0.,0.))), t2=cross(d,t1);
-      float a=1.5708/uBrightPx*16.;
-      vec3 c=textureLod(uBright,d,1.).rgb*.44+textureLod(uBright,d,2.5).rgb*.30;
-      for(int k=0;k<6;k++){ float an=float(k)*1.04719755; c+=textureLod(uBright,normalize(d+(t1*cos(an)+t2*sin(an))*a),4.).rgb*.0433333; }
+      float px=1.5708/uBrightPx;
+      vec3 c=vec3(0.);
+      // Two rotated rings filter the coarse bright pass without exposing its
+      // square texels as a blown-out solar halo at lower adaptive resolutions.
+      for(int k=0;k<8;k++){
+        float outer=step(4.,float(k));
+        float an=mod(float(k),4.)*1.5707963+(1.-outer)*.7853982;
+        float radius=px*mix(1.5,4.,outer);
+        vec3 tap=normalize(d+(t1*cos(an)+t2*sin(an))*radius);
+        c+=textureLod(uBright,tap,mix(1.,2.5,outer)).rgb*mix(.17,.08,outer);
+      }
       return c;
     }
     // A line of light: an antialiased core of width w (never thinner than a pixel, with its
@@ -3264,6 +3272,7 @@ syncSliders();
 // Narration is loaded once; only the selected voice is scheduled on the audio clock.
 let lastVoiceUI=0, lastNarrator=voice.settings.voice==='off'?'female':voice.settings.voice;
 function syncVoiceControls(){
+  sceneDirty=true;
   const v=voice.settings;
   if(v.voice!=='off')lastNarrator=v.voice;
   document.querySelectorAll('[data-voice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.voice===v.voice)));
@@ -3294,7 +3303,7 @@ document.querySelectorAll('[data-voice]').forEach(b=>b.addEventListener('click',
 $('v-duck').addEventListener('change',()=>{voice.configure({duck:$('v-duck').checked});syncVoiceControls();});
 $('voice-reset').addEventListener('click',()=>{voice.configure(window.IrelandNarration.DEFAULTS);syncVoiceControls();});
 $('voice-retry').addEventListener('click',()=>{voice.unlock();voice.prepare().then(syncVoiceControls);syncVoiceControls();});
-$('b-voice').addEventListener('click',()=>{closePanels();$('control').hidden=false;document.querySelector('[data-tab="sound"]').click();poke();});
+$('b-voice').addEventListener('click',()=>{closePanels();$('control').hidden=false;sceneDirty=true;document.querySelector('[data-tab="sound"]').click();poke();});
 voice.prepare().then(syncVoiceControls);syncVoiceControls();
 
 const panelIds=['media','control','chapters'];

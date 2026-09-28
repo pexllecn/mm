@@ -37,6 +37,7 @@ const server=http.createServer((req,res)=>{
     assert.equal(await page.locator('#start').isEnabled(),true,await page.locator('#load-note').textContent());
     await page.waitForFunction(()=>window.__ireland.metrics().narration.ready,{},{timeout:30000});
     await page.screenshot({path:path.join(out,'01-gate.png')});
+    console.log('PASS: production shader warm-up and narration decoding');
     await page.getByRole('button',{name:'Enter the experience'}).click();
     await page.waitForFunction(()=>window.__ireland.metrics().renderedFrames>2);
     await page.getByRole('button',{name:'Pause the journey'}).click();
@@ -67,6 +68,8 @@ const server=http.createServer((req,res)=>{
     assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).speaking,false);
     await page.locator('#v-offset').evaluate(el=>{el.value='.5';el.dispatchEvent(new Event('input',{bubbles:true}));});
     assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).settings.offset,.5);
+    console.log('PASS: male/female playback, seek, pause, ducking and offset');
+    await page.waitForTimeout(250);
     await page.screenshot({path:path.join(out,'06-voice-controls.png')});
     await page.locator('[data-pane="sound"] [data-voice="off"]').click();
     assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).voice,'off');
