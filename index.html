@@ -3773,6 +3773,9 @@ const VOICE_DIRS = ['assets/voice/', 'igloo/assets/voice/'];
 const audio = (() => {
   let ctx = null, master = null, sess = null, on = false;
   let a0 = 0, s0 = 0, anchored = false;
+  // The music starts with the welcome page and carries straight on into the show: mOff is how
+  // far into the track the show's first second falls; w0 when the welcome's music began.
+  let mOff = 0, w0 = 0, welS = false;
   const settings = { master: .9, voice: 1, duck: .4, voiceOffset: 0 };
   // ---- voice state
   let voiceOut = null, vsess = null, voiceSel = 'off', voiceDirty = false;
@@ -3888,12 +3891,15 @@ const audio = (() => {
   // A session is one stretch of uninterrupted playing.
   function newSession(t, when) {
     endSession();
-    if (!musicBuf || t + MUSIC_LEAD >= musicBuf.duration) return;
+    if (!musicBuf) return;
     const g = ctx.createGain(), src = ctx.createBufferSource();
     src.buffer = musicBuf;
+    // It loops (past its opening silence), so however long the welcome runs it never runs out.
+    src.loop = true; src.loopStart = MUSIC_LEAD; src.loopEnd = musicBuf.duration;
+    const span = musicBuf.duration - MUSIC_LEAD, at = MUSIC_LEAD + (((t + mOff) % span) + span) % span;
     g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(1, when + (t > .05 ? .25 : .02));
     src.connect(g); g.connect(master);
-    src.start(when, t + MUSIC_LEAD);
+    src.start(when, at);
     sess = { g, src };
   }
   function endSession() {
@@ -3908,6 +3914,8 @@ const audio = (() => {
   return {
     get on() { return on; },
     get musicReady() { return !!musicBuf; },
+    // Where the track is now, in seconds from the start of the music, or -1 if it is not playing.
+    get musicAt() { return sess && ctx ? (welS ? ctx.currentTime - w0 : ctx.currentTime - a0 + s0 + mOff) : -1; },
     get voice() { return voiceSel; },
     settings,
     setLevel(k, v) { if (k === 'voiceOffset' && v !== settings[k]) voiceDirty = true; settings[k] = v; },
@@ -3931,9 +3939,24 @@ const audio = (() => {
       return on;
     },
     // Keep the music where the show clock is; fade in and out with play and pause.
-    update(t, playing, ended) {
+    update(t, playing, ended, standby) {
       if (!ctx) return;
       const now = ctx.currentTime;
+      // The welcome page: the music starts from the top, at the opening's quieter level.
+      if (standby) {
+        const liveW = on && ctx.state === 'running';
+        master.gain.setTargetAtTime(liveW ? settings.master * MUSIC_TRIM * INTRO_MUSIC : 0, now, liveW ? .5 : .15);
+        voiceOut.gain.setTargetAtTime(0, now, .08);
+        if (!liveW) { if (welS) { endSession(); welS = false; } anchored = false; return; }
+        if (!welS || !sess) { endVoice(); mOff = 0; w0 = now + .03; newSession(0, w0); welS = !!sess; anchored = false; }
+        return;
+      }
+      // The show has just begun from the welcome: the music plays on where it is.
+      if (welS) {
+        welS = false;
+        if (sess && on && playing) { mOff = now - w0 - t; anchored = true; a0 = now; s0 = t; startVoice(t); }
+        else { endSession(); mOff = 0; }
+      }
       // At the end the show holds on the thank-you page; the track plays on and fades away.
       if (ended && anchored) { master.gain.setTargetAtTime(0, now, 2.2); voiceOut.gain.setTargetAtTime(0, now, 3); return; }
       const live = on && playing && ctx.state === 'running';
@@ -4392,7 +4415,7 @@ function frame(now) {
   renderer.render(post.scene, post.cam);
   gpuEnd(q);
   governor(now, interval);
-  audio.update(showT, playing && started, ended);
+  audio.update(showT, playing && started, ended, standby);
   updateHud(now);
   fpsAcc += interval / 1000; fpsN++;
   if (fpsAcc > 1) {
