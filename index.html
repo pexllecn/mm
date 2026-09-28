@@ -438,7 +438,8 @@ if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the netwo
 const DURATION = 162, W_END = 192;
 // T_THANK: the thank-you page and the harp's return begin together. Half a second before,
 // the island map on the wall has finished giving way (T_MAPOFF).
-const T_CUT = 16.0, T_THANK = 153.4, T_MAPOFF = T_THANK - 1.1;
+// (World = show + 36 s here: T_THANK is OUT_HARP on the show clock.)
+const T_CUT = 16.0, T_THANK = 152.1, T_MAPOFF = T_THANK - 1.1;
 const WARP = [[T_CUT, 74.5], [33.4, 92], [65, 110], [81, 126], [97, 142], [113, 150], [128, 164], [142, 178], [156, 192]];
 function worldAt(T) {
   if (T < T_CUT) return T;
@@ -450,10 +451,17 @@ const T_YEARS = 130;
 const dialAt = (T) => (T < T_CUT ? 0 : clamp((T - T_CUT) / (T_YEARS - T_CUT), 0, 1) * 166);
 // The outro, after the finale, on the world clock: the map lifts off the floor and folds onto
 // a wall (OUT_MAP0 to OUT_MAP1), then the opening plays backwards, the world sinking into the
-// floor and the ring drawing itself away (OUT_REV0 to OUT_END), leaving the island on the
+// floor and the ring drawing itself away (from OUT_REV0), leaving the island on the
 // wall, which then gives way to the thank-you page.
-const OUT_SHOW = 177.6, OUT_MAP0 = 179.4, OUT_MAP1 = 185, OUT_REV0 = 185, OUT_END = 191;
-const introAt = (t) => (t < OUT_REV0 ? t : Math.max(0, OUT_END - t));
+// The reverse starts as the map lands, picking the opening up where it last had something
+// moving (OUT_IT0), and draws the world away slowly while the map holds on the wall; from
+// the harp's return (OUT_HARP, the thank-you page) it runs at the opening's own pace.
+const OUT_SHOW = 177.6, OUT_MAP0 = 179.4, OUT_MAP1 = 185, OUT_REV0 = 185.2, OUT_IT0 = 3.2, OUT_HARP = 188.1;
+const introAt = (t) => {
+  if (t < OUT_REV0) return t;
+  if (t < OUT_HARP) return lerp(OUT_IT0, 1.5, (t - OUT_REV0) / (OUT_HARP - OUT_REV0));
+  return Math.max(0, 1.5 - (t - OUT_HARP));
+};
 // The dial reaches 2036 here, the moment the finale begins, not on the last frame.
 const YEAR_END = 166;
 // Each scene is a stock clip wrapped around the room. `want` is what the clip should show.
@@ -2073,7 +2081,7 @@ function buildWorld() {
       vec3 p=b;
       if(aQ.z<.5){ p+=vec3(aQ.x,0.,aQ.y)*5200.; p.y+=8.; }
       else if(aQ.z<1.5){
-        float w=max(22.,dh*1.4/uPx);                 // a thread, never under a pixel and a half
+        float w=max(60.,dh*4./uPx);                  // a soft column, never under a few pixels, so it cannot shimmer
         p+=vec3(r.x,0.,r.y)*aQ.x*w; p.y+=(aQ.y*.5+.5)*lift;
       } else {
         vec3 top=b+vec3(0.,lift,0.); float d3=length(top-uCam);
@@ -2090,16 +2098,16 @@ function buildWorld() {
       if(vA<.004) discard;
       bool home=vQ.w<.5;                              // Dublin in gold, as on the floor
       vec3 tint=home?vec3(1.,.8,.45):vec3(.82,.93,.9);
-      float k=vQ.w*1.7;
       vec3 c;
       if(vQ.z<.5){
         float d=length(vQ.xy);
-        c=tint*(exp(-d*d*9.)*.22+exp(-d*d*40.)*.25)*(.85+.15*sin(uTime*.8+k));
+        c=tint*(exp(-d*d*6.)*.2+exp(-d*d*30.)*.18);   // steady: the town's own light on the ground
       } else if(vQ.z<1.5){
         float v=vQ.y*.5+.5;
-        float core=exp(-vQ.x*vQ.x*5.);
-        float rise=exp(-pow((v-fract(uTime*.12+k*.13))*9.,2.));   // light travelling up
-        c=tint*core*(pow(1.-v,1.6)*.32+.04+rise*.35)*smoothstep(1.,.9,v);
+        // Light from the ground scattering up through the air: brightest at the foot, fading
+        // with height, soft across its width. Steady, with no pulse, so nothing flickers.
+        float core=exp(-vQ.x*vQ.x*3.2);
+        c=tint*core*(pow(1.-v,2.2)*.3+.025)*smoothstep(1.,.85,v);
       } else {
         vec2 uv=vec2(vQ.x*.5+.5,(NROW-1.-vQ.w+vQ.y*.5+.5)/NROW);
         float a=texture2D(uNames,uv).r;
@@ -2260,7 +2268,7 @@ const post = (() => {
       // The harp on a white floor: x strength, y seconds; uHarpUp: toward the feature wall.
       uHarp: { value: new T.Vector2(0, 0) }, uHarpUp: { value: new T.Vector2(1, 0) }, uHarpTex: { value: BLANK },
       // 1 while the opening's light lines run: they come down the walls rather than going up.
-      uLineDn: { value: 0 },
+      uLineDn: { value: 0 }, uLineK: { value: 1 },   // uLineK: the opening's pulses fade in as the outro picks them up
     },
     vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
     fragmentShader: `
@@ -2286,7 +2294,7 @@ const post = (() => {
     uniform vec2 uWaveO; uniform float uWaveR; uniform float uIntro;
     uniform vec4 uOut; uniform vec2 uOutC0; uniform vec2 uOutC1; uniform int uOutK; uniform vec2 uMapC0;
     uniform vec4 uWel; uniform int uWelK; uniform sampler2D uWelTex;
-    uniform vec2 uHarp; uniform vec2 uHarpUp; uniform sampler2D uHarpTex; uniform float uLineDn;
+    uniform vec2 uHarp; uniform vec2 uHarpUp; uniform sampler2D uHarpTex; uniform float uLineDn; uniform float uLineK;
     // Signed distance to a polygon (after Inigo Quilez): negative inside.
     float sdPoly(vec2 p, vec2 v[12], int n){
       float d=dot(p-v[0],p-v[0]), s=1.;
@@ -2560,21 +2568,22 @@ const post = (() => {
 
       // ---- the opening: the room assembles itself out of light
       float it=uIntro;
-      float ringDraw=smoothstep(.35,1.9,it), dialA=smoothstep(1.2,2.4,it), mapA=smoothstep(.9,3.4,it);
+      float ringDraw=smoothstep(.3,1.6,it), dialA=smoothstep(1.,2.,it), mapA=smoothstep(.9,3.4,it);
       // The world comes down the walls from the top, the way the land falls away beneath a
       // climbing aircraft: we are going up.
-      float rev=H-(it-2.15)*2.6;                     // how far down the walls the world has come
+      float rev=H*.72-(it-1.3)*2.6;                  // how far down the walls the world has come,
+      // starting where the wall is already lit (the top third fades to the dark above)
       float hWc=min(hW,H);
       float ringM=RING/1024.*S;                      // ring radius in metres
-      float revF=ringM+(it-1.9)*2.4;                 // how far it has spread across the floor
-      float worldA=onFloor?step(1.9,it)*smoothstep(-.15,.15,revF-length(qDial-uDialOff)):smoothstep(-.35,0.,hWc-rev)*step(2.15,it);
+      float revF=ringM+(it-1.45)*2.2;                // how far it has spread across the floor
+      float worldA=onFloor?step(1.45,it)*smoothstep(-.15,.15,revF-length(qDial-uDialOff)):smoothstep(-.35,0.,hWc-rev)*step(1.3,it);
       col*=worldA;
       // The outro lifts the island off the floor: the floor's own picture (the real island seen
       // straight down, which the map dissolved into) fades as the map rises, so nothing of it
       // is left behind. The ring and the light lines stay, to draw themselves away later.
       if(onFloor) col*=1.-uOut.x;
       vec3 add=vec3(0.);                             // light added over everything, display space
-      if(it<7.) add+=GOLD*exp(-abs(onFloor?revF-length(qDial-uDialOff):rev-hWc)/.035)*step(0.,it-1.9)*(1.-smoothstep(3.6,5.5,it))*.45*(onFloor?step(ringM,length(qDial-uDialOff)):step(2.15,it))*uLines;
+      if(it<7.) add+=GOLD*exp(-abs(onFloor?revF-length(qDial-uDialOff):rev-hWc)/.035)*step(0.,it-1.3)*(1.-smoothstep(3.,4.5,it))*.45*(onFloor?step(ringM,length(qDial-uDialOff)):step(1.3,it))*uLines;
 
       // ---- the floor: live world beyond the ring, the island inside it
       if(onFloor){
@@ -2690,17 +2699,17 @@ const post = (() => {
       vec3 L=vec3(0.);
       // the cove line along the join, with a halo up the wall and out across the floor
       float cove=beam(seam,.010,pxR,.07)*step(0.,seam);
-      float coveOn=smoothstep(2.1,2.9,it);
+      float coveOn=smoothstep(1.45,2.3,it);
       // splashes that run round the room from wherever a pulse lands on the join
       float splash=0.;
       for(int k=0;k<11;k++){
         vec4 A=uMerA[k], B=uMerB[k];
         float tau=B.z; if(tau<0.) continue;
-        float hit=(uLineDn>.5?H:B.y)/2.4;            // pulses run at 2.4 m/s
+        float hit=(uLineDn>.5?H*.7:B.y)/2.4;         // pulses run at 2.4 m/s
         float s2=tau-hit;
         if(s2>0.&&s2<3.) splash+=exp(-abs(wrapP(PF-B.x))/(.25+s2*2.6))*exp(-s2/.9);
       }
-      L+=uCove*cove*(.5*coveOn+splash*1.3+.4*uWel.x*(.75+.25*sin(uWel.y*.9)));
+      L+=uCove*cove*(.5*coveOn+splash*1.3*uLineK+.4*uWel.x*(.75+.25*sin(uWel.y*.9)));
       // the year lines: from each year's mark on the ring straight out to the wall, then up it
       for(int k=0;k<11;k++){
         vec4 A=uMerA[k], B=uMerB[k];
@@ -2711,7 +2720,7 @@ const post = (() => {
           dl=length(q-(A.xy+dir*s)); al=s;
           if(dot(q-A.xy,dir)<0.) dl=1e3;
         } else { dl=abs(wrapP(P-B.x)); al=B.y+hW; }
-        if(uLineDn>.5) al=B.y+H-al;                  // the opening: from the top of the wall, down, then in to the ring
+        if(uLineDn>.5) al=B.y+H*.7-al;               // the opening: from high on the wall, down, then in to the ring
         if(dl>.6) continue;
         float fade=onFloor?1.:exp(-hW/.7);
         float base=B.w*.08+.025;                     // a faint rule, gold once the year is reached
@@ -2720,11 +2729,11 @@ const post = (() => {
         float tau=B.z;
         if(tau>=0.){
           float head=tau*2.4;
-          float top=B.y+H;
+          float top=B.y+(uLineDn>.5?H*.7:H);
           float live=1.-smoothstep(top,top+1.2,head);
           float trail=step(al,head)*exp(-(head-al)/.45);
           float hd=exp(-pow((al-head)/.09,2.));
-          L+=vec3(1.,.9,.7)*(beam(dl,.010,pxR,.035)*(trail*1.1+hd*2.4)+exp(-dl/.06)*hd*.35)*live;
+          L+=vec3(1.,.9,.7)*(beam(dl,.010,pxR,.035)*(trail*1.1+hd*2.4)+exp(-dl/.06)*hd*.35)*live*uLineK;
         }
       }
       // Caption stems: before words appear on a wall, a line of light leaves the ring,
@@ -3576,14 +3585,15 @@ function applyTime(T, dt, wOverride) {
 
   // ---- light lines: year pulses, caption stems, the 2036 wave, the cove line
   updateSeamGeo();
-  { const it = introAt(t); P.uLineDn.value = (t < 7 && t >= 1.9) || (t >= OUT_REV0 && it >= 1.9 && it < 7) ? 1 : 0; }
+  { const it = introAt(t); P.uLineDn.value = (t < 7 && t >= 1.3) || (t >= OUT_REV0 && it >= 1.3 && it < 7) ? 1 : 0;
+    P.uLineK.value = t >= OUT_REV0 ? smooth(OUT_REV0, OUT_REV0 + 1.2, t) : 1; }
   for (let k = 0; k <= 10; k++) {
     const Tk = k * YEAR_END / 10;
     let tau = -1;
-    if (t < 7 && t >= 1.9) tau = t - 1.9;                       // the opening: every line at once
+    if (t < 7 && t >= 1.3) tau = t - 1.3;                       // the opening: every line at once
     if (k >= 1 && dT >= Tk && T - T_CUT >= 0 && dT - Tk < 4.5 * 166 / (T_YEARS - T_CUT)) tau = (dT - Tk) * (T_YEARS - T_CUT) / 166; // a year arrives
     if (dT >= YEAR_END && T - T_YEARS < 4.5) tau = T - T_YEARS;  // 2036: every line again
-    { const it = introAt(t); if (t >= OUT_REV0 && it >= 1.9 && it < 7) tau = it - 1.9; } // the outro: every line runs home
+    { const it = introAt(t); if (t >= OUT_REV0 && it >= 1.3 && it < 7) tau = it - 1.3; } // the outro: every line runs home
     P.uMerB.value[k].z = tau;
     P.uMerB.value[k].w = dT >= Tk ? 1 : 0;
   }
@@ -3853,7 +3863,7 @@ const audio = (() => {
   // position. It is mastered loud, so it is trimmed to sit under the voice. It is decoded
   // ahead of time, like the voice, and a seek or pause fades the old playback and starts it
   // again at the new position.
-  const MUSIC_TRIM = .45;
+  const MUSIC_TRIM = .45, INTRO_MUSIC = .45;
   let musicBuf = null, musicLoading = null;
   function loadMusic() {
     if (musicBuf || musicLoading) return;
@@ -3927,7 +3937,10 @@ const audio = (() => {
       // ahead of each phrase, to the "music under the voice" level, rising again after it.
       const withVoice = voiceSel !== 'off' && !!voiceBuf[voiceSel];
       const duck = !withVoice ? 1 : speaking(t) ? settings.duck : Math.min(1, .8, settings.duck + .4);
-      master.gain.setTargetAtTime(live ? settings.master * MUSIC_TRIM * duck : 0, now, live ? .22 : .15);
+      // The opening, the Cliffs and our people, is quieter; the music lifts with the flash on
+      // "...start right now".
+      const intro = lerp(INTRO_MUSIC, 1, smooth(T_CUT - .3, T_CUT + 1.5, t));
+      master.gain.setTargetAtTime(live ? settings.master * MUSIC_TRIM * duck * intro : 0, now, live ? .22 : .15);
       voiceOut.gain.setTargetAtTime(live ? settings.voice : 0, now, live ? .05 : .08);
       if (!live) { if (anchored) { endSession(); endVoice(); anchored = false; } return; }
       // Re-sync only on a real jump (a seek, a stall): restarting a recorded track is audible.
