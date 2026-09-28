@@ -1,0 +1,36 @@
+name: Align narration source
+on:
+  push:
+    branches: [codex-cinematic-60fps]
+    paths: ['igloo/assets/audio/*.mp3', '.github/workflows/narration-alignment.yml']
+permissions:
+  contents: read
+jobs:
+  transcribe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install faster-whisper==1.2.0
+      - name: Extract speech timestamps for chapter alignment
+        run: |
+          python - <<'PYTHON'
+          import json, pathlib
+          from faster_whisper import WhisperModel
+          model = WhisperModel('small.en', device='cpu', compute_type='int8', cpu_threads=4)
+          out = pathlib.Path('alignment'); out.mkdir()
+          for name in ['female','male']:
+              segments, info = model.transcribe('igloo/assets/audio/narration-'+name+'.mp3', language='en', word_timestamps=True, vad_filter=True, beam_size=5)
+              rows = []
+              for s in segments:
+                  rows.append(dict(start=s.start, end=s.end, text=s.text, words=[dict(start=w.start, end=w.end, word=w.word) for w in s.words]))
+                  print(name, s.start, s.end, s.text, flush=True)
+              (out/(name+'.json')).write_text(json.dumps(rows, indent=2))
+          PYTHON
+      - uses: actions/upload-artifact@v4
+        with:
+          name: narration-alignment
+          path: alignment/
