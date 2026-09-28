@@ -398,7 +398,7 @@
     <p class="hint" id="voice-note" role="status"></p>
     <div class="subhead">Music</div>
     <div class="sl"><label for="c-vol">Music level</label><input id="c-vol" type="range" min="0" max="1.4" step="0.02"><output></output></div>
-    <p class="hint">Each phrase of the voiceover is cued to its caption, so it stays in step through pauses, skips and scrubbing. <b>Voice timing</b> moves every phrase earlier or later together. While a phrase plays the music dips to the <b>Music under the voice</b> level. <kbd>A</kbd> mutes and unmutes all sound.</p>
+    <p class="hint">The music is the supplied track, played in step with the show. Each phrase of the voiceover is cued to its caption, so both stay in step through pauses, skips and scrubbing. <b>Voice timing</b> moves every phrase earlier or later together. While a phrase plays the music dips to the <b>Music under the voice</b> level. <kbd>A</kbd> mutes and unmutes all sound.</p>
   </div>
 
   <div class="tabpane" data-pane="content" hidden>
@@ -3592,13 +3592,10 @@ async function removeSlot(id) {
   }, () => note('Footage library is offline. Scenes without footage show the live 3D world.', true));
 })();
 
-// ---------------------------------------------------------------- music
-// One piece of music and nothing else: an original slow air in the Irish style, in D, for
-// low whistle over harp, with a soft string drone underneath. There are no sound effects.
-// The whole three minutes is written out below as a list of notes, and played live: each
-// note is handed to the audio clock a fraction of a second before it sounds, in step with the
-// show clock. So it starts the moment the show does, and seeking, pausing and skipping between
-// acts keep it in time.
+// ---------------------------------------------------------------- sound
+// Two recordings and nothing else: the supplied music track (assets/audio/music.mp3) and the
+// voiceover, both played in step with the show clock, so seeking, pausing and skipping between
+// acts keep them in time. There are no sound effects.
 // ---------------------------------------------------------------- voiceover
 // The recorded reading of the script (the female voice supplied for the show), cut at its
 // natural pauses into phrases, and every phrase cued to the moment its caption appears, so
@@ -3628,8 +3625,8 @@ const VOICE_EXTRA = { sustainability: 'voice-sustainability.mp3', health: 'voice
 const VOICE_DIRS = ['assets/voice/', 'igloo/assets/voice/'];
 
 const audio = (() => {
-  let ctx = null, master = null, bus = null, sess = null, on = false;
-  let a0 = 0, s0 = 0, idx = 0, anchored = false;
+  let ctx = null, master = null, sess = null, on = false;
+  let a0 = 0, s0 = 0, anchored = false;
   const settings = { master: .9, voice: 1, duck: .4, voiceOffset: 0 };
   // ---- voice state
   let voiceOut = null, vsess = null, voiceSel = 'off', voiceDirty = false;
@@ -3715,225 +3712,54 @@ const audio = (() => {
       ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
       master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
       voiceOut = ctx.createGain(); voiceOut.gain.value = 0; voiceOut.connect(ctx.destination);
-      bus = makeBus(ctx, master);
       return true;
     } catch (e) { ctx = null; return false; }
   }
-  const LEVEL = 1.3;                                    // with the bus limiter, a peak of about 0.8
-  const BEAT = 60 / 104, BAR = 4 * BEAT;                // 4/4 at 104 to the minute: an 8-bar phrase is 18.5 s
-  const mf = (m) => 440 * Math.pow(2, (m - 69) / 12);
-  // Chords (root, third, fifth as MIDI notes), in D major.
-  const I = [50, 54, 57], IV = [43, 47, 50], V = [45, 49, 52], vi = [47, 50, 54], ii = [52, 55, 59];
-  const CH_V = [I, V, vi, IV, I, V, IV, V];             // verse
-  const CH_B = [vi, IV, I, V, vi, IV, ii, V];           // the lift
-  const CH_C = [IV, I, V, vi, IV, I, V, I];             // chorus
-  // Melodies as [MIDI note, beats]; each fills eight bars (32 beats).
-  const MEL_V = [[69, 1], [74, 1], [78, 1.5], [76, .5], [76, 2], [73, 1], [69, 1], [71, 1], [74, 1], [78, 1], [83, 1], [81, 2], [79, 1], [78, 1],
-    [78, 1.5], [76, .5], [74, 1], [78, 1], [76, 1], [73, 1], [76, 1], [81, 1], [83, 1.5], [81, .5], [79, 1], [76, 1], [76, 3], [69, 1]];
-  const MEL_B = [[78, 1], [83, 1], [86, 1.5], [85, .5], [83, 2], [79, 2], [81, 1], [78, 1], [74, 1], [78, 1], [76, 2], [73, 2],
-    [74, 1], [78, 1], [83, 1.5], [81, .5], [79, 1], [83, 1], [86, 2], [83, 1], [79, 1], [76, 1], [79, 1], [81, 2], [83, 1], [85, 1]];
-  const MEL_C = [[83, 2], [81, 1], [79, 1], [78, 2], [81, 2], [76, 1], [81, 1], [85, 1.5], [83, .5], [83, 3], [78, 1],
-    [79, 1], [83, 1], [86, 2], [81, 1.5], [78, .5], [81, 2], [85, 1], [83, 1], [81, 1], [76, 1], [86, 4]];
-  // The running order follows the show: harp alone at dawn over the Cliffs, a two-bar lift,
-  // and the first full chorus landing on the flash at "...start right now" (T_CUT). Energy,
-  // sustainability and transport keep driving, the city at night and health soften, and the
-  // last chorus carries the finale. bars: a shortened section. drums: 0 none, 1 pulse, 2 full.
-  const FORM = [
-    { ch: CH_V, bars: 4, mel: null, lead: 0, pad: .5, bass: 0, drums: 0 },                   // dawn at the Cliffs
-    { ch: CH_B, bars: 2, mel: MEL_B, lead: .9, pad: .8, bass: 1, drums: 1 },                  // the lift into...
-    { ch: CH_C, mel: MEL_C, lead: 1.15, pad: 1.2, bass: 1, drums: 2 },                        // ...the flash: 2036
-    { ch: CH_V, mel: MEL_V, lead: 1, pad: .9, bass: 1, drums: 2 },                            // energy
-    { ch: CH_B, mel: MEL_B, lead: 1, pad: 1, bass: 1, drums: 1 },                             // sustainability
-    { ch: CH_C, mel: MEL_C, lead: 1.15, pad: 1.2, bass: 1, drums: 2 },                        // transport
-    { ch: CH_V, mel: MEL_V, lead: .75, pad: .8, bass: 1, drums: 0, soft: true },              // Dublin at night, health
-    { ch: CH_B, mel: MEL_B, lead: 1, pad: 1, bass: 1, drums: 1 },                             // housing
-    { ch: CH_C, mel: MEL_C, lead: 1.2, pad: 1.3, bass: 1, drums: 2, last: true },             // the finale
-  ];
-
-
-  function impulse(c, sec) {
-    const n = Math.floor(c.sampleRate * sec), b = c.createBuffer(2, n, c.sampleRate);
-    for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
-    return b;
-  }
-  // Harp: a plucked string, bright at the attack and mellowing as it rings.
-  // One oscillator per note, its upper partials fading faster through a closing filter.
-  function harp(c, out, wave, t, m, v) {
-    const f = mf(m), d = m < 55 ? 4.5 : 3;
-    const o = c.createOscillator(), lp = c.createBiquadFilter(), g = c.createGain();
-    o.setPeriodicWave(wave); o.frequency.value = f;
-    lp.type = 'lowpass'; lp.Q.value = .3;
-    lp.frequency.setValueAtTime(f * 6, t); lp.frequency.exponentialRampToValueAtTime(f * 1.2, t + .6);
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .004);
-    g.gain.exponentialRampToValueAtTime(.0001, t + d);
-    o.connect(lp); lp.connect(g); g.connect(out); o.start(t); o.stop(t + d + .05);
-  }
-  // Low whistle: a soft, breathy tone with a slow vibrato that grows into each long note.
-  function whistle(c, out, noise, t, dur, m, v) {
-    const f = mf(m), end = t + dur, rel = .18;
-    const o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), g2 = c.createGain();
-    o.frequency.value = f; o2.frequency.value = f * 2; g2.gain.value = .12;
-    const vib = c.createOscillator(), vg = c.createGain();
-    vib.frequency.value = 5.2; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(dur > .8 ? f * .006 : f * .002, t + Math.min(dur, 1.2));
-    vib.connect(vg); vg.connect(o.frequency); vg.connect(o2.frequency);
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .07);
-    g.gain.setValueAtTime(v, Math.max(t + .07, end - .05)); g.gain.linearRampToValueAtTime(0, end + rel);
-    o.connect(g); o2.connect(g2); g2.connect(g); g.connect(out);
-    // breath: filtered noise riding the note, strongest at the start
-    const n = c.createBufferSource(), nf = c.createBiquadFilter(), ng = c.createGain();
-    n.buffer = noise; nf.type = 'bandpass'; nf.frequency.value = f * 2; nf.Q.value = 2.5;
-    ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(v * .5, t + .03); ng.gain.linearRampToValueAtTime(v * .08, t + .3);
-    ng.gain.setValueAtTime(v * .08, Math.max(t + .3, end - .05)); ng.gain.linearRampToValueAtTime(0, end + rel);
-    n.connect(nf); nf.connect(ng); ng.connect(out);
-    [o, o2, vib, n].forEach((s) => { s.start(t); s.stop(end + rel + .05); });
-  }
-  // Strings: a slow-breathing chord, low and quiet, following the harmony.
-  function strings(c, out, t, dur, notes, v) {
-    const g = c.createGain();
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * 2, t + dur * .35);
-    g.gain.linearRampToValueAtTime(v * 1.6, t + dur); g.gain.linearRampToValueAtTime(0, t + dur + .8);
-    g.connect(out);
-    notes.forEach((m, i) => {
-      const o = c.createOscillator();
-      o.type = 'triangle'; o.frequency.value = mf(m + 12); o.detune.value = (i - 1) * 6;
-      o.connect(g); o.start(t); o.stop(t + dur + .9);
-    });
-  }
-
-  // Bass: a round plucked low note under each chord.
-  function bass(c, out, t, dur, m, v) {
-    const o = c.createOscillator(), o2 = c.createOscillator(), lp = c.createBiquadFilter(), g = c.createGain();
-    o.type = 'triangle'; o.frequency.value = mf(m); o2.type = 'sine'; o2.frequency.value = mf(m - 12);
-    lp.type = 'lowpass'; lp.frequency.value = 700;
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .01); g.gain.exponentialRampToValueAtTime(v * .35, t + dur * .8);
-    g.gain.linearRampToValueAtTime(0, t + dur);
-    o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(out);
-    [o, o2].forEach((x) => { x.start(t); x.stop(t + dur + .05); });
-  }
-  // Soft drums: a low, round kick, a brushed snare and a shaker, all kept well under the tune.
-  function kick(c, out, t, v) {
-    const o = c.createOscillator(), g = c.createGain();
-    o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(42, t + .14);
-    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + .4);
-    o.connect(g); g.connect(out); o.start(t); o.stop(t + .45);
-  }
-  function snare(c, out, noise, t, v) {
-    const n = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-    n.buffer = noise; f.type = 'bandpass'; f.frequency.value = 2200; f.Q.value = .7;
-    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + .22);
-    n.connect(f); f.connect(g); g.connect(out); n.start(t, Math.random()); n.stop(t + .25);
-  }
-  function shaker(c, out, noise, t, v) {
-    const n = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-    n.buffer = noise; f.type = 'highpass'; f.frequency.value = 7500;
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + .07);
-    n.connect(f); f.connect(g); g.connect(out); n.start(t, Math.random()); n.stop(t + .09);
-  }
-
-  // Every note of the piece, in order: [start in seconds, play(ctx, session, when)].
-  const EVENTS = [];
-  {
-    const t0 = T_CUT - 6 * BAR;                          // so the chorus's downbeat is the flash
-    let ps = t0;
-    FORM.forEach((sec) => {
-      const bars = sec.bars || 8;
-      sec.ch.slice(0, bars).forEach((chd, b) => {
-        const bs = ps + b * BAR, lastBar = sec.last && b === bars - 1;
-        // harp: eight quavers to the bar, up through the chord and back
-        const pat = [chd[0] - 12, chd[0], chd[2], chd[0] + 12, chd[1] + 12, chd[0] + 12, chd[2], chd[1]];
-        if (lastBar) [chd[0] - 12, chd[0], chd[2], chd[1] + 12, chd[2] + 12, chd[0] + 24].forEach((m, i) =>
-          EVENTS.push([bs + i * .09, (c, S, w) => harp(c, S.dry, S.wave, w, m, .12)]));
-        else pat.forEach((m, i) =>
-          EVENTS.push([bs + i * BEAT / 2, (c, S, w) => harp(c, S.dry, S.wave, w, m, (i === 0 ? .12 : .075) * (sec.soft ? .7 : 1))]));
-        EVENTS.push([bs, (c, S, w) => strings(c, S.pad, w, lastBar ? 5 : BAR, chd, .011 * sec.pad)]);
-        if (sec.bass) {
-          const r = chd[0] < 45 ? chd[0] : chd[0] - 12;
-          if (sec.drums === 2 && !lastBar) [0, 1.5, 2, 3].forEach((q, i) => EVENTS.push([bs + q * BEAT, (c, S, w) => bass(c, S.bass, w, BEAT * (i === 0 ? 1.4 : .9), r + (i === 2 ? 7 : 0), .16)]));
-          else EVENTS.push([bs, (c, S, w) => bass(c, S.bass, w, lastBar ? 4 : BAR * .95, r, .15)]);
-        }
-        if (sec.drums && !lastBar) {
-          for (let q = 0; q < 4; q++) {
-            if (q % 2 === 0 || sec.drums === 2) EVENTS.push([bs + q * BEAT, (c, S, w) => kick(c, S.drum, w, q % 2 ? .22 : .32)]);
-            if (sec.drums === 2 && q % 2) EVENTS.push([bs + q * BEAT, (c, S, w) => snare(c, S.drum, S.noise, w, .09)]);
-          }
-          for (let e = 0; e < 8; e++) EVENTS.push([bs + e * BEAT / 2, (c, S, w) => shaker(c, S.drum, S.noise, w, e % 2 ? .035 : .02)]);
-        }
-        if (lastBar) EVENTS.push([bs, (c, S, w) => kick(c, S.drum, w, .35)]);
-      });
-      if (sec.mel) {
-        let bt = 0;
-        sec.mel.forEach(([m, d]) => {
-          if (bt >= bars * 4 - 1e-6) return;
-          const final = sec.last && bt + d >= 32;
-          EVENTS.push([ps + bt * BEAT, (c, S, w) => whistle(c, S.lead, S.noise, w, (final ? 5 : d) * BEAT * .94, m - (sec.soft ? 12 : 0), .065 * sec.lead)]);
-          bt += d;
-        });
+  // ---- music: the supplied track (assets/audio/music.mp3), played from the show clock's
+  // position. It is mastered loud, so it is trimmed to sit under the voice. It is decoded
+  // ahead of time, like the voice, and a seek or pause fades the old playback and starts it
+  // again at the new position.
+  const MUSIC_TRIM = .45;
+  let musicBuf = null, musicLoading = null;
+  function loadMusic() {
+    if (musicBuf || musicLoading) return;
+    musicLoading = (async () => {
+      for (const dir of ['assets/audio/', 'igloo/assets/audio/']) {
+        try {
+          const r = await fetch(dir + 'music.mp3'); if (!r.ok) continue;
+          const data = await r.arrayBuffer(), Off = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+          musicBuf = await new Promise((res, rej) => { const p = new Off(2, 1, 44100).decodeAudioData(data, res, rej); if (p && p.catch) p.catch(rej); });
+          anchored = false;                                 // pick it up at the current position
+          return;
+        } catch (e) { /* try the next place */ }
       }
-      ps += bars * BAR;
-    });
-    // Coda for the outro: the harp falls back down through D major, two octaves, the opening's
-    // rising figure in reverse, onto a low D as the room goes dark.
-    {
-      const cs = ps;
-      EVENTS.push([cs, (c, S, w) => strings(c, S.pad, w, 2 * BAR, I, .009)]);
-      [86, 81, 78, 74, 81, 78, 74, 69, 78, 74, 69, 66, 74, 69, 66, 62].forEach((m, i) =>
-        EVENTS.push([cs + i * BEAT / 2, (c, S, w) => harp(c, S.dry, S.wave, w, m, .08 - i * .002)]));
-      EVENTS.push([cs + 8 * BEAT, (c, S, w) => harp(c, S.dry, S.wave, w, 38, .11)]);
-      EVENTS.push([cs + 8 * BEAT, (c, S, w) => bass(c, S.bass, w, 3, 38, .12)]);
-      // The thank-you page: the harp rises through D major once more, as it did at the start,
-      // over a held chord, and the room rests on it.
-      [62, 66, 69, 74, 78, 81, 86].forEach((m, i) => EVENTS.push([T_THANK + .4 + i * BEAT / 2, (c, S, w) => harp(c, S.dry, S.wave, w, m, .07 + i * .004)]));
-      EVENTS.push([T_THANK + .4, (c, S, w) => strings(c, S.pad, w, 5, I, .009)]);
-      EVENTS.push([T_THANK + .4 + 3.5 * BEAT, (c, S, w) => harp(c, S.dry, S.wave, w, 50, .09)]);
-    }
-    EVENTS.sort((a, b) => a[0] - b[0]);
+      musicLoading = null;
+    })();
   }
-
-  // The fixed part of the chain: reverb, the strings' filter, the whistle's place in the mix.
-  function makeBus(c, dest) {
-    const dry = c.createGain(), rev = c.createConvolver(), wet = c.createGain(), out = c.createGain();
-    rev.buffer = impulse(c, 3.2); wet.gain.value = .38; dry.gain.value = .8; out.gain.value = LEVEL;
-    // A gentle limiter at the end of the chain, so the fuller choruses never clip.
-    const lim = c.createDynamicsCompressor();
-    lim.threshold.value = -10; lim.knee.value = 8; lim.ratio.value = 6; lim.attack.value = .004; lim.release.value = .25;
-    dry.connect(out); dry.connect(rev); rev.connect(wet); wet.connect(out); out.connect(lim); lim.connect(dest);
-    // Drums and bass stay mostly dry: reverb would blur the pulse.
-    const drum = c.createGain(), bassG = c.createGain(), dsend = c.createGain();
-    drum.connect(out); bassG.connect(out); drum.connect(dsend); dsend.gain.value = .12; dsend.connect(rev);
-    const pad = c.createBiquadFilter(); pad.type = 'lowpass'; pad.frequency.value = 900; pad.connect(dry);
-    const lead = c.createGain(); lead.gain.value = .9;
-    const pan = c.createStereoPanner ? c.createStereoPanner() : null;
-    if (pan) { pan.pan.value = .12; lead.connect(pan); pan.connect(dry); } else lead.connect(dry);
-    const noise = c.createBuffer(1, c.sampleRate * 2, c.sampleRate);
-    { const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
-    const wave = c.createPeriodicWave(new Float32Array([0, 0, 0, 0, 0, 0]), new Float32Array([0, 1, .42, .18, .08, .03]));
-    return { dry, pad, lead, noise, wave, drum, bass: bassG };
-  }
-  // A session is one stretch of uninterrupted playing. Seeking or pausing fades the notes of
-  // the old session out quickly (the reverb tail rings on) and starts a new one.
-  function newSession() {
+  loadMusic();
+  // A session is one stretch of uninterrupted playing.
+  function newSession(t, when) {
     endSession();
-    const S = { gains: [] };
-    ['dry', 'pad', 'lead', 'drum', 'bass'].forEach((k) => { const g = ctx.createGain(); g.connect(bus[k]); S[k] = g; S.gains.push(g); });
-    S.noise = bus.noise; S.wave = bus.wave;
-    sess = S;
+    if (!musicBuf || t >= musicBuf.duration) return;
+    const g = ctx.createGain(), src = ctx.createBufferSource();
+    src.buffer = musicBuf;
+    g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(1, when + (t > .05 ? .25 : .02));
+    src.connect(g); g.connect(master);
+    src.start(when, t);
+    sess = { g, src };
   }
   function endSession() {
     if (!sess) return;
     const now = ctx.currentTime, old = sess;
-    old.gains.forEach((g) => { g.gain.setValueAtTime(g.gain.value, now); g.gain.linearRampToValueAtTime(0, now + .12); });
-    setTimeout(() => old.gains.forEach((g) => g.disconnect()), 400);
+    old.g.gain.setValueAtTime(old.g.gain.value, now); old.g.gain.linearRampToValueAtTime(0, now + .15);
+    try { old.src.stop(now + .2); } catch (e) {}
+    setTimeout(() => old.g.disconnect(), 500);
     sess = null;
-  }
-  // For testing: the whole piece into any (offline) context.
-  function renderInto(c) {
-    const S = makeBus(c, c.destination);
-    EVENTS.forEach(([t, play]) => play(c, S, t));
   }
 
   return {
-    renderInto,
     get on() { return on; },
+    get musicReady() { return !!musicBuf; },
     get voice() { return voiceSel; },
     settings,
     setLevel(k, v) { if (k === 'voiceOffset' && v !== settings[k]) voiceDirty = true; settings[k] = v; },
@@ -3960,27 +3786,23 @@ const audio = (() => {
     update(t, playing, ended) {
       if (!ctx) return;
       const now = ctx.currentTime;
-      // At the end the show holds: nothing new is scheduled and the last chord rings away.
-      if (ended && anchored) { master.gain.setTargetAtTime(0, now, 3); voiceOut.gain.setTargetAtTime(0, now, 3); return; }
+      // At the end the show holds on the thank-you page; the track plays on and fades away.
+      if (ended && anchored) { master.gain.setTargetAtTime(0, now, 2.2); voiceOut.gain.setTargetAtTime(0, now, 3); return; }
       const live = on && playing && ctx.state === 'running';
       // With a voice chosen the music sits a little lower throughout, and dips further, just
       // ahead of each phrase, to the "music under the voice" level, rising again after it.
       const withVoice = voiceSel !== 'off' && !!voiceBuf[voiceSel];
       const duck = !withVoice ? 1 : speaking(t) ? settings.duck : Math.min(1, .8, settings.duck + .4);
-      master.gain.setTargetAtTime(live ? settings.master * duck : 0, now, live ? .22 : .15);
+      master.gain.setTargetAtTime(live ? settings.master * MUSIC_TRIM * duck : 0, now, live ? .22 : .15);
       voiceOut.gain.setTargetAtTime(live ? settings.voice : 0, now, live ? .05 : .08);
       if (!live) { if (anchored) { endSession(); endVoice(); anchored = false; } return; }
-      if (!anchored || Math.abs(now - a0 + s0 - t) > .25) {
-        newSession(); anchored = true;
+      // Re-sync only on a real jump (a seek, a stall): restarting a recorded track is audible.
+      if (!anchored || Math.abs(now - a0 + s0 - t) > .5) {
+        anchored = true;
         a0 = now + .03; s0 = t;
-        idx = 0; while (idx < EVENTS.length && EVENTS[idx][0] < t) idx++;
+        newSession(t, a0);
         startVoice(t);
       } else if (voiceDirty) startVoice(t);
-      const horizon = now - a0 + s0 + .6;
-      while (idx < EVENTS.length && EVENTS[idx][0] < horizon) {
-        const [et, play] = EVENTS[idx++];
-        play(ctx, sess, Math.max(now + .005, a0 + et - s0));
-      }
     },
   };
 })();
