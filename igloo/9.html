@@ -157,6 +157,7 @@
       <h1 id="gate-title">Ireland <em>2036</em></h1>
       <p class="intro">From the Atlantic at first light to the next decade of possibility. One continuous journey, all around you.</p>
       <div class="spec"><span><b>3 minutes</b></span><span><b>4 acts</b></span><span><b>360°</b> walls + floor</span></div>
+      <div class="gate-voice"><span class="setup-label">Narration</span><div class="seg voice-choice" role="group" aria-label="Narration voice"><button type="button" data-voice="female" aria-pressed="true">Female</button><button type="button" data-voice="male" aria-pressed="false">Male</button><button type="button" data-voice="off" aria-pressed="false">Off</button></div><small id="gate-voice-status" role="status">Preparing both voices…</small></div>
       <div class="row"><button type="button" class="go" id="start" disabled>Enter the experience <span class="arrow" aria-hidden="true">↗</span></button><button type="button" class="ghost" id="retry" hidden>Try loading again</button></div>
       <div class="loading"><progress id="load-progress" max="100" value="0" aria-label="Preparing the experience"></progress><div class="note" id="load-note" role="status">Preparing the island…</div></div>
     </div>
@@ -189,6 +190,7 @@
       <span><kbd>V</kbd>Output format</span>
       <span><kbd>F</kbd>Full screen</span>
       <span><kbd>A</kbd>Music on / off</span>
+      <span><kbd>N</kbd>Narration on / off</span>
       <span><kbd>H</kbd>Hide controls</span>
       <span><kbd>B</kbd>Blackout</span>
       <span><kbd>O</kbd>Rotate floor panel</span>
@@ -207,7 +209,8 @@
     <button type="button" class="primary" id="b-play">Pause</button>
     <button type="button" id="b-restart">Restart</button>
     <button type="button" id="b-mode">360° Igloo</button>
-    <button type="button" id="b-audio">Sound on</button>
+    <button type="button" id="b-voice" aria-pressed="true">Voice · Female</button>
+    <button type="button" id="b-audio">Music on</button>
     <button type="button" id="b-chapters">Chapters</button>
     <button type="button" id="b-media">Footage</button>
     <button type="button" id="b-control">Controls</button>
@@ -270,8 +273,20 @@
     <p class="hint"><kbd>G</kbd>Room calibration · <kbd>Q</kbd>Scene detail · <kbd>J</kbd>Chapters</p>
   </div>
   <div class="tabpane" data-pane="sound" hidden>
-    <div class="sl"><label for="c-vol">Music level</label><input id="c-vol" type="range" min="0" max="1.4" step="0.02"><output></output></div>
-    <p class="hint">One piece of music plays through the show: an original slow air in the Irish style for low whistle, harp and strings. There are no sound effects.</p>
+    <div class="sound-heading"><span class="eyebrow">The voice of the journey</span><span id="voice-badge" class="voice-badge">Loading</span></div>
+    <div class="seg voice-choice" role="group" aria-label="Narration voice"><button type="button" data-voice="female" aria-pressed="true">Female</button><button type="button" data-voice="male" aria-pressed="false">Male</button><button type="button" data-voice="off" aria-pressed="false">Off</button></div>
+    <p id="voice-state" class="hint" role="status">Preparing both recordings…</p>
+    <button type="button" class="ghost" id="voice-retry" hidden>Reload narration</button>
+    <div class="sl"><label for="v-volume">Voice level</label><input id="v-volume" type="range" min="0" max="1.2" step="0.01"><output></output></div>
+    <div class="sl"><label for="v-offset">Voice delay</label><input id="v-offset" type="range" min="-1" max="1" step="0.05"><output></output></div>
+    <p class="hint">Both voices follow the chapters at their original speed. Positive delay makes the voice arrive later; negative delay brings it forward.</p>
+    <div class="sound-mix">
+      <label class="check-row" for="v-duck"><span><b>Make room for the voice</b><small>Soften the music during narration</small></span><input type="checkbox" id="v-duck" role="switch"></label>
+      <div class="sl"><label for="v-ducklevel">Music under voice</label><input id="v-ducklevel" type="range" min="0" max="1" step="0.01"><output></output></div>
+      <div class="sl"><label for="c-vol">Music level</label><input id="c-vol" type="range" min="0" max="1.4" step="0.02"><output></output></div>
+    </div>
+    <p class="hint">Play, pause, restart and chapter jumps control the voice and picture together. <kbd>N</kbd>toggles narration. <kbd>A</kbd>toggles music.</p>
+    <button type="button" class="ghost" id="voice-reset">Reset voice settings</button>
   </div>
 
   <div class="tabpane" data-pane="content" hidden>
@@ -291,6 +306,7 @@
 <div id="toast" class="off" role="status"></div>
 
 <script src="assets/runtime.js"></script>
+<script src="assets/voiceover.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 <script>
 if (!window.THREE) document.write('<script src="https://unpkg.com/three@0.158.0/build/three.min.js"><\/script>');
@@ -304,7 +320,7 @@ let sceneDirty = true, worldDirty = true, contextLost = false, lastSkyTime = -In
 const shaderErrors = [];
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (id) => document.getElementById(id);
-if (!T || !Runtime) { $('load-note').textContent = 'The rendering engine could not load. Check the connection and reload.'; $('load-note').classList.add('err'); $('retry').hidden = false; $('retry').onclick = () => location.reload(); return; }
+if (!T || !Runtime || !window.IrelandNarration) { $('load-note').textContent = 'The rendering engine could not load. Check the connection and reload.'; $('load-note').classList.add('err'); $('retry').hidden = false; $('retry').onclick = () => location.reload(); return; }
 
 
 // ---------------------------------------------------------------- show data
@@ -1121,8 +1137,10 @@ const skyLUT = (() => {
     vec3 c=skyCol(d);
     float sd=dot(d,uSunDir);
     // Sun disc with limb darkening, dimmed and reddened by the same air as the sky.
-    float disc=smoothstep(.99994,.99997,sd);
-    float limb=sqrt(max(1.-(1.-sd)/(1.-.99994),0.));
+    // Angular coverage keeps the solar edge soft at every adaptive face size.
+    float sunR=length(d-uSunDir), sunAA=max(fwidth(sunR),.0004);
+    float disc=1.-smoothstep(.0095-sunAA,.0095+sunAA,sunR);
+    float limb=sqrt(max(1.-sunR*sunR/(.0095*.0095),0.));
     c+=uSunCol*disc*(.45+.55*limb)*26.;
     if(uNight>0.01){
       // Stars: many faint ones and a few bright, with colour temperature and a slow
@@ -2941,6 +2959,7 @@ const audio = (() => {
   return {
     renderInto,
     get on() { return on; },
+    resume() { if(ctx&&on)ctx.resume().catch(()=>{}); },
     settings,
     setLevel(k, v) { settings[k] = v; },
     toggle(v) {
@@ -2952,14 +2971,14 @@ const audio = (() => {
           bus = makeBus(ctx, master);
         } catch (e) { on = false; return false; }
       }
-      if (ctx) { if (on) ctx.resume(); else { master.gain.setTargetAtTime(0, ctx.currentTime, .3); } }
+      if (ctx) { if (on) ctx.resume().catch(()=>{}); else { master.gain.setTargetAtTime(0, ctx.currentTime, .3); } }
       return on;
     },
     // Keep the music where the show clock is; fade in and out with play and pause.
-    update(t, playing) {
+    update(t, playing, duckGain = 1) {
       if (!ctx) return;
       const now = ctx.currentTime, live = on && playing && ctx.state === 'running';
-      master.gain.setTargetAtTime(live ? settings.master * Math.min(1, (DURATION - t) / 2.5) : 0, now, live ? .25 : .15);
+      master.gain.setTargetAtTime(live ? settings.master * duckGain * Math.min(1, (DURATION - t) / 2.5) : 0, now, live ? .25 : .15);
       if (!live) { if (anchored) { endSession(); anchored = false; } return; }
       if (!anchored || Math.abs(now - a0 + s0 - t) > .25) {
         newSession(); anchored = true;
@@ -2977,6 +2996,7 @@ const audio = (() => {
 
 // ---------------------------------------------------------------- operator state + controls
 let showT = 0, playing = false, started = false, blackout = false, mode = 0, last = performance.now();
+const voice = new window.IrelandNarration.Player();
 const MODES = ['360° Igloo', 'Walls + floor', 'Desk preview'];
 const look = { yaw: 0, pitch: .12, targetYaw: 0, targetPitch: .12, zoom: 40, targetZoom: 40, drag: null };
 const actsEl = $('acts');
@@ -2986,7 +3006,7 @@ ACTS.forEach((a, i) => {
   b.addEventListener('click', () => seek(a.t + .01)); actsEl.appendChild(b);
 });
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('off'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('off'), 1600); }
-function seek(t) { showT = clamp(t, 0, DURATION - .01); camSmooth.ready = false; sceneDirty = true; worldDirty=true; lastSkyTime = -Infinity; frameMeter.clear(); governor.reset(); }
+function seek(t) { showT = clamp(t, 0, DURATION - .01); voice.stop(); voice.update(showT,playing&&started); audio.update(showT,playing&&started,voice.duckGain); camSmooth.ready = false; sceneDirty = true; worldDirty=true; lastSkyTime = -Infinity; frameMeter.clear(); governor.reset(); }
 function currentAct() { let i = 0; ACTS.forEach((a, k) => { if (showT >= a.t) i = k; }); return i; }
 function setMode(m) {
   mode = clamp(m|0,0,2); m=mode; post.material.uniforms.uMode.value = m; resize();
@@ -2995,7 +3015,7 @@ function setMode(m) {
   $('b-mode').textContent = MODES[m];
   try { localStorage.setItem('ire2036-mode', String(m)); } catch (e) {}
 }
-function setPlaying(p) { playing = !!p; if(!playing)document.body.classList.remove('show-hidden'); last = performance.now(); sceneDirty = true; frameMeter.clear(); governor.reset(); $('b-play').textContent = p ? 'Pause' : 'Play'; $('b-play').setAttribute('aria-label',p?'Pause the journey':'Play the journey'); }
+function setPlaying(p) { playing = !!p; if(playing){voice.unlock();audio.resume();} voice.update(showT,playing&&started); audio.update(showT,playing&&started,voice.duckGain); if(!playing)document.body.classList.remove('show-hidden'); last = performance.now(); sceneDirty = true; frameMeter.clear(); governor.reset(); $('b-play').textContent = p ? 'Pause' : 'Play'; $('b-play').setAttribute('aria-label',p?'Pause the journey':'Play the journey'); }
 function fullscreen() {
   const el = document.documentElement;
   if (!document.fullscreenElement) { (el.requestFullscreen ? el.requestFullscreen() : Promise.reject()).catch(() => toast('Full screen is not available here')); }
@@ -3006,7 +3026,7 @@ function start() {
   started = true; $('gate').hidden = true; $('hud').hidden = false; document.body.classList.add('in-show'); $('scene-meta').hidden = mode !== 2;
   seek(0); setPlaying(true);
   if (!document.fullscreenElement && mode !== 2) fullscreen();
-  audio.toggle(true); $('b-audio').textContent = 'Sound off';
+  audio.toggle(true); $('b-audio').textContent = 'Music off';
   poke(); $('b-play').focus({preventScroll:true});
 }
 $('start').addEventListener('click', start);
@@ -3014,7 +3034,7 @@ document.querySelectorAll('#mode-seg button').forEach((b) => b.addEventListener(
 $('b-play').addEventListener('click', () => setPlaying(!playing));
 $('b-restart').addEventListener('click', () => { seek(0); setPlaying(true); });
 $('b-mode').addEventListener('click', () => setMode((mode + 1) % 3));
-$('b-audio').addEventListener('click', () => { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; });
+$('b-audio').addEventListener('click', () => { const on = audio.toggle(); $('b-audio').textContent = on ? 'Music off' : 'Music on'; });
 $('b-full').addEventListener('click', fullscreen);
 const openMedia = () => { $('media').hidden = false; poke(); };
 $('b-media').addEventListener('click', () => { $('media').hidden = !$('media').hidden; });
@@ -3035,7 +3055,8 @@ addEventListener('keydown', (e) => {
   else if (k === 'r' || k === 'R' || k === 'Home') { seek(0); setPlaying(true); toast('Restarted'); }
   else if (k === 'v' || k === 'V') { setMode((mode + 1) % 3); toast(MODES[mode]); }
   else if (k === 'f' || k === 'F') fullscreen();
-  else if (k === 'a' || k === 'A') { const on = audio.toggle(); $('b-audio').textContent = on ? 'Sound off' : 'Sound on'; toast(on ? 'Sound on' : 'Sound off'); }
+  else if (k === 'a' || k === 'A') { const on = audio.toggle(); $('b-audio').textContent = on ? 'Music off' : 'Music on'; toast(on ? 'Music on' : 'Music off'); }
+  else if (k === 'n' || k === 'N') { toggleNarration(); }
   else if (k === 'h' || k === 'H') { if (document.body.classList.contains('show-hidden')) poke(); else document.body.classList.add('show-hidden'); return; }
   else if (k === 'b' || k === 'B' || k === '.') { blackout = !blackout; toast(blackout ? 'Blackout' : 'Picture on'); }
   else if (k === 'q' || k === 'Q') { qIndex = (qIndex + 1) % QUALITY.length; governor.index=qIndex; governor.reset(); makeCube(); toast('Scene detail '+QUALITY[qIndex]+' px per face'); }
@@ -3217,11 +3238,11 @@ $('ctab-seg').querySelectorAll('button').forEach((b) => b.addEventListener('clic
   document.querySelectorAll('.tabpane').forEach((p) => { p.hidden = p.dataset.pane !== b.dataset.tab; });
 }));
 $('c-reset').addEventListener('click', () => {
-  Object.assign(ctrl, CTRL_DEFAULTS); applyCtrl(); syncSliders();
+  Object.assign(ctrl, CTRL_DEFAULTS); applyCtrl(); syncSliders(); voice.configure(window.IrelandNarration.DEFAULTS); syncVoiceControls();
   $('control-note').textContent = 'Controls reset';
 });
 $('c-export').addEventListener('click', async () => {
-  const text = JSON.stringify({ controls: ctrl, content: contentSnapshot() }, null, 2);
+  const text = JSON.stringify({ controls: ctrl, narration: { ...voice.settings }, content: contentSnapshot() }, null, 2);
   try { await navigator.clipboard.writeText(text); $('control-note').textContent = 'Copied to clipboard'; }
   catch (e) { $('control-note').textContent = 'Clipboard blocked; open the console for the JSON'; console.log(text); }
 });
@@ -3231,6 +3252,7 @@ $('c-import').addEventListener('click', async () => {
     const d = JSON.parse(text);
     if (d.controls) { Object.assign(ctrl, d.controls); applyCtrl(); syncSliders(); }
     if (d.content) { applyContent(d.content); buildEditor(); }
+    if (d.narration) { voice.configure(d.narration); syncVoiceControls(); }
     $('control-note').textContent = 'Settings applied';
   } catch (e) { $('control-note').textContent = 'Could not read JSON from the clipboard'; }
 });
@@ -3238,6 +3260,42 @@ $('c-import').addEventListener('click', async () => {
 applyCtrl();
 syncSliders();
 
+
+// Narration is loaded once; only the selected voice is scheduled on the audio clock.
+let lastVoiceUI=0, lastNarrator=voice.settings.voice==='off'?'female':voice.settings.voice;
+function syncVoiceControls(){
+  const v=voice.settings;
+  if(v.voice!=='off')lastNarrator=v.voice;
+  document.querySelectorAll('[data-voice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.voice===v.voice)));
+  $('b-voice').textContent='Voice · '+(v.voice==='off'?'Off':v.voice==='male'?'Male':'Female');
+  $('b-voice').setAttribute('aria-pressed',String(v.voice!=='off'));
+  $('b-voice').setAttribute('aria-label','Narration controls, '+(v.voice==='off'?'off':v.voice+' voice'));
+  [['v-volume','volume'],['v-offset','offset'],['v-ducklevel','duckLevel']].forEach(([id,key])=>{
+    const el=$(id);el.value=v[key];
+    el.parentElement.querySelector('output').textContent=key==='offset'?(v[key]>0?'+':'')+v[key].toFixed(2)+' s':Math.round(v[key]*100)+'%';
+  });
+  $('v-duck').checked=v.duck;$('v-ducklevel').disabled=!v.duck;
+  updateVoiceStatus(performance.now(),true);
+}
+function updateVoiceStatus(now,force=false){
+  if(!force&&now-lastVoiceUI<400)return;lastVoiceUI=now;
+  const v=voice.status();
+  const text=v.voice==='off'?'Narration is off. The music and picture continue together.':v.state==='error'?v.error+'. You can reload the recording or choose the other voice.':!v.ready?'Preparing the '+v.label.toLowerCase()+' recording…':v.context!=='running'&&started&&playing?'Tap Play to enable audio on this device.':v.speaking?(v.muted?'Muted · ':'Speaking · ')+v.cue:!started?'Ready · synced to the story':!playing?'Paused with the picture':'Listening to the landscape · next cue follows automatically';
+  if($('voice-state').textContent!==text)$('voice-state').textContent=text;
+  $('voice-badge').textContent=v.speaking?(v.muted?'Muted':'Speaking'):v.voice==='off'?'Off':v.state==='error'?'Unavailable':v.ready?'Ready':'Loading';
+  $('voice-badge').dataset.active=String(v.speaking);
+  $('voice-retry').hidden=v.state!=='error';
+  const ready=Object.values(voice.states).filter(x=>x==='ready').length;
+  $('gate-voice-status').textContent=ready===2?'Two voices · chapter synced':v.state==='error'?'Narration unavailable · open Sound controls to retry':v.voice==='off'?'Narration off':'Preparing narration…';
+}
+function toggleNarration(){voice.unlock();voice.configure({voice:voice.settings.voice==='off'?lastNarrator:'off'});syncVoiceControls();toast(voice.settings.voice==='off'?'Narration off':voice.status().label+' narration');}
+document.querySelectorAll('[data-voice]').forEach(b=>b.addEventListener('click',()=>{voice.unlock();voice.configure({voice:b.dataset.voice});syncVoiceControls();}));
+[['v-volume','volume'],['v-offset','offset'],['v-ducklevel','duckLevel']].forEach(([id,key])=>$(id).addEventListener('input',()=>{voice.configure({[key]:+$(id).value});syncVoiceControls();}));
+$('v-duck').addEventListener('change',()=>{voice.configure({duck:$('v-duck').checked});syncVoiceControls();});
+$('voice-reset').addEventListener('click',()=>{voice.configure(window.IrelandNarration.DEFAULTS);syncVoiceControls();});
+$('voice-retry').addEventListener('click',()=>{voice.unlock();voice.prepare().then(syncVoiceControls);syncVoiceControls();});
+$('b-voice').addEventListener('click',()=>{closePanels();$('control').hidden=false;document.querySelector('[data-tab="sound"]').click();poke();});
+voice.prepare().then(syncVoiceControls);syncVoiceControls();
 
 const panelIds=['media','control','chapters'];
 function closePanels(){panelIds.forEach(id=>$(id).hidden=true);}
@@ -3257,7 +3315,7 @@ $('render-seg').querySelectorAll('button').forEach(b=>b.addEventListener('click'
   $('render-seg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
 }));
 let lastMetrics={fps:0,p95:0,missed:0,frames:0}, renderedFrames=0, lastUI=0, lastReport=0;
-function performanceReport(){return {at:new Date().toISOString(),policy:renderPolicy,output:[canvas.width,canvas.height],devicePixelRatio,sceneFace:QUALITY[qIndex],cloudFace:cloudRT.width,softwareRenderer:softGPU,frameWindow:lastMetrics,gpuMs:gpuTimer.ms,renderedFrames,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,view:MODES[mode],showTime:showT,mapDetail:QUALITY_KEY,shaderErrors:[...shaderErrors]};}
+function performanceReport(){return {at:new Date().toISOString(),policy:renderPolicy,output:[canvas.width,canvas.height],devicePixelRatio,sceneFace:QUALITY[qIndex],cloudFace:cloudRT.width,softwareRenderer:softGPU,frameWindow:lastMetrics,gpuMs:gpuTimer.ms,renderedFrames,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,view:MODES[mode],showTime:showT,narration:voice.status(),mapDetail:QUALITY_KEY,shaderErrors:[...shaderErrors]};}
 $('b-report').addEventListener('click',()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(performanceReport(),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='ireland-2036-performance.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 function updateUI(now){
   if(now-lastUI<120)return;lastUI=now;
@@ -3295,6 +3353,7 @@ function frame(now){
     U.uTime.value=t;U.uShow.value=t;
     applyTime(t,playing?dt:0);
     post.material.uniforms.uIntro.value=started?showT:99;
+    if(!started)post.material.uniforms.uCapA.value=0;
     post.material.uniforms.uPrev.value.set(look.yaw,look.pitch,Math.tan(look.zoom*Math.PI/180));
     renderer.info.reset();gpuTimer.poll();gpuTimer.begin();
     if(needsWorld()&&post.material.uniforms.uCalibrate.value<.5&&(playing||worldDirty)){
@@ -3303,7 +3362,7 @@ function frame(now){
     }
     renderer.setRenderTarget(null);renderer.render(post.scene,post.cam);gpuTimer.end();renderedFrames++;sceneDirty=false;
   }
-  audio.update(showT,playing&&started);updateUI(now);
+  voice.update(showT,playing&&started);audio.update(showT,playing&&started,voice.duckGain);updateUI(now);updateVoiceStatus(now);
   if(now-lastReport>=1000){
     lastReport=now;lastMetrics=frameMeter.read();
     if(playing&&started&&renderPolicy==='adaptive'&&lastMetrics.frames>=20){
@@ -3393,7 +3452,7 @@ keepAwake();
       worldBuilt=true;buildWorld();
       say('Preparing light, atmosphere and transitions…');progress(94);
       await new Promise(r=>requestAnimationFrame(r));
-      applyTime(48,0);U.uTime.value=48;skyLUT.update();lastSkyTime=48;
+      applyTime(48,0);post.material.uniforms.uCapA.value=0;U.uTime.value=48;skyLUT.update();lastSkyTime=48;
       if(renderer.compileAsync){await renderer.compileAsync(scene,cubeCam.children[0]);await renderer.compileAsync(cloudLayer.scene,cubeCam.children[0]);await renderer.compileAsync(post.scene,post.cam);}
       else{renderer.compile(scene,cubeCam.children[0]);renderer.compile(cloudLayer.scene,cubeCam.children[0]);renderer.compile(post.scene,post.cam);}
       renderCube();renderer.setRenderTarget(null);renderer.render(post.scene,post.cam);

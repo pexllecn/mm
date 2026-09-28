@@ -19,7 +19,7 @@ const server=http.createServer((req,res)=>{
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)){res.writeHead(404);res.end();return;}
   let data=fs.readFileSync(file);
   if(file.endsWith('.html'))data=Buffer.from(data.toString().replace('const ELEV_Z = 10;','const ELEV_Z = 6;').replace('const FW = 2560,','const FW = 256,').replace(/z: (1[1-5]), px:/g,'z: 7, px:'));
-  const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2'};
+  const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.mp3':'audio/mpeg'};
   res.writeHead(200,{'content-type':types[path.extname(file)]||'application/octet-stream'});res.end(data);
 });
 (async()=>{
@@ -35,6 +35,7 @@ const server=http.createServer((req,res)=>{
     await page.goto('http://127.0.0.1:8036/?view=desk');
     await page.waitForFunction(()=>!document.querySelector('#start').disabled||document.querySelector('#load-note').classList.contains('err'),{},{timeout:180000});
     assert.equal(await page.locator('#start').isEnabled(),true,await page.locator('#load-note').textContent());
+    await page.waitForFunction(()=>window.__ireland.metrics().narration.ready,{},{timeout:30000});
     await page.screenshot({path:path.join(out,'01-gate.png')});
     await page.getByRole('button',{name:'Enter the experience'}).click();
     await page.waitForFunction(()=>window.__ireland.metrics().renderedFrames>2);
@@ -44,6 +45,43 @@ const server=http.createServer((req,res)=>{
     await page.waitForTimeout(350);
     const held=await page.evaluate(()=>window.__ireland.metrics());
     assert.equal(held.showTime,paused.showTime);assert.equal(held.renderedFrames,paused.renderedFrames);
+    // Decode the actual supplied recordings and exercise the real audio clock.
+    await page.locator('#b-voice').click();
+    await page.locator('[data-pane="sound"] [data-voice="male"]').click();
+    await page.waitForFunction(()=>window.__ireland.metrics().narration.ready);
+    await page.evaluate(()=>window.__ireland.seek(94.5));
+    await page.getByRole('button',{name:'Play the journey',exact:true}).click();
+    await page.waitForFunction(()=>window.__ireland.metrics().narration.speaking);
+    let narration=await page.evaluate(()=>window.__ireland.metrics().narration);
+    assert.equal(narration.voice,'male');assert.equal(narration.cue,'Energy');assert.equal(narration.context,'running');
+    assert.ok(Math.abs(narration.position-narration.expectedPosition)<.4,'Narration follows the show clock');
+    assert.equal(narration.duckGain,.24);
+    await page.locator('#v-duck').uncheck();
+    assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).duckGain,1);
+    await page.locator('#v-duck').check();
+    await page.locator('[data-pane="sound"] [data-voice="female"]').click();
+    await page.waitForFunction(()=>window.__ireland.metrics().narration.voice==='female'&&window.__ireland.metrics().narration.speaking);
+    narration=await page.evaluate(()=>window.__ireland.metrics().narration);
+    assert.equal(narration.cue,'Energy');assert.ok(narration.position>=64.16);
+    await page.getByRole('button',{name:'Pause the journey'}).click();
+    assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).speaking,false);
+    await page.locator('#v-offset').fill('0.5');
+    await page.locator('#v-offset').dispatchEvent('input');
+    assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).settings.offset,.5);
+    await page.screenshot({path:path.join(out,'06-voice-controls.png')});
+    await page.locator('[data-pane="sound"] [data-voice="off"]').click();
+    assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).voice,'off');
+    await page.locator('#voice-reset').click();
+    await page.locator('#close-control').click();
+    // Keyboard narration toggle works while transport retains focus.
+    await page.locator('#b-play').focus();await page.keyboard.press('n');
+    assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).voice,'off');
+    await page.keyboard.press('n');
+    assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).voice,'female');
+    await page.locator('#b-restart').click();
+    await page.waitForFunction(()=>window.__ireland.metrics().narration.speaking);
+    assert.ok((await page.evaluate(()=>window.__ireland.metrics().narration)).position<5);
+    await page.getByRole('button',{name:'Pause the journey'}).click();
     await page.locator('#b-chapters').click();
     await page.getByRole('button',{name:/05 The turn/}).click();
     await page.waitForTimeout(300);
@@ -69,6 +107,12 @@ const server=http.createServer((req,res)=>{
     await page.locator('#b-chapters').click();
     await page.screenshot({path:path.join(out,'04-mobile-chapters.png')});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await page.locator('#close-chapters').click();
+    await page.locator('#b-voice').click();
+    await page.screenshot({path:path.join(out,'07-mobile-voice.png')});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await page.locator('#close-control').click();
+    await page.locator('#b-chapters').click();
     await page.setViewportSize({width:1280,height:800});
     await page.getByRole('button',{name:/10 Together/}).click();
     await page.locator('#close-chapters').click();
@@ -77,6 +121,6 @@ const server=http.createServer((req,res)=>{
     const metrics=await page.evaluate(()=>window.__ireland.metrics());
     fs.writeFileSync(path.join(out,'smoke-results.json'),JSON.stringify({fixture:'Synthetic map tiles, reduced dataset, software WebGL. Not a venue FPS benchmark.',metrics,errors},null,2));
     assert.deepEqual(errors,[]);
-    console.log('PASS: shader warm-up, playback, held pause, chapter seek, packed output, calibration, local media, mobile layout and finale.');
+    console.log('PASS: shader warm-up, playback, held pause, chapter seek, packed output, calibration, local media, mobile layout finale, both real narration recordings, audio clock sync, voice switching, ducking, offset, mute and restart.');
   }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});

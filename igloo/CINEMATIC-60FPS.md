@@ -16,6 +16,33 @@ The first visit opens the desk view. The chosen output persists on that device. 
 
 All visual animation freezes while paused, including water, clouds and lighting. Moving to another browser tab pauses the show. The three-minute timeline uses elapsed time, so slow frames do not extend the presentation. The existing continuous replay remains.
 
+## Narration
+
+The supplied female and male recordings are bundled as high-quality mono MP3s, totalling 3.81 MB. Choose a voice on the opening screen, or open **Voice** in the playback bar / **Controls → Sound**. Female is the initial default. **N** toggles narration; **A** toggles music independently.
+
+- Female / Male / Off, independent voice level, and fine timing adjustment from −1 to +1 second.
+- Automatic music ducking, with an adjustable music level under speech. Muting narration restores the music level.
+- Ten cues per recording, cut at sentence pauses and aligned to the existing chapters. Every part of each recording is retained. The voice runs at its original pitch and speed; the extra show time becomes quiet space between chapters.
+- Play, pause, chapter changes, timeline scrubs, restart and the continuous loop all follow the same presentation clock. Changing voices selects the equivalent position in the other voice's chapter.
+- Audio is decoded before use and scheduled on the Web Audio clock. Brief gain ramps prevent clicks on seeks. The player corrects clock drift beyond 120 ms rather than changing the speaker's pitch.
+- Voice and mix preferences persist on the device, are included in **Copy as JSON / Paste JSON**, and can be reset independently.
+- If a recording cannot load, the picture remains available and the Sound panel shows a retry button. If the browser blocks audio, start/resume or a voice-selection gesture unlocks it.
+
+| Visual chapter | Cue begins | Female source | Male source |
+| --- | ---: | ---: | ---: |
+| Atlantic dawn | 0:01.00 | 0.00–14.85 s | 0.00–14.65 s |
+| The coast | 0:22.25 | 14.85–26.96 s | 14.65–26.20 s |
+| The land / people | 0:40.25 | 26.96–40.96 s | 26.20–39.75 s |
+| Open economy | 1:00.00 | 40.96–58.52 s | 39.75–57.05 s |
+| The turn | 1:18.25 | 58.52–64.16 s | 57.05–62.50 s |
+| Energy | 1:34.00 | 64.16–81.97 s | 62.50–79.85 s |
+| Transport | 1:52.00 | 81.97–96.30 s | 79.85–93.30 s |
+| The capital | 2:08.00 | 96.30–109.34 s | 93.30–105.82 s |
+| Housing | 2:24.00 | 109.34–123.70 s | 105.82–119.80 s |
+| Together | 2:42.00 | 123.70–138.00 s | 119.80–133.68 s |
+
+The cue sheet lives in `igloo/assets/voiceover.js`. Replacing a recording requires updating its duration and source boundaries. Editing visual captions does not synthesize or alter the supplied speech. Final room tuning should include speaker output latency as well as projector timing.
+
 ## Rendering changes
 
 - Native physical output pixels, bounded by the GPU's dimension limit and a 33.55-megapixel framebuffer budget. DOM controls and the floor's analytical lines are independent of world cubemap quality.
@@ -46,6 +73,6 @@ Geographic services and the pinned Three.js CDN are required on first load. Loca
 
 ## Automated checks
 
-`node --test tests/runtime.test.cjs` covers native sizing and GPU limits, honest frame measurements including stalls, adaptation/cooldown/recovery behavior, JavaScript syntax and parity between the two entry points.
+`node --test tests/*.test.cjs` covers native sizing and GPU limits, honest frame measurements including stalls, adaptation/cooldown/recovery behavior, JavaScript syntax and parity between the two entry points. Narration tests cover cue boundaries, clock drift, pause/resume, seek, switching, silent gaps, mute, ducking, settings validation and failed-download recovery.
 
-`tests/browser.cjs` exercises the production shaders and presentation UI in Chromium with software WebGL: loading/warm-up, play, frozen pause, chapter seeking, packed room output, seam calibration, local original-resolution media, mobile layout and finale. It uses small synthetic map tiles and a reduced geographic dataset to keep CI deterministic. Its screenshots validate layout and shader execution, not the look of the real satellite data or the Igloo's frame rate.
+`tests/browser.cjs` exercises the production shaders and presentation UI in Chromium with software WebGL: loading/warm-up, play, frozen pause, chapter seeking, packed room output, seam calibration, local original-resolution media, mobile layout and finale, plus decoding both supplied recordings, narration playback/seek/switch/restart, ducking, timing adjustment, mute and responsive Sound controls. It uses small synthetic map tiles and a reduced geographic dataset to keep CI deterministic. Its screenshots validate layout and shader execution, not the look of the real satellite data or the Igloo's frame rate.
