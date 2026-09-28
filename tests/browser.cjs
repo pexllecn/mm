@@ -65,8 +65,7 @@ const server=http.createServer((req,res)=>{
     assert.equal(narration.cue,'Energy');assert.ok(narration.position>=64.16);
     await page.getByRole('button',{name:'Pause the journey'}).click();
     assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).speaking,false);
-    await page.locator('#v-offset').fill('0.5');
-    await page.locator('#v-offset').dispatchEvent('input');
+    await page.locator('#v-offset').evaluate(el=>{el.value='.5';el.dispatchEvent(new Event('input',{bubbles:true}));});
     assert.equal((await page.evaluate(()=>window.__ireland.metrics().narration)).settings.offset,.5);
     await page.screenshot({path:path.join(out,'06-voice-controls.png')});
     await page.locator('[data-pane="sound"] [data-voice="off"]').click();

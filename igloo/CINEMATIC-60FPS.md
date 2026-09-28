@@ -18,7 +18,7 @@ All visual animation freezes while paused, including water, clouds and lighting.
 
 ## Narration
 
-The supplied female and male recordings are bundled as high-quality mono MP3s, totalling 3.81 MB. Choose a voice on the opening screen, or open **Voice** in the playback bar / **Controls → Sound**. Female is the initial default. **N** toggles narration; **A** toggles music independently.
+The supplied female and male recordings are bundled as high-quality mono MP3s, totalling 3.81 MB. Their web copies are loudness-balanced to approximately −18 LUFS, with true-peak headroom, so changing the narrator does not produce an 8 dB level jump. The original uploaded WAVs are untouched. Choose a voice on the opening screen, or open **Voice** in the playback bar / **Controls → Sound**. Female is the initial default. **N** toggles narration; **A** toggles music independently.
 
 - Female / Male / Off, independent voice level, and fine timing adjustment from −1 to +1 second.
 - Automatic music ducking, with an adjustable music level under speech. Muting narration restores the music level.
