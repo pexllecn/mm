@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install faster-whisper==1.2.0
+      - run: pip install faster-whisper==1.2.0 requests==2.32.5 huggingface-hub==0.34.4
       - name: Extract speech timestamps for chapter alignment
         run: |
           python - <<'PYTHON'
