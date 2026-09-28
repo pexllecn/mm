@@ -261,7 +261,7 @@
     <div class="eyebrow"><span class="dot"></span>Igloo immersive · four walls + floor</div>
     <h1 id="gate-title">Ireland <em>2036</em></h1>
     <p>The real island. Terrain and sea-floor depth from satellite survey data, satellite imagery draped over it, and every place — the Cliffs of Moher, the Liffey, Arklow Bank — at its true longitude and latitude. Underfoot, the same island as a lit relief map inside a ring that counts 2026 to 2036, and lines of light that run from the floor straight up the walls. The flight is slow and always forward. A wave of light leaves Dublin, and Ireland 2036 takes shape around you; in the last seconds the map settles onto the real island below.</p>
-    <div class="spec"><span><b>3:00</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> live render</span><span id="gpu-note">Checking graphics…</span></div>
+    <div class="spec"><span><b>3:12</b> runtime</span><span><b>4</b> acts, no cuts</span><span><b>360°</b> live render</span><span id="gpu-note">Checking graphics…</span></div>
     <div class="loader" id="loader">
       <svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle class="bg" cx="22" cy="22" r="18"/><circle class="fg" id="load-ring" cx="22" cy="22" r="18"/></svg>
       <div class="note" id="load-note" role="status">Starting up…</div>
@@ -314,14 +314,14 @@
 </section>
 
 <div id="hud" hidden>
-  <div class="tl" id="tl" role="slider" aria-label="Show position" aria-valuemin="0" aria-valuemax="180" aria-valuenow="0">
+  <div class="tl" id="tl" role="slider" aria-label="Show position" aria-valuemin="0" aria-valuemax="192" aria-valuenow="0">
     <div class="tl-track" id="tl-track"><div class="tl-fill" id="tl-fill"></div><div class="tl-head" id="tl-head"></div></div>
     <div class="tl-tip" id="tl-tip"></div>
   </div>
   <div class="acts" id="acts"></div>
   <div class="ctl">
     <button type="button" class="icon primary" id="b-play" aria-label="Pause" data-tip="Pause (Space)"><svg class="i main"><use href="#i-pause"/></svg><svg class="i alt"><use href="#i-play"/></svg></button>
-    <span class="clock" id="clock">0:00 <small>/ 3:00</small></span>
+    <span class="clock" id="clock">0:00 <small>/ 3:12</small></span>
     <button type="button" class="icon" id="b-restart" aria-label="Restart" data-tip="Restart (R)"><svg class="i"><use href="#i-restart"/></svg></button>
     <span class="spacer"></span>
     <span class="stat" id="stat"></span>
@@ -367,6 +367,14 @@
   </div>
 
   <div class="tabpane" data-pane="floor" hidden>
+    <div class="subhead">Outro: the map ends on</div>
+    <div class="seg seg-wide" id="owall-seg" role="group" aria-label="Wall the map folds onto in the outro">
+      <button type="button" data-w="0" aria-pressed="false">1 · Front</button>
+      <button type="button" data-w="1" aria-pressed="true">2 · Right</button>
+      <button type="button" data-w="2" aria-pressed="false">3 · Back</button>
+      <button type="button" data-w="3" aria-pressed="false">4 · Left</button>
+    </div>
+    <div class="subhead">Fit</div>
     <div class="sl"><label for="c-inset">Edge margin</label><input id="c-inset" type="range" min="0" max="0.45" step="0.005"><output></output></div>
     <div class="sl"><label for="c-fscale">Expand / shrink</label><input id="c-fscale" type="range" min="0.5" max="1.6" step="0.01"><output></output></div>
     <div class="sl"><label for="c-tiltx">Keystone X</label><input id="c-tiltx" type="range" min="-0.4" max="0.4" step="0.005"><output></output></div>
@@ -381,8 +389,8 @@
     <div class="subhead">Voiceover</div>
     <div class="seg seg-wide" id="voice-seg" role="group" aria-label="Voiceover">
       <button type="button" data-voice="off" aria-pressed="false">Off</button>
-      <button type="button" data-voice="female" aria-pressed="false">Female</button>
-      <button type="button" data-voice="male" aria-pressed="true">Male</button>
+      <button type="button" data-voice="female" aria-pressed="true">Female</button>
+      <button type="button" data-voice="male" aria-pressed="false">Male</button>
     </div>
     <div class="sl"><label for="c-vvol">Voice level</label><input id="c-vvol" type="range" min="0" max="1.6" step="0.02"><output></output></div>
     <div class="sl"><label for="c-duck">Music under the voice</label><input id="c-duck" type="range" min="0" max="1" step="0.02"><output></output></div>
@@ -422,7 +430,12 @@ if (!T) { $('gpu-note').textContent = '3D engine could not load. Check the netwo
 
 
 // ---------------------------------------------------------------- show data
-const DURATION = 180;
+const DURATION = 192;
+// The outro, after the finale: the map lifts off the floor and folds onto a wall (OUT_MAP0 to
+// OUT_MAP1), then the opening plays backwards, the world sinking into the floor and the ring
+// drawing itself away (OUT_REV0 to OUT_END), leaving the island alone on the wall.
+const OUT_SHOW = 177.6, OUT_MAP0 = 179.4, OUT_MAP1 = 185, OUT_REV0 = 185, OUT_END = 191;
+const introAt = (t) => (t < OUT_REV0 ? t : Math.max(0, OUT_END - t));
 // The dial reaches 2036 here, the moment the finale begins, not on the last frame.
 const YEAR_END = 166;
 // Each scene is a stock clip wrapped around the room. `want` is what the clip should show.
@@ -2096,6 +2109,10 @@ const post = (() => {
       uStemT: { value: -1 },
       uWaveO: { value: new T.Vector2(0, 0) }, uWaveR: { value: -1 },
       uIntro: { value: 99 },
+      // The outro: the island map lifts off the floor and folds up onto one wall.
+      // uOut: x strength, y slide progress, z turn (radians), w scale. uOutK: the wall.
+      uOut: { value: new T.Vector4(0, 0, 0, 1) }, uOutC0: { value: new T.Vector2() }, uOutC1: { value: new T.Vector2() },
+      uOutK: { value: 1 }, uMapC0: { value: new T.Vector2() },
     },
     vertexShader: `void main(){ gl_Position=vec4(position.xy,0.,1.); }`,
     fragmentShader: `
@@ -2119,6 +2136,7 @@ const post = (() => {
     uniform float uLabelA; uniform float uLock; uniform float uCoast; uniform float uAurora;
     uniform vec3 uCove; uniform vec4 uMerA[11]; uniform vec4 uMerB[11]; uniform vec4 uStemA[4]; uniform vec4 uStemB[4]; uniform float uStemT;
     uniform vec2 uWaveO; uniform float uWaveR; uniform float uIntro;
+    uniform vec4 uOut; uniform vec2 uOutC0; uniform vec2 uOutC1; uniform int uOutK; uniform vec2 uMapC0;
 
     const float PI=3.14159265;
     const vec3 GOLD=vec3(1.,.74,.36); const vec3 TEAL=vec3(.4,1.,.88); const vec3 WARM=vec3(1.,.9,.72);
@@ -2566,6 +2584,60 @@ const post = (() => {
       }
       col+=srgb(tone(L*1.1))*uLines+add;
 
+      // ---- the outro: the island lifts off the floor as a disc of light, slides across it and
+      // folds straight up onto one wall, as if floor and wall were one sheet. Every pixel is
+      // unfolded into the floor's plane (a wall point at height h lies h beyond its wall), so
+      // the map crosses the join without a break and ends upright, north to the ceiling.
+      if(uOut.x>0.){
+        vec2 uf=q; bool okS=onFloor;
+        if(!onFloor){
+          int wk; vec2 nk;
+          if(abs(wb.x)/(W*.5)>=abs(wb.y)/(D*.5)){ wk=wb.x>0.?1:3; nk=vec2(sign(wb.x),0.); }
+          else { wk=wb.y<0.?0:2; nk=vec2(0.,sign(wb.y)); }
+          okS=wk==uOutK&&hW<=H*1.02;
+          uf=wb+nk*hW;
+        }
+        float e=uOut.y;
+        vec2 C=mix(uOutC0,uOutC1,e);
+        vec2 lp=rot2(-uOut.z)*(uf-C)/(uOut.w*S);
+        vec2 cDv=lp*1024.+512.;
+        vec2 Xs=uMapC0+(cDv-512.)*CANV2M;
+        float lonS=LON0+Xs.x/MLON, latS=LAT0-Xs.y/MLAT;
+        vec2 cMs=vec2(512.+(lonS+7.8)*87.,498.-(latS-53.4)*144.);
+        vec2 uvS=vec2((lonS-LONW)/(LONE-LONW),(latS-LATN)/(LATS-LATN));
+        vec2 sdx=dFdx(cMs), sdy=dFdy(cMs), udx=dFdx(uvS), udy=dFdy(uvS), vdx=dFdx(cDv), vdy=dFdy(cDv);
+        float pxS=clamp(max(length(sdx),length(sdy)),1e-3,6.), pxV=clamp(max(length(vdx),length(vdy)),1e-3,6.);
+        if(pxS>=6.){ sdx=vec2(0.); sdy=vec2(0.); udx=vec2(0.); udy=vec2(0.); }
+        vec4 mkS=textureGrad(uMask,cMs/1024.,sdx/1024.,sdy/1024.);
+        float niS=fwidth(mkS.g), hfS=fwidth(textureGrad(uRelief,clamp(uvS,0.,1.),udx,udy).b);
+        float rhoS=length(cDv-512.);
+        float inS=(1.-smoothstep(RING-1.5,RING+1.,rhoS))*(okS?1.:0.);
+        if(okS){
+          vec3 mh=islandMap(cMs,uvS,udx,udy,pxS,Xs,1.,1.,mkS,niS,hfS);
+          vec3 ln=vec3(0.);
+          for(int i=1;i<7;i++){
+            vec2 a=CITY[0], b=CITY[i], c2=(a+b)*.5-vec2(0.,35.);
+            vec2 sb=sdBez(cMs,a,c2,b);
+            float u=fract(uTime*.03+float(i)*.17);
+            ln+=WARM*(beam(sb.x,.55,pxS,1.4)*.3+exp(-abs(sb.y-u)*length(b-a)/2.)*exp(-sb.x/1.1)*1.1);
+          }
+          for(int i=0;i<7;i++){
+            float dc=length(cMs-CITY[i]); float rad=i==0?3.6:2.3;
+            ln+=(i==0?vec3(1.,.86,.42):vec3(.85,.95,.88))*(1.-smoothstep(rad-pxS,rad+pxS,dc))*1.6+(i==0?GOLD:vec3(.6,.8,.75))*exp(-dc/7.)*.1;
+          }
+          vec4 txS=textureGrad(uText,cMs/1024.,sdx/1024.,sdy/1024.);
+          ln+=vec3(.86,.9,.86)*txS.g*.85;
+          vec3 sheet=srgb(tone((mh*uMapBright*1.25+ln)*1.05));
+          col=mix(col,sheet,inS*uOut.x);
+          // its rim: a ring of light that travels with it
+          float dR=abs(rhoS-RING);
+          col+=srgb(tone(GOLD*(beam(dR,1.6,pxV,3.)*1.1+exp(-dR/18.)*.12)))*uOut.x*(1.-smoothstep(RING+60.,RING+120.,rhoS));
+          // a bright crease where the sheet folds over the join between floor and wall
+          float seamD=onFloor?min(W*.5-abs(q.x),D*.5-abs(q.y)):hW;
+          col+=srgb(tone(WARM*beam(seamD,.012,pxR,.05)*1.6))*inS*uOut.x*step(.02,e)*(1.-step(.98,e));
+        }
+      }
+
       // ---- captions, one per wall
       if(!onFloor&&uCapA>0.){
         float cw=min(wallL*.88,H*2.9), ch=cw/3.2;
@@ -3006,6 +3078,8 @@ const CAM_LL = [
   [172,  -6.3317, 53.6699, 205000],
   [176,  -6.3376, 53.7170, 207400],
   [180,  -6.3430, 53.7622, 209800],
+  [186,  -6.3511, 53.8300, 213400],                   // the outro drifts on at the same pace
+  [192,  -6.3592, 53.8978, 217000],
 ];
 const CAM = CAM_LL.map(([t, lon, lat, alt]) => [t, gx(lon), alt, gz(lat)]);
 
@@ -3101,7 +3175,7 @@ const perimOf = (x, z, W, D) => {
 function updateSeamGeo() {
   const P = post.material.uniforms, R = P.uRoom.value, W = R.x, D = R.y, H = R.z;
   const rot = mode === 1 ? P.uFloorRot.value : 0;
-  const key = [W, D, H, ctrl.dscale, ctrl.dx, ctrl.dy, rot, mode].join();
+  const key = [W, D, H, ctrl.dscale, ctrl.dx, ctrl.dy, rot, mode, ctrl.owall].join();
   if (key === seamGeo.key) return;
   seamGeo.key = key;
   const S = Math.min(W, D) * ctrl.dscale, off = [ctrl.dx, ctrl.dy];
@@ -3140,7 +3214,18 @@ function updateSeamGeo() {
   const [mx, mz] = mapXY(PLACES.dublin[0], PLACES.dublin[1]);
   const o = toRoom(off[0] + (mx / 1024 - .5) * S, off[1] + (mz / 1024 - .5) * S);
   P.uWaveO.value.set(o[0], o[1]);
+  // The outro sheet starts where the dial is, north as the dial shows it, and ends centred on
+  // the chosen wall at half its height, north up the wall, as large as the wall allows.
+  const wall = ((ctrl.owall | 0) % 4 + 4) % 4, nk = [[0, -1], [1, 0], [0, 1], [-1, 0]][wall];
+  const base = [[0, -D / 2], [W / 2, 0], [0, D / 2], [-W / 2, 0]][wall], len = wall % 2 ? D : W;
+  const n0 = toRoom(off[0], off[1] - 1), nv = norm([n0[0] - c0[0], n0[1] - c0[1]]);
+  const a0 = Math.atan2(nv[0], -nv[1]), a1 = Math.atan2(nk[0], -nk[1]);
+  let da = a1 - a0; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
+  const r0 = RING / 1024 * S, r1 = Math.min(H * .42, len * .42);
+  Object.assign(outroGeo, { c0, c1: [base[0] + nk[0] * H * .5, base[1] + nk[1] * H * .5], a0, da, k: r1 / r0, wall });
+  P.uMapC0.value.set(MAP_C0[0], MAP_C0[1]);
 }
+const outroGeo = { c0: [0, 0], c1: [0, 0], a0: 0, da: 0, k: 1, wall: 1 };
 // The cove line's colour through the show: dawn gold, daylight, the 2036 gold, night.
 const COVE = [
   [0, [1, .76, .48], .55], [30, [1, .9, .76], .45], [60, [.86, .93, 1], .40], [76, [1, .82, .52], .85],
@@ -3221,6 +3306,7 @@ function applyTime(t, dt) {
     if (t < 7 && t >= 1.9) tau = t - 1.9;                       // the opening: every line at once
     if (k >= 1 && t >= Tk && t - Tk < 4.5) tau = t - Tk;        // a year arrives
     if (t >= YEAR_END && t - YEAR_END < 4.5) tau = t - YEAR_END; // 2036: every line again
+    { const it = introAt(t); if (t >= OUT_REV0 && it >= 1.9 && it < 7) tau = it - 1.9; } // the outro: every line runs home
     P.uMerB.value[k].z = tau;
     P.uMerB.value[k].w = t >= Tk ? 1 : 0;
   }
@@ -3259,7 +3345,14 @@ function applyTime(t, dt) {
     P.uCap.value = capTextures[cap]; P.uCapRev.value = smooth(k.t0, k.t0 + 1.6, t);
     P.uCapA.value = 1 - smooth(k.t1, k.t1 + 1.1, t);
   }
-  P.uFade.value = (1 - smooth(DURATION - 2.2, DURATION, t)) * (blackout ? 0 : 1);
+  // ---- the outro
+  {
+    const a = smooth(OUT_SHOW, OUT_MAP0, t), e = smooth(OUT_MAP0, OUT_MAP1, t);
+    const O = outroGeo;
+    P.uOut.value.set(a, e, lerp(O.a0, O.a0 + O.da, e), lerp(1, O.k, e));
+    P.uOutC0.value.set(O.c0[0], O.c0[1]); P.uOutC1.value.set(O.c1[0], O.c1[1]); P.uOutK.value = O.wall;
+  }
+  P.uFade.value = (1 - smooth(DURATION - 1.4, DURATION, t)) * (blackout ? 0 : 1);
 }
 function needsWorld() { const u = post.material.uniforms; return u.uHasA.value < .5 || (u.uMix.value < .999 && u.uHasB.value < .5); }
 // ---------------------------------------------------------------- footage library (assets + db)
@@ -3567,6 +3660,15 @@ const audio = (() => {
         });
       }
     });
+    // Coda for the outro: the harp falls back down through D major over a held string chord,
+    // the opening's rising arpeggio played in reverse, ending on a low D as the room goes dark.
+    {
+      const cs = t0 + FORM.length * 8 * BAR;
+      EVENTS.push([cs, (c, S, w) => strings(c, S.pad, w, 3 * BAR, I, .010)]);
+      [[74, 69, 66, 62], [69, 66, 62, 57], [66, 62, 57, 50]].forEach((run, b) => run.forEach((m, i) =>
+        EVENTS.push([cs + b * BAR + i * BEAT * .75, (c, S, w) => harp(c, S.dry, S.wave, w, m, b === 2 && i === 3 ? .12 : .075 - b * .01)])));
+      EVENTS.push([cs + 3 * BAR, (c, S, w) => harp(c, S.dry, S.wave, w, 38, .1)]);
+    }
     EVENTS.sort((a, b) => a[0] - b[0]);
   }
 
@@ -3825,10 +3927,16 @@ const CTRL_DEFAULTS = {
   fmapb: 1, lines: 1, grade: .45, warm: .35, nlight: .55, land: 1,
   inset: 0, fscale: 1, tiltx: 0, tilty: 0, dscale: 1, dx: 0, dy: 0,
   vol: .9,
-  voice: 'male', vvol: 1, duck: .4, voff: 0,
+  voice: 'female', vvol: 1, duck: .4, voff: 0,
+  owall: 1, cv: 2,
 };
 const ctrl = Object.assign({}, CTRL_DEFAULTS);
-try { Object.assign(ctrl, JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}')); } catch (e) {}
+try {
+  const saved = JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}');
+  // Settings saved before the female reading became the default take it up once.
+  if (saved.cv !== CTRL_DEFAULTS.cv) { delete saved.voice; saved.cv = CTRL_DEFAULTS.cv; }
+  Object.assign(ctrl, saved);
+} catch (e) {}
 
 function applyCtrl() {
   const P = post.material.uniforms;
@@ -3847,6 +3955,7 @@ function applyCtrl() {
   audio.setLevel('voice', ctrl.vvol); audio.setLevel('duck', ctrl.duck); audio.setLevel('voiceOffset', ctrl.voff);
   audio.setVoice(ctrl.voice);
   document.querySelectorAll('#voice-seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.voice === audio.voice)));
+  document.querySelectorAll('#owall-seg button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.w === (ctrl.owall | 0))));
   try { localStorage.setItem('ire2036-ctrl', JSON.stringify(ctrl)); } catch (e) {}
 }
 
@@ -3980,6 +4089,9 @@ document.querySelectorAll('#voice-seg button').forEach((b) => b.addEventListener
   ctrl.voice = b.dataset.voice; applyCtrl();
   toast(ctrl.voice === 'off' ? 'Voiceover off' : (ctrl.voice === 'female' ? 'Female voiceover' : 'Male voiceover'));
 }));
+document.querySelectorAll('#owall-seg button').forEach((b) => b.addEventListener('click', () => {
+  ctrl.owall = +b.dataset.w; applyCtrl(); toast('Outro map ends on wall ' + (ctrl.owall + 1));
+}));
 applyCtrl();
 syncSliders();
 
@@ -4013,7 +4125,7 @@ function frame(now) {
   if (!look.drag) { look.ty += look.vy * dt; look.tp = clamp(look.tp + look.vp * dt, -1.4, 1.4); const damp = Math.exp(-dt * 3.5); look.vy *= damp; look.vp *= damp; }
   const kl = 1 - Math.exp(-dt / .085);
   look.yaw += (look.ty - look.yaw) * kl; look.pitch += (look.tp - look.pitch) * kl; look.tan += (look.tt - look.tan) * kl;
-  P.uIntro.value = started ? showT : 99;
+  P.uIntro.value = started ? introAt(showT) : 99;
   P.uPrev.value.set(look.yaw, look.pitch, look.tan);
   if (needsWorld()) renderWorld();
   renderer.setRenderTarget(null);
