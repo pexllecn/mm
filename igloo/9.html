@@ -389,9 +389,8 @@
   <div class="tabpane" data-pane="sound" hidden>
     <div class="subhead">Voiceover</div>
     <div class="seg seg-wide" id="voice-seg" role="group" aria-label="Voiceover">
+      <button type="button" data-voice="female" aria-pressed="true">On</button>
       <button type="button" data-voice="off" aria-pressed="false">Off</button>
-      <button type="button" data-voice="female" aria-pressed="true">Female</button>
-      <button type="button" data-voice="male" aria-pressed="false">Male</button>
     </div>
     <div class="sl"><label for="c-vvol">Voice level</label><input id="c-vvol" type="range" min="0" max="1.6" step="0.02"><output></output></div>
     <div class="sl"><label for="c-duck">Music under the voice</label><input id="c-duck" type="range" min="0" max="1" step="0.02"><output></output></div>
@@ -3569,28 +3568,28 @@ async function removeSlot(id) {
 // show clock. So it starts the moment the show does, and seeking, pausing and skipping between
 // acts keep it in time.
 // ---------------------------------------------------------------- voiceover
-// Two recorded readings of the script (female and male). Each is cut at its natural pauses into
-// phrases, and every phrase is cued to the moment its caption appears, so the words stay with
-// the pictures however the show is paused, skipped or scrubbed. Columns: show second, then the
-// phrase's start and end in the female take, then in the male take.
+// The recorded reading of the script (the female voice supplied for the show), cut at its
+// natural pauses into phrases, and every phrase cued to the moment its caption appears, so
+// the words stay with the pictures however the show is paused, skipped or scrubbed.
+// Columns: show second, then the phrase's start and end in the recording.
 const VOICE_CUES = [
-  [  3.0,   0.00,   7.37,   0.00,   7.54],  // Welcome. As we stand here in 2026...
-  [ 11.0,   7.37,  14.58,   7.54,  14.37],  // The sun rising over the Wild Atlantic Way...
-  [ 20.5,  14.58,  27.02,  14.37,  26.21],  // The Cliffs of Moher. This coast has always been our edge...
-  [ 33.6,  27.02,  31.57,  26.21,  30.64],  // But our greatest asset... is our people.
-  [ 39.0,  31.57,  40.80,  30.64,  39.85],  // A nation 5.4 million strong...
-  [ 57.5,  40.80,  53.91,  39.85,  52.30],  // An incredibly open economy...
-  [ 71.4,  53.91,  58.54,  52.30,  57.09],  // Yet everything we've achieved is simply the foundation.
-  [ 77.2,  58.54,  61.11,  57.09,  59.82],  // The next ten years start right now.
-  [ 80.9,  61.11,  64.25,  59.82,  62.61],  // Let's look ahead to Ireland 2036.
-  [ 90.5,  64.25,  81.90,  62.61,  79.95],  // Powered by the very ocean... offshore wind...
-  [110.0,  81.90,  96.25,  79.95,  93.34],  // MetroLink... the airport to the city centre... rail...
-  [125.5,  96.25, 109.48,  93.34, 105.90],  // Here in Dublin, a capital on the move...
-  [141.0, 109.48, 123.64, 105.90, 119.53],  // Homes for a growing nation...
-  [159.5, 123.64, 137.00, 119.53, 132.76],  // Ireland 2036 is not just a projection...
-  [174.6, 137.00, 138.00, 132.76, 133.68],  // Thank you.
+  [   3.0,    0.00,    7.37],  // Welcome. As we stand here in 2026...
+  [  11.0,    7.37,   14.58],  // The sun rising over the Wild Atlantic Way...
+  [  20.5,   14.58,   27.02],  // The Cliffs of Moher. This coast has always been our edge...
+  [  33.6,   27.02,   31.57],  // But our greatest asset... is our people.
+  [  39.0,   31.57,   40.80],  // A nation 5.4 million strong...
+  [  57.5,   40.80,   53.91],  // An incredibly open economy...
+  [  71.4,   53.91,   58.54],  // Yet everything we've achieved is simply the foundation.
+  [  77.2,   58.54,   61.11],  // The next ten years start right now.
+  [  80.9,   61.11,   64.25],  // Let's look ahead to Ireland 2036.
+  [  90.5,   64.25,   81.90],  // Powered by the very ocean... offshore wind...
+  [ 110.0,   81.90,   96.25],  // MetroLink... the airport to the city centre... rail...
+  [ 125.5,   96.25,  109.48],  // Here in Dublin, a capital on the move...
+  [ 141.0,  109.48,  123.64],  // Homes for a growing nation...
+  [ 159.5,  123.64,  137.00],  // Ireland 2036 is not just a projection...
+  [ 174.6,  137.00,  138.00],  // Thank you.
 ];
-const VOICE_FILES = { female: 'voice-female.mp3', male: 'voice-male.mp3' };
+const VOICE_FILES = { female: 'voice-female.mp3' };
 // The page runs from igloo/ and from the repository root, so the voice is looked for beside
 // it first and then in the igloo folder.
 const VOICE_DIRS = ['assets/voice/', 'igloo/assets/voice/'];
@@ -3608,7 +3607,7 @@ const audio = (() => {
   // starts; an AudioBuffer can be played by any context.
   function loadVoice(name) {
     if (!VOICE_FILES[name] || voiceBuf[name] || voiceLoading[name]) return voiceLoading[name];
-    voiceNote('Loading the ' + name + ' voice…');
+    voiceNote('Loading the voiceover…');
     voiceLoading[name] = (async () => {
       for (const dir of VOICE_DIRS) {
         try {
@@ -3619,7 +3618,7 @@ const audio = (() => {
           const dc = new Off(1, 1, 44100);
           voiceBuf[name] = await new Promise((res, rej) => { const p = dc.decodeAudioData(data, res, rej); if (p && p.catch) p.catch(rej); });
           voiceDirty = true;
-          voiceNote(name === 'female' ? 'Female voice ready.' : 'Male voice ready.');
+          voiceNote('Voiceover ready.');
           return voiceBuf[name];
         } catch (e) { /* try the next place */ }
       }
@@ -3632,8 +3631,7 @@ const audio = (() => {
   // Is a phrase being spoken (or about to be) at show time t? The music dips just before it.
   function speaking(t) {
     if (voiceSel === 'off' || !voiceBuf[voiceSel]) return false;
-    const k = voiceSel === 'female' ? 1 : 3;
-    for (const c of VOICE_CUES) { const A = c[0] + settings.voiceOffset; if (t >= A - .5 && t <= A + (c[k + 1] - c[k]) + .7) return true; }
+    for (const c of VOICE_CUES) { const A = c[0] + settings.voiceOffset; if (t >= A - .5 && t <= A + (c[2] - c[1]) + .7) return true; }
     return false;
   }
   function endVoice() {
@@ -3650,9 +3648,9 @@ const audio = (() => {
     endVoice(); voiceDirty = false;
     const buf = voiceBuf[voiceSel]; if (!buf) return;
     const g = ctx.createGain(); g.connect(voiceOut); vsess = { gain: g, srcs: [] };
-    const k = voiceSel === 'female' ? 1 : 3, now = ctx.currentTime;
+    const now = ctx.currentTime;
     for (const c of VOICE_CUES) {
-      const A = c[0] + settings.voiceOffset, from = c[k], to = Math.min(c[k + 1], buf.duration), dur = to - from;
+      const A = c[0] + settings.voiceOffset, from = c[1], to = Math.min(c[2], buf.duration), dur = to - from;
       if (dur <= 0 || A + dur <= t + .05) continue;
       const into = Math.max(0, t - A), when = Math.max(now + .02, a0 + (A + into) - s0), len = dur - into;
       const src = ctx.createBufferSource(), eg = ctx.createGain();
@@ -3884,9 +3882,10 @@ const audio = (() => {
     get voice() { return voiceSel; },
     settings,
     setLevel(k, v) { if (k === 'voiceOffset' && v !== settings[k]) voiceDirty = true; settings[k] = v; },
-    // 'off', 'female' or 'male'. The chosen reading is decoded straight away.
+    // 'off', or on (any other value, including a 'male' saved by an earlier build, plays the
+    // one recording there is). It is decoded straight away.
     setVoice(name) {
-      name = VOICE_FILES[name] ? name : 'off';
+      name = name === 'off' ? 'off' : 'female';
       if (name !== voiceSel) { voiceSel = name; voiceDirty = true; }
       if (name !== 'off') loadVoice(name); else voiceNote('Voiceover off. The music plays alone.');
     },
@@ -4119,6 +4118,7 @@ try {
   const saved = JSON.parse(localStorage.getItem('ire2036-ctrl') || '{}');
   // Settings saved before the female reading became the default take it up once.
   if (saved.cv !== CTRL_DEFAULTS.cv) { delete saved.voice; saved.cv = CTRL_DEFAULTS.cv; }
+  if (saved.voice && saved.voice !== 'off') saved.voice = 'female';   // there is one voice
   Object.assign(ctrl, saved);
 } catch (e) {}
 
@@ -4284,7 +4284,7 @@ $('c-import').addEventListener('click', async () => {
 audio.onVoiceNote((m) => { const n = $('voice-note'); if (n) n.textContent = m; });
 document.querySelectorAll('#voice-seg button').forEach((b) => b.addEventListener('click', () => {
   ctrl.voice = b.dataset.voice; applyCtrl();
-  toast(ctrl.voice === 'off' ? 'Voiceover off' : (ctrl.voice === 'female' ? 'Female voiceover' : 'Male voiceover'));
+  toast(ctrl.voice === 'off' ? 'Voiceover off' : 'Voiceover on');
 }));
 document.querySelectorAll('#owall-seg button').forEach((b) => b.addEventListener('click', () => {
   ctrl.owall = +b.dataset.w; applyCtrl(); toast('Feature wall: wall ' + (ctrl.owall + 1));
